@@ -6,7 +6,7 @@ on:
   push:
     paths:
       - 'Client/**'
-      - '.github/workflows/validate.yml'
+      - '.github/workflows/client.yml'
     branches:
       - '**'
     tags:
