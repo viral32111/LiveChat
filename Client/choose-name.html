@@ -16,40 +16,44 @@
 		<div class="container mt-5">
 
 			<!-- Box -->
-			<div class="row text-center justify-content-center">
-				<div class="col-3 p-3 pt-2 border rounded bg-light">
+			<div class="row justify-content-center">
+				<div class="col-3 p-3 pt-2 text-center border rounded bg-light">
 
 					<!-- Title & instructions -->
-					<h1><strong>Live Chat</strong></h1>
-					<p>Enter a name of your choosing<br>below to begin chatting.</p>
+					<div class="row">
+						<h1><strong>Live Chat</strong></h1>
+						<p>Enter a name of your choosing<br>below to begin chatting.</p>
+					</div>
 
 					<!-- Form for choosing a name -->
-					<form id="nameForm" method="post" action="/api/set-name" novalidate>
+					<div class="row">
+						<form id="nameForm" method="post" action="/api/set-name" novalidate>
 
-						<!-- Input for name -->
-						<div class="input-group has-validation mb-2">
+							<!-- Input for name -->
+							<div class="input-group has-validation mb-2">
 
-							<!-- Icon -->
-							<span id="userIcon" class="input-group-text">
-								<i class="bi bi-person-circle"></i>
-							</span>
+								<!-- Icon -->
+								<span id="userIcon" class="input-group-text">
+									<i class="bi bi-person-circle"></i>
+								</span>
 
-							<!-- Input with validation in attributes -->
-							<input id="nameInput" class="form-control shadow-none" type="text" placeholder="John Doe..." required minlength="2" maxlength="30" aria-label="John Doe..." aria-describedby="userIcon">
-							
-							<!-- Message if input validation fails -->
-							<div class="invalid-feedback">
-								Please choose a name.
+								<!-- Input with validation in attributes -->
+								<input id="nameInput" class="form-control shadow-none" type="text" placeholder="John Doe..." required minlength="2" maxlength="30" aria-label="John Doe..." aria-describedby="userIcon">
+								
+								<!-- Message if input validation fails -->
+								<div class="invalid-feedback">
+									Please choose a name.
+								</div>
 							</div>
-						</div>
 
-						<!-- Submit button with spinner -->
-						<button id="continueButton" class="btn btn-primary w-100" type="submit">
-							<span id="continueButtonSpinner" class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
-							<span>Continue</span>
-						</button>
+							<!-- Submit button with spinner -->
+							<button id="continueButton" class="btn btn-primary w-100" type="submit">
+								<span id="continueButtonSpinner" class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
+								<span>Continue</span>
+							</button>
 
-					</form>
+						</form>
+					</div>
 
 				</div>
 			</div>
