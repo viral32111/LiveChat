@@ -1,0 +1,51 @@
+name: Server
+
+on:
+  push:
+    paths:
+      - 'Server/**'
+      - '.github/workflows/server.yml'
+    branches:
+      - '**'
+    tags:
+      - '*.*.*'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./Server
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npx eslint ./source/
+
+      - name: Compile TypeScript
+        run: npx tsc
+
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: LiveChat
+          path: |
+            ./dist/
+            ./package.json
+            ./package-lock.json
