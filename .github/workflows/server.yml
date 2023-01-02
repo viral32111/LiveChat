@@ -46,6 +46,6 @@ jobs:
         with:
           name: LiveChat
           path: |
-            ./dist/
-            ./package.json
-            ./package-lock.json
+            ./Server/dist/
+            ./Server/package.json
+            ./Server/package-lock.json
