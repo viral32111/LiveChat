@@ -1,0 +1,39 @@
+# This action validates and error-checks HTML pages using the W3C validator.
+
+name: Validate
+
+on:
+  push:
+    paths:
+      - 'Client/**'
+      - '.github/workflows/validate.yml'
+    branches:
+      - '**'
+    tags:
+      - '*.*.*'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  html:
+    name: HTML
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Validate HTML
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: ./Client
+          css: true
+
+      - name: Upload validation log
+        uses: actions/upload-artifact@v3
+        with:
+          name: Log
+          path: ./log.log
