@@ -73,3 +73,11 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
+
+      - name: Run Page Speed Insights
+        uses: jakepartusch/psi-action@v1.3
+        with:
+          url: ${{ steps.deployment.outputs.page_url }}
+          threshold: 70
+          strategy: desktop
+          key: ${{ secrets.GOOGLE_PAGE_SPEED_INSIGHTS_API_KEY }}
