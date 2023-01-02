@@ -96,7 +96,7 @@ jobs:
         id: metadata
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY_NAME }}/${{ github.repository_owner }}/${{ env.REGISTRY_IMAGE_NAME }}
+          images: ${{ env.REGISTRY_NAME }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           flavor: latest=true
           tags: |
             type=ref,event=pr
