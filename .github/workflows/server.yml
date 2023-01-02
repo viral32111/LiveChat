@@ -96,15 +96,16 @@ jobs:
         id: metadata
         uses: docker/metadata-action@v4
         with:
-          flavor: latest=true
           images: ${{ env.REGISTRY_NAME }}/${{ github.repository_owner }}/${{ env.REGISTRY_IMAGE_NAME }}
+          flavor: latest=true
           tags: |
+            type=ref,event=pr
+            type=ref,event=branch
             type=semver,pattern={{major}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}.{{minor}}.{{patch}}
           labels: |
             org.opencontainers.image.title=Live Chat
-            org.opencontainers.image.description=Real-time, ephemeral, room-based chat system.
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             com.docker.extension.publisher-url=${{ env.PUBLISHER_WEBSITE }}
 
