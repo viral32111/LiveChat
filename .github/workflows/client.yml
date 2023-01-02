@@ -1,6 +1,6 @@
 # This action validates and error-checks HTML pages using the W3C validator.
 
-name: Validate
+name: Client
 
 on:
   push:
@@ -17,8 +17,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  html:
-    name: HTML
+  validate-html:
+    name: Validate HTML
     runs-on: ubuntu-22.04
     permissions:
       contents: read

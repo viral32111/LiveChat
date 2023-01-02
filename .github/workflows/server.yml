@@ -1,3 +1,5 @@
+# This action builds the server-side code.
+
 name: Server
 
 on:
