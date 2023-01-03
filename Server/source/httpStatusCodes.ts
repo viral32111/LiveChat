@@ -1,3 +1,5 @@
-export const OK = 200
-
-export const BAD_REQUEST = 400
+// Easy to use HTTP status codes for responses
+export enum HTTPStatusCodes {
+	OK = 200,
+	BadRequest = 400
+}

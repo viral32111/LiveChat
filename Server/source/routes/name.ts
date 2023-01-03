@@ -1,9 +1,9 @@
 // Import variables from the main script
 import { expressApp } from "../main"
 
-// Import constant variables
-import { INVALID_CONTENT_TYPE, NO_PAYLOAD, PAYLOAD_MALFORMED_VALUE, PAYLOAD_MISSING_PROPERTY } from "../errorCodes"
-import { BAD_REQUEST, OK } from "../httpStatusCodes"
+// Import enumerations
+import { ErrorCodes } from "../errorCodes"
+import { HTTPStatusCodes } from "../httpStatusCodes"
 
 // Import helper functions
 import { respondToRequest } from "../helpers/requests"
@@ -20,39 +20,35 @@ interface NamePayload {
 // Create a route for the user choosing their name
 expressApp.post( "/api/set-name", ( request, response ) => {
 
-	// DEBUGGING
-	console.debug( "/api/set-name:", request.body )
-
 	// Fail if the request payload is not JSON
-	if ( !request.is( "application/json" ) ) return respondToRequest( response, BAD_REQUEST, {
-		error: INVALID_CONTENT_TYPE
+	if ( !request.is( "application/json" ) ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+		error: ErrorCodes.InvalidContentType
 	} )
 
 	// Fail if there is no request payload
-	if ( request.body.length <= 0 ) return respondToRequest( response, BAD_REQUEST, {
-		error: NO_PAYLOAD
+	if ( request.body.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+		error: ErrorCodes.MissingPayload
 	} )
 
 	// Cast the request body to the expected JSON structure
 	const payload: NamePayload = request.body
 
 	// Fail if there is no name property in the payload
-	if ( !payload.name ) return respondToRequest( response, BAD_REQUEST, {
-		error: PAYLOAD_MISSING_PROPERTY
+	if ( !payload.name ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+		error: ErrorCodes.PayloadMissingProperty
 	} )
 
 	// Fail if the name does not meet validation requirements
-	if ( !nameValidationPattern.test( payload.name ) ) return respondToRequest( response, BAD_REQUEST, {
-		error: PAYLOAD_MALFORMED_VALUE
+	if ( !nameValidationPattern.test( payload.name ) ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+		error: ErrorCodes.PayloadMalformedValue
 	} )
-
-	// DEBUGGING
-	console.debug( "NAME:", payload.name )
 
 	// TODO: Start a new cookie-based session that expires when the browser closes
 
+	// TODO: Add user to Mongo
+
 	// Send the name back as confirmation
-	respondToRequest( response, OK, {
+	respondToRequest( response, HTTPStatusCodes.OK, {
 		name: payload.name
 	} )
 
