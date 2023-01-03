@@ -6,7 +6,7 @@ import { validateChosenName } from "../helpers/validation"
 suite( "Input Validation", () => {
 
 	// Test input validation for chosen name
-	test( () => {
+	test( "Chosen Name", () => {
 
 		// These are good names
 		chai.assert.isTrue( validateChosenName( "JohnSmith" ) )

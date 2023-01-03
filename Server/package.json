@@ -5,7 +5,7 @@
 	"main": "./dist/main.js",
 	"scripts": {
 		"start": "npx tsc && node ./",
-		"test": "npx tsc && npx mocha --ui tdd ./dist/tests.js"
+		"test": "npx tsc && npx mocha --ui tdd ./dist/tests/validation.js"
 	},
 	"author": {
 		"name": "viral32111",
