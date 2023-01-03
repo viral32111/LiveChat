@@ -115,3 +115,8 @@ nameForm.submit( ( event ) => {
 	} )
 
 } )
+
+// Redirect to the room list page if we have already chosen a name
+$( () => $.getJSON( "/api/name", ( payload ) => {
+	if ( payload.hasName === true ) window.location.href = "/room-list.html"
+} ) )

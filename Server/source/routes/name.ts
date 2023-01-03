@@ -23,7 +23,7 @@ declare module "express-session" {
 }
 
 // Create a route for the user choosing their name
-expressApp.post( "/api/set-name", async ( request, response ) => {
+expressApp.post( "/api/name", async ( request, response ) => {
 
 	// Fail if the user has already set their name
 	if ( request.session.chosenName !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
@@ -74,3 +74,8 @@ expressApp.post( "/api/set-name", async ( request, response ) => {
 	} )
 
 } )
+
+// Route for checking if the guest has chosen a name
+expressApp.get( "/api/name", ( request, response ) => respondToRequest( response, HTTPStatusCodes.OK, {
+	hasName: request.session.chosenName !== undefined
+} ) )
