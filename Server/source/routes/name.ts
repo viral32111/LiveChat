@@ -19,7 +19,6 @@ interface ChooseNamePayload {
 
 // Create a route for the user choosing their name
 expressApp.post( "/api/name", async ( request, response ) => {
-	log.debug( request.method, request.path, request.body )
 
 	// Fail if the user has already chosen their name
 	if ( request.session.chosenName !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {

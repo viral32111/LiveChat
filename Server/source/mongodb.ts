@@ -23,13 +23,11 @@ export default class MongoDB {
 	// Initialises the client & database
 	public static Initialise() {
 
-		// Fail if any of the required environment variables are not set
+		// Fail if the required environment variables are not set & assign them to constants for easier access
 		if ( !process.env.MONGO_HOST ) throw new Error( "The MONGO_HOST environment variable is not set" )
 		if ( !process.env.MONGO_DATABASE ) throw new Error( "The MONGO_DATABASE environment variable is not set" )
 		if ( !process.env.MONGO_USER_NAME ) throw new Error( "The MONGO_USER_NAME environment variable is not set" )
 		if ( !process.env.MONGO_USER_PASS ) throw new Error( "The MONGO_USER_PASS environment variable is not set" )
-
-		// Assign the environment variables to constants for easier access
 		const MONGO_HOST = process.env.MONGO_HOST
 		const MONGO_DATABASE = process.env.MONGO_DATABASE
 		const MONGO_USER_NAME = process.env.MONGO_USER_NAME
