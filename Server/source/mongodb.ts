@@ -1,48 +1,53 @@
-// Import third-party packages
-import { MongoClient } from "mongodb"
+// Import required classes from the MongoDB package
+import { MongoClient, Db } from "mongodb"
 
-// Fail if any of the required environment variables are not set
-if ( !process.env.MONGO_HOST ) throw new Error( "The MONGO_HOST environment variable is not set" )
-if ( !process.env.MONGO_DATABASE ) throw new Error( "The MONGO_DATABASE environment variable is not set" )
-if ( !process.env.MONGO_USER_NAME ) throw new Error( "The MONGO_USER_NAME environment variable is not set" )
-if ( !process.env.MONGO_USER_PASS ) throw new Error( "The MONGO_USER_PASS environment variable is not set" )
+// Static class to encapsulate all our MongoDB functionality
+export default class MongoDB {
 
-// Assign the environment variables to constants for easier access
-const MONGO_HOST = process.env.MONGO_HOST
-const MONGO_DATABASE = process.env.MONGO_DATABASE
-const MONGO_USER_NAME = process.env.MONGO_USER_NAME
-const MONGO_USER_PASS = process.env.MONGO_USER_PASS
+	// Properties to store the client & database
+	public static Client: MongoClient
+	public static Database: Db
 
-// TODO: Make custom class for all MongoDB operations
+	// Private property to store names of collections in the database
+	private static CollectionNames = {
+		Guests: "Guests",
+		Rooms: "Rooms",
+		Messages: "Messages"
+	}
 
-// Create a new MongoDB client
-export const mongoClient = new MongoClient( `mongodb+srv://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }/${ MONGO_DATABASE }?retryWrites=true&w=majority` )
+	// Initialises the client & database
+	public static Initialise() {
 
-export async function mongoConnect() {
-	await mongoClient.connect()
-	return mongoClient.db( MONGO_DATABASE )
-}
+		// Fail if any of the required environment variables are not set
+		if ( !process.env.MONGO_HOST ) throw new Error( "The MONGO_HOST environment variable is not set" )
+		if ( !process.env.MONGO_DATABASE ) throw new Error( "The MONGO_DATABASE environment variable is not set" )
+		if ( !process.env.MONGO_USER_NAME ) throw new Error( "The MONGO_USER_NAME environment variable is not set" )
+		if ( !process.env.MONGO_USER_PASS ) throw new Error( "The MONGO_USER_PASS environment variable is not set" )
 
-export async function mongoDisconnect() {
-	await mongoClient.close()
-}
+		// Assign the environment variables to constants for easier access
+		const MONGO_HOST = process.env.MONGO_HOST
+		const MONGO_DATABASE = process.env.MONGO_DATABASE
+		const MONGO_USER_NAME = process.env.MONGO_USER_NAME
+		const MONGO_USER_PASS = process.env.MONGO_USER_PASS
 
-export async function mongoAddGuest( name: string ) {
-	try {
-		const mongoDatabase = await mongoConnect()
-		console.debug( "Connected to MongoDB" )
-	
-		const guestCollection = mongoDatabase.collection( "Guests" )
-		console.debug( "Got Mongo collection" )
+		// Initialise the client & fetch the database
+		MongoDB.Client = new MongoClient( `mongodb+srv://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }/${ MONGO_DATABASE }?retryWrites=true&w=majority` )
+		MongoDB.Database = MongoDB.Client.db( MONGO_DATABASE )
 
-		const insertResult = await guestCollection.insertOne( {
+	}
+
+	// Connects to & disconnects
+	public static async Connect() { await MongoDB.Client.connect() }
+	public static async Disconnect() { await MongoDB.Client.close() }
+
+	// Checks the connection
+	public static async Ping() { await MongoDB.Database.command( { ping: 1 } ) }
+
+	// Adds a guest to the database
+	public static async AddGuest( name: string ) {
+		await MongoDB.Database.collection( MongoDB.CollectionNames.Guests ).insertOne( {
 			name: name
 		} )
-		console.debug( "Inserted guest into MongoDB:", insertResult.insertedId )
-	
-		/*await mongoDisconnect()
-		console.debug( "Disconnected from MongoDB" )*/
-	} catch ( error ) {
-		console.error( "mongoAddGuest:", error )
 	}
+
 }

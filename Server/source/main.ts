@@ -15,8 +15,9 @@ if ( dotenv.config().parsed ) {
 export const isProduction = process.env.NODE_ENV === "production"
 console.log( "Production mode:", isProduction )
 
-// Import the MongoDB functions
-import { mongoClient, mongoConnect } from "./mongodb"
+// Import the MongoDB class & then initialise it
+import MongoDB from "./mongodb"
+MongoDB.Initialise()
 
 // Fail if any of the required environment variables are not set
 if ( !process.env.HTTP_SERVER_ADDRESS ) throw new Error( "The HTTP_SERVER_ADDRESS environment variable is not set" )
@@ -40,9 +41,9 @@ expressApp.use( expressSession( {
 	resave: true,
 	saveUninitialized: false,
 	store: isProduction ? MongoStore.create( {
-		client: mongoClient,
+		client: MongoDB.Client,
 		collectionName: "Sessions"
-	} ) : undefined,
+	} ) : undefined, // Falling back to undefined will use the default in-memory store
 	cookie: {
 		domain: HTTP_SERVER_ADDRESS,
 		httpOnly: true,
@@ -82,8 +83,8 @@ export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRE
 
 	// Attempt a connection to MongoDB
 	console.log( "Testing connection to MongoDB..." )
-	const mongoDatabase = await mongoConnect()
-	await mongoDatabase.command( { ping: 1 } )
+	await MongoDB.Connect()
+	await MongoDB.Ping()
 	console.log( "Connected to MongoDB!\n" )
 	/*console.log( "Connected to MongoDB! Disconnecting..." )
 	await mongoDisconnect()

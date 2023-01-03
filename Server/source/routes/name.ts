@@ -7,8 +7,10 @@ import { HTTPStatusCodes } from "../httpStatusCodes"
 
 // Import required helper functions
 import { respondToRequest } from "../helpers/requests"
-import { mongoAddGuest } from "../mongodb"
 import { validateChosenName } from "../helpers/validation"
+
+// Import the MongoDB class
+import MongoDB from "../mongodb"
 
 // Expected structure of the choose name JSON payload
 interface NamePayload {
@@ -59,7 +61,7 @@ expressApp.post( "/api/name", async ( request, response ) => {
 	// Add the new guest to MongoDB
 	try {
 		console.debug( "adding to mongodb..." )
-		await mongoAddGuest( payload.name )
+		await MongoDB.AddGuest( payload.name )
 		console.debug( "added to mongo" )
 	} catch ( error ) {
 		return console.error( "Failed to add new guest to MongoDB:", error )
