@@ -39,7 +39,7 @@ nameForm.submit( ( event ) => {
 	event.preventDefault()
 	event.stopPropagation()
 
-	// Show any validation messages
+	// Show any Bootstrap input validation messages
 	nameForm.addClass( "was-validated" )
 
 	// Get the name that was entered
@@ -50,6 +50,9 @@ nameForm.submit( ( event ) => {
 
 	// Fail if the manual input validation fails
 	if ( nameValidationPattern.test( desiredName ) !== true ) return showFeedbackModal( "Notice", "The name you have entered is invalid." )
+
+	// Hide any Bootstrap input validation messages
+	nameForm.addClass( "was-validated" )
 
 	// Change UI to indicate loading
 	setFormLoading( true )
@@ -75,12 +78,13 @@ nameForm.submit( ( event ) => {
 
 		// Event handler for when the request is successful
 		success: ( responseData, textStatus, request ) => {
-			console.debug( textStatus, responseData )
 
 			// Change UI back as we're finished
 			setFormLoading( false )
 
-			// TODO: Redirect to the room list page
+			// Redirect to the room list page
+			window.location.href = "/room-list.html"
+
 		},
 
 		// Event handler for when the request fails

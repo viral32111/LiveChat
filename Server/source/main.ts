@@ -69,7 +69,7 @@ console.log( "Starting HTTP server..." )
 export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRESS, async () => {
 
 	// Show the URL in the console
-	console.log( `HTTP server now listening on http://${ HTTP_SERVER_ADDRESS }:${ HTTP_SERVER_PORT }` )
+	console.log( `HTTP server now listening on http://${ HTTP_SERVER_ADDRESS }:${ HTTP_SERVER_PORT }\n` )
 
 	// Attempt a connection to MongoDB
 	console.log( "Testing connection to MongoDB..." )
