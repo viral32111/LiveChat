@@ -65,7 +65,7 @@ import( "./routes/name" )
 console.log( "Loaded API routes." )
 
 // Start the HTTP server
-console.log( "Starting HTTP server..." )
+console.log( "\nStarting HTTP server..." )
 export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRESS, async () => {
 
 	// Show the URL in the console
@@ -79,4 +79,11 @@ export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRE
 	await mongoDisconnect()
 	console.log( "Disconnected from MongoDB!\n" )
 
+} )
+
+// When CTRL+C is pressed, stop gracefully
+process.on( "SIGINT", () => {
+	console.log( "\nStopping HTTP server..." )
+	httpServer.close()
+	process.exit( 0 ) // Success exit code
 } )
