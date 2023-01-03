@@ -2,9 +2,13 @@
 import chai from "chai"
 import chaiHTTP from "chai-http"
 import chaiString from "chai-string"
+import { getLogger } from "log4js"
 
 // Import required variables from the main script
 import { expressApp, httpServer } from "../main"
+
+// Create the logger for this file
+const log = getLogger( "tests/routes" )
 
 // Enable support for HTTP requests & strings in Chai
 chai.use( chaiHTTP )
@@ -67,7 +71,7 @@ suite( "API routes", () => {
 	// Stop the HTTP server after all tests have completed
 	// TODO: Doesn't seem to work? Runs BEFORE the async MongoDB stuff finishes!
 	suiteTeardown( () => {
-		console.debug( "Tests over, stopping web server..." )
+		log.debug( "Tests completed, stopping HTTP server..." )
 		httpServer.close()
 	} )
 

@@ -1,18 +1,23 @@
-// Import required classes from the MongoDB package
+// Import required third-party packages
 import { MongoClient, Db } from "mongodb"
+import { getLogger } from "log4js"
+
+// Create the logger for this file
+const log = getLogger( "mongodb" )
 
 // Static class to encapsulate all our MongoDB functionality
 export default class MongoDB {
 
-	// Properties to store the client & database
+	// Stores the client & database
 	public static Client: MongoClient
 	public static Database: Db
 
-	// Private property to store names of collections in the database
-	private static CollectionNames = {
+	// Stores names of collections in the database
+	public static CollectionNames = {
 		Guests: "Guests",
 		Rooms: "Rooms",
-		Messages: "Messages"
+		Messages: "Messages",
+		Sessions: "Sessions"
 	}
 
 	// Initialises the client & database
@@ -33,21 +38,32 @@ export default class MongoDB {
 		// Initialise the client & fetch the database
 		MongoDB.Client = new MongoClient( `mongodb+srv://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }/${ MONGO_DATABASE }?retryWrites=true&w=majority` )
 		MongoDB.Database = MongoDB.Client.db( MONGO_DATABASE )
+		log.info( "Initialised MongoDB." )
 
 	}
 
-	// Connects to & disconnects
-	public static async Connect() { await MongoDB.Client.connect() }
-	public static async Disconnect() { await MongoDB.Client.close() }
+	// Connects to & disconnects from the database
+	public static async Connect() {
+		await MongoDB.Client.connect()
+		log.info( "Connected to the database." )
+	}
+	public static async Disconnect() {
+		await MongoDB.Client.close()
+		log.info( "Disconnected from the database." )
+	}
 
 	// Checks the connection
-	public static async Ping() { await MongoDB.Database.command( { ping: 1 } ) }
+	public static async Ping() {
+		await MongoDB.Database.command( { ping: 1 } )
+		log.debug( "Database ping successful." )
+	}
 
 	// Adds a guest to the database
 	public static async AddGuest( name: string ) {
-		await MongoDB.Database.collection( MongoDB.CollectionNames.Guests ).insertOne( {
+		const insertResult = await MongoDB.Database.collection( MongoDB.CollectionNames.Guests ).insertOne( {
 			name: name
 		} )
+		log.debug( `Inserted new document with ID: ${ insertResult.insertedId }.` )
 	}
 
 }

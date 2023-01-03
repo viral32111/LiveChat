@@ -1,31 +1,25 @@
-// Import required variables from the main script
-import { expressApp } from "../main"
+// Import required third-party packages
+import { getLogger } from "log4js"
 
-// Import required enumerations
+// Import required data from other scripts
+import { expressApp } from "../main"
 import { ErrorCodes } from "../errorCodes"
 import { HTTPStatusCodes } from "../httpStatusCodes"
-
-// Import required helper functions
 import { respondToRequest } from "../helpers/requests"
 import { validateChosenName } from "../helpers/validation"
-
-// Import the MongoDB class
 import MongoDB from "../mongodb"
 
-// Expected structure of the choose name JSON payload
-interface NamePayload {
-	name: string
-}
+// Create the logger for this file
+const log = getLogger( "routes/name" )
 
-// Extend the Express session data interface to include our own properties
-declare module "express-session" {
-	interface SessionData {
-		chosenName: string
-	}
+// Structure of the choose name payload
+interface ChooseNamePayload {
+	name: string
 }
 
 // Create a route for the user choosing their name
 expressApp.post( "/api/name", async ( request, response ) => {
+	log.debug( request.method, request.path, request.body )
 
 	// Fail if the user has already set their name
 	if ( request.session.chosenName !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
@@ -43,7 +37,7 @@ expressApp.post( "/api/name", async ( request, response ) => {
 	} )
 
 	// Cast the request body to the expected JSON structure
-	const payload: NamePayload = request.body
+	const payload: ChooseNamePayload = request.body
 
 	// Fail if there is no name property in the payload
 	if ( payload.name === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
@@ -55,20 +49,22 @@ expressApp.post( "/api/name", async ( request, response ) => {
 		error: ErrorCodes.PayloadMalformedValue
 	} )
 
-	// Set the name in the session
-	request.session.chosenName = payload.name
+	// Set the name in the session (new session is created in-case one already exits)
+	request.session.regenerate( () => {
+		request.session.chosenName = payload.name
+		log.info( `Created session '${ request.sessionID }' for guest '${ payload.name }'.` )
+	} )
 
-	// Add the new guest to MongoDB
+	// Add the new guest to the database
 	try {
-		console.debug( "adding to mongodb..." )
 		await MongoDB.AddGuest( payload.name )
-		console.debug( "added to mongo" )
-	} catch ( error ) {
-		return console.error( "Failed to add new guest to MongoDB:", error )
+		log.info( `Added new guest '${ payload.name }' to the database.` )
+	} catch ( errorMessage ) {
+		return log.error( `Failed to add new guest '${ payload.name }' to the database (${ errorMessage })!` )
 	}
 
-	// Display message in console
-	console.log( "New user:", payload.name )
+	// Display name in the console
+	log.info( `Welcome, ${ payload.name }.` )
 
 	// Send the name back as confirmation
 	respondToRequest( response, HTTPStatusCodes.OK, {
