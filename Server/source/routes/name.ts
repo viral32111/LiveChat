@@ -1,17 +1,14 @@
-// Import variables from the main script
+// Import required variables from the main script
 import { expressApp } from "../main"
 
-// Import enumerations
+// Import required enumerations
 import { ErrorCodes } from "../errorCodes"
 import { HTTPStatusCodes } from "../httpStatusCodes"
 
-// Import helper functions
+// Import required helper functions
 import { respondToRequest } from "../helpers/requests"
 import { mongoAddGuest } from "../mongodb"
-
-// The regular expression for validating the name (alphanumeric characters, 2 to 30)
-// NOTE: Keep this the same as the one on the client!
-const nameValidationPattern = new RegExp( /^[A-Za-z0-9_]{2,30}$/ )
+import { validateChosenName } from "../helpers/validation"
 
 // Expected structure of the choose name JSON payload
 interface NamePayload {
@@ -54,7 +51,7 @@ expressApp.post( "/api/set-name", async ( request, response ) => {
 	} )
 
 	// Fail if the name does not meet validation requirements
-	if ( nameValidationPattern.test( payload.name ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+	if ( validateChosenName( payload.name ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 		error: ErrorCodes.PayloadMalformedValue
 	} )
 
