@@ -21,7 +21,7 @@ interface NamePayload {
 expressApp.post( "/api/set-name", ( request, response ) => {
 
 	// Fail if the request payload is not JSON
-	if ( !request.is( "application/json" ) ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+	if ( request.is( "application/json" ) === false ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 		error: ErrorCodes.InvalidContentType
 	} )
 
@@ -34,12 +34,12 @@ expressApp.post( "/api/set-name", ( request, response ) => {
 	const payload: NamePayload = request.body
 
 	// Fail if there is no name property in the payload
-	if ( !payload.name ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+	if ( payload.name === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 		error: ErrorCodes.PayloadMissingProperty
 	} )
 
 	// Fail if the name does not meet validation requirements
-	if ( !nameValidationPattern.test( payload.name ) ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+	if ( nameValidationPattern.test( payload.name ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 		error: ErrorCodes.PayloadMalformedValue
 	} )
 
