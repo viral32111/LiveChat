@@ -6,4 +6,5 @@ const serverErrorCodeMessages = {
 	2: "Request payload missing one or more properties",
 	3: "One or more request payload values are malformed",
 	4: "You have already chosen a name",
+	5: "Failed to add data into the database"
 }

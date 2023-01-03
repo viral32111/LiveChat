@@ -21,9 +21,9 @@ interface ChooseNamePayload {
 expressApp.post( "/api/name", async ( request, response ) => {
 	log.debug( request.method, request.path, request.body )
 
-	// Fail if the user has already set their name
+	// Fail if the user has already chosen their name
 	if ( request.session.chosenName !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
-		error: ErrorCodes.NameAlreadySet
+		error: ErrorCodes.NameAlreadyChosen
 	} )
 
 	// Fail if the request payload is not JSON
@@ -60,7 +60,10 @@ expressApp.post( "/api/name", async ( request, response ) => {
 		await MongoDB.AddGuest( payload.name )
 		log.info( `Added new guest '${ payload.name }' to the database.` )
 	} catch ( errorMessage ) {
-		return log.error( `Failed to add new guest '${ payload.name }' to the database (${ errorMessage })!` )
+		log.error( `Failed to add new guest '${ payload.name }' to the database (${ errorMessage })!` )
+		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseInsertFailure
+		} )
 	}
 
 	// Display name in the console
