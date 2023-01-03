@@ -90,14 +90,14 @@ nameForm.submit( ( event ) => {
 			try {
 				const payload = JSON.parse( request.responseText )
 			} catch {
-				return showErrorModal( "Failed to parse server response payload." )
+				return showErrorModal( "Failed to parse server response payload" )
 			}
 
 			// Fail if the server didn't give us an error code
-			if ( payload.error === undefined ) return showErrorModal( "An unknown server error occured." )
+			if ( payload.error === undefined ) return showErrorModal( "An unknown server error occured" )
 
 			// Fail if there is no message for this error code
-			if ( serverErrorCodeMessages[ payload.error ] === undefined ) return showErrorModal( `An unhandled server error occured (${ payload.error }).` )
+			if ( serverErrorCodeMessages[ payload.error ] === undefined ) return showErrorModal( `An unhandled server error occured (${ payload.error })` )
 
 			// Display the friendly error message as we have an error code
 			showErrorModal( serverErrorCodeMessages[ payload.error ] )
