@@ -45,8 +45,11 @@ nameForm.submit( ( event ) => {
 	// Get the name that was entered
 	const desiredName = nameInput.val()
 
-	// Do not continue if form validation fails, or the entered name is invalid
-	if ( !nameForm[ 0 ].checkValidity() || !nameValidationPattern.test( desiredName ) ) return showErrorModal( "The entered name is invalid." )
+	// Do not continue if form validation fails
+	if ( nameForm[ 0 ].checkValidity() !== true ) return
+
+	// Fail if the manual input validation fails
+	if ( nameValidationPattern.test( desiredName ) !== true ) return showFeedbackModal( "Notice", "The name you have entered is invalid." )
 
 	// Change UI to indicate loading
 	setFormLoading( true )
@@ -84,17 +87,20 @@ nameForm.submit( ( event ) => {
 		error: ( request ) => {
 
 			// Convert the response body to JSON
-			// TODO: Error handling in case this isn't JSON?
-			const payload = JSON.parse( request.responseText )
+			try {
+				const payload = JSON.parse( request.responseText )
+			} catch {
+				return showErrorModal( "Failed to parse server response payload." )
+			}
 
 			// Fail if the server didn't give us an error code
-			if ( payload.error === undefined ) return showErrorModal( "Error", "An unknown server error occured. Please try again later." )
+			if ( payload.error === undefined ) return showErrorModal( "An unknown server error occured." )
 
 			// Fail if there is no message for this error code
-			if ( !serverErrorCodeMessages[ payload.error ] ) return showErrorModal( "Error", `An unknown server error occured (${ payload.error }). Please try again later.` )
+			if ( !serverErrorCodeMessages[ payload.error ] ) return showErrorModal( `An unhandled server error occured (${ payload.error }).` )
 
 			// Display the friendly error message as we have an error code
-			showErrorModal( "Error", `A server error occured (${ serverErrorCodeMessages[ payload.error ] }). Please try again later.` )
+			showErrorModal( serverErrorCodeMessages[ payload.error ] )
 
 			// Change UI back as we're finished
 			setFormLoading( false )
