@@ -43,7 +43,14 @@ expressApp.post( "/api/set-name", ( request, response ) => {
 		error: ErrorCodes.PayloadMalformedValue
 	} )
 
-	// TODO: Start a new cookie-based session that expires when the browser closes
+	// @ts-ignore
+	console.log( "BEFORE", request.session.chosenName )
+
+	// @ts-ignore
+	request.session.chosenName = payload.name
+
+	// @ts-ignore
+	console.log( "AFTER", request.session.chosenName )
 
 	// TODO: Add user to Mongo
 
