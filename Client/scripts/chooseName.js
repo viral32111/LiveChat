@@ -89,18 +89,20 @@ nameForm.submit( ( event ) => {
 			// Convert the response body to JSON
 			try {
 				const payload = JSON.parse( request.responseText )
+
+				// Fail if the server didn't give us an error code
+				if ( payload.error === undefined ) return showErrorModal( "An unknown server error occured" )
+
+				// Fail if there is no message for this error code
+				if ( serverErrorCodeMessages[ payload.error ] === undefined ) return showErrorModal( `An unhandled server error occured (${ payload.error })` )
+
+				// Display the friendly error message as we have an error code
+				showErrorModal( serverErrorCodeMessages[ payload.error ] )
+
+			// Error if the response body cannot be converted to JSON
 			} catch {
 				return showErrorModal( "Failed to parse server response payload" )
 			}
-
-			// Fail if the server didn't give us an error code
-			if ( payload.error === undefined ) return showErrorModal( "An unknown server error occured" )
-
-			// Fail if there is no message for this error code
-			if ( serverErrorCodeMessages[ payload.error ] === undefined ) return showErrorModal( `An unhandled server error occured (${ payload.error })` )
-
-			// Display the friendly error message as we have an error code
-			showErrorModal( serverErrorCodeMessages[ payload.error ] )
 
 			// Change UI back as we're finished
 			setFormLoading( false )
