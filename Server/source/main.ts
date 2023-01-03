@@ -2,6 +2,7 @@
 import * as dotenv from "dotenv"
 import express from "express"
 import expressSession from "express-session"
+import MongoStore from "connect-mongo"
 
 // Load the environment variables configuration file
 if ( dotenv.config().parsed ) {
@@ -10,8 +11,13 @@ if ( dotenv.config().parsed ) {
 	console.warn( "Failed to load environment variables from configuration file." )
 }
 
+// Are we running in production mode?
+process.env.NODE_ENV = "production" // DEBUGGING
+export const isProduction = process.env.NODE_ENV === "production"
+console.log( "Production mode:", isProduction )
+
 // Import the MongoDB functions
-import { mongoConnect, mongoDisconnect } from "./mongodb"
+import { mongoClient, mongoConnect } from "./mongodb"
 
 // Fail if any of the required environment variables are not set
 if ( !process.env.HTTP_SERVER_ADDRESS ) throw new Error( "The HTTP_SERVER_ADDRESS environment variable is not set" )
@@ -29,15 +35,19 @@ console.log( "Created Express application." )
 
 // Enable JSON & cookie session support for Express
 expressApp.use( express.json() )
-expressApp.use( expressSession( { // TODO: MemoryStore is not recommended for production, use MongoDB instead!
+expressApp.use( expressSession( {
 	name: "sessionIdentifier",
 	secret: EXPRESS_SESSION_SECRET,
 	resave: true,
 	saveUninitialized: false,
+	store: isProduction ? MongoStore.create( {
+		client: mongoClient,
+		collectionName: "Sessions"
+	} ) : undefined,
 	cookie: {
 		domain: HTTP_SERVER_ADDRESS,
 		httpOnly: true,
-		secure: false, // TODO: Set to true in production!
+		secure: isProduction,
 		sameSite: "strict"
 	}
 } ) )
@@ -75,9 +85,10 @@ export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRE
 	console.log( "Testing connection to MongoDB..." )
 	const mongoDatabase = await mongoConnect()
 	await mongoDatabase.command( { ping: 1 } )
-	console.log( "Connected to MongoDB! Disconnecting..." )
+	console.log( "Connected to MongoDB!\n" )
+	/*console.log( "Connected to MongoDB! Disconnecting..." )
 	await mongoDisconnect()
-	console.log( "Disconnected from MongoDB!\n" )
+	console.log( "Disconnected from MongoDB!\n" )*/
 
 } )
 
