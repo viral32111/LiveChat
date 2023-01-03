@@ -97,7 +97,7 @@ nameForm.submit( ( event ) => {
 			if ( payload.error === undefined ) return showErrorModal( "An unknown server error occured." )
 
 			// Fail if there is no message for this error code
-			if ( !serverErrorCodeMessages[ payload.error ] ) return showErrorModal( `An unhandled server error occured (${ payload.error }).` )
+			if ( serverErrorCodeMessages[ payload.error ] === undefined ) return showErrorModal( `An unhandled server error occured (${ payload.error }).` )
 
 			// Display the friendly error message as we have an error code
 			showErrorModal( serverErrorCodeMessages[ payload.error ] )
