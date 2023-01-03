@@ -31,15 +31,21 @@ export const expressApp = express()
 // Enable JSON support for Express
 expressApp.use( express.json() )
 
+// Serve the client-side files
+expressApp.use( express.static( "../Client/" ) )
+
 // Create a new MongoDB client
 export const mongoClient = new MongoClient( `mongodb://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }:${ MONGO_PORT }/${ MONGO_DATABASE }` )
 
 // Create a route for the root path
 expressApp.get( "/", ( _, response ) => {
 	response.status( 200 )
-	response.header( "Content-Type", "application/json" )
+	response.setHeader( "Content-Type", "application/json" )
 	response.send( {} )
 } )
+
+// Import routes from other scripts
+import( "./routes/name" )
 
 // Start the HTTP server
 export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRESS, () => {
