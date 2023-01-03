@@ -1,13 +1,13 @@
-// Import functions from native packages
-import { randomUUID } from "crypto"
-
 // Import third-party packages
 import * as dotenv from "dotenv"
 import express from "express"
 import expressSession from "express-session"
 
-// Load the .env configuration file
+// Load the environment variables configuration file
 dotenv.config()
+
+// Import the MongoDB functions
+import { mongoConnect, mongoDisconnect } from "./mongodb"
 
 // Fail if any of the required environment variables are not set
 if ( !process.env.HTTP_SERVER_ADDRESS ) throw new Error( "The HTTP_SERVER_ADDRESS environment variable is not set" )
@@ -54,6 +54,10 @@ expressApp.use( express.static( "../Client/" ) )
 import( "./routes/name" )
 
 // Start the HTTP server
-export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRESS, () => {
+export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRESS, async () => {
 	console.log( `HTTP server listening on http://${ HTTP_SERVER_ADDRESS }:${ HTTP_SERVER_PORT }` )
+
+	// Attempt a connection to MongoDB
+	await mongoConnect()
+	await mongoDisconnect()
 } )

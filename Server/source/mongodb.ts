@@ -18,23 +18,39 @@ const MONGO_USER_PASS = process.env.MONGO_USER_PASS
 // TODO: Make custom class for all MongoDB operations
 
 // Create a new MongoDB client
-const mongoClient = new MongoClient( `mongodb+srv://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }:${ MONGO_PORT }/${ MONGO_DATABASE }` )
+const mongoClient = new MongoClient( `mongodb+srv://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }/${ MONGO_DATABASE }?retryWrites=true&w=majority` )
+
+export async function mongoConnect() {
+	await mongoClient.connect()
+	console.debug( "Connected to MongoDB" )
+
+	const mongoDatabase = mongoClient.db( MONGO_DATABASE )
+	console.debug( "Got Mongo database" )
+
+	await mongoDatabase.command( { ping: 1 } )
+	console.debug( "Pinged MongoDB!" )
+
+	return mongoDatabase
+}
+
+export async function mongoDisconnect() {
+	await mongoClient.close()
+	console.debug( "Disconnected from MongoDB" )
+}
 
 export async function mongoAddGuest( name: string ) {
 	try {
-		await mongoClient.connect()
-		const mongoDatabase = mongoClient.db( MONGO_DATABASE )
-		console.debug( "Connected to MongoDB" )
+		const mongoDatabase = await mongoConnect()
 	
 		const guestCollection = mongoDatabase.collection( "Guests" )
+		console.debug( "Got Mongo collection" )
+
 		const insertResult = await guestCollection.insertOne( {
 			name: name
 		} )
-	
 		console.debug( "Inserted guest into MongoDB:", insertResult.insertedId )
 	
-		await mongoClient.close()
-		console.debug( "Disconnected from MongoDB" )
+		await mongoDisconnect()
 	} catch ( error ) {
 		console.error( "mongoAddGuest:", error )
 	}
