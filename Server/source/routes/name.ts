@@ -17,8 +17,20 @@ interface NamePayload {
 	name: string
 }
 
+// Extend the Express session data interface to include our own properties
+declare module "express-session" {
+	interface SessionData {
+		chosenName: string
+	}
+}
+
 // Create a route for the user choosing their name
 expressApp.post( "/api/set-name", ( request, response ) => {
+
+	// Fail if the user has already set their name
+	if ( request.session.chosenName !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+		error: ErrorCodes.NameAlreadySet
+	} )
 
 	// Fail if the request payload is not JSON
 	if ( request.is( "application/json" ) === false ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
@@ -43,16 +55,13 @@ expressApp.post( "/api/set-name", ( request, response ) => {
 		error: ErrorCodes.PayloadMalformedValue
 	} )
 
-	// @ts-ignore
-	console.log( "BEFORE", request.session.chosenName )
-
-	// @ts-ignore
+	// Set the name in the session
 	request.session.chosenName = payload.name
 
-	// @ts-ignore
-	console.log( "AFTER", request.session.chosenName )
-
 	// TODO: Add user to Mongo
+
+	// Display message in console
+	console.log( "New user:", payload.name )
 
 	// Send the name back as confirmation
 	respondToRequest( response, HTTPStatusCodes.OK, {

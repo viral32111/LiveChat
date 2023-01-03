@@ -3,5 +3,6 @@ export enum ErrorCodes {
 	InvalidContentType = 0,
 	MissingPayload = 1,
 	PayloadMissingProperty = 2,
-	PayloadMalformedValue = 3
+	PayloadMalformedValue = 3,
+	NameAlreadySet = 4
 }

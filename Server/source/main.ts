@@ -1,3 +1,6 @@
+// Import functions from native packages
+import { randomUUID } from "crypto"
+
 // Import third-party packages
 import * as dotenv from "dotenv"
 import express from "express"
@@ -23,17 +26,16 @@ export const expressApp = express()
 expressApp.use( express.json() )
 
 // Enable cookie session support for Express
-// TODO: MemoryStore is not recommended for production
+// TODO: MemoryStore is not recommended for production, use MongoDB instead!
 expressApp.use( expressSession( {
 	name: "sessionIdentifier",
 	secret: EXPRESS_SESSION_SECRET,
 	resave: true,
-	saveUninitialized: true,
+	saveUninitialized: false,
 	cookie: {
 		domain: HTTP_SERVER_ADDRESS,
-		//maxAge: 3600,
 		httpOnly: true,
-		//secure: true,
+		secure: false, // TODO: Set to true in production!
 		sameSite: "strict"
 	}
 } ) )
