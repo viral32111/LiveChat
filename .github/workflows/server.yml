@@ -47,6 +47,9 @@ jobs:
       - name: Compile TypeScript
         run: npx tsc
 
+      - name: Run Unit Tests
+        run: npm test
+
       - name: Upload build
         uses: actions/upload-artifact@v3
         with:
