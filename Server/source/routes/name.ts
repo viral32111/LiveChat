@@ -7,6 +7,7 @@ import { HTTPStatusCodes } from "../httpStatusCodes"
 
 // Import helper functions
 import { respondToRequest } from "../helpers/requests"
+import { mongoAddGuest } from "../mongodb"
 
 // The regular expression for validating the name (alphanumeric characters, 2 to 30)
 // NOTE: Keep this the same as the one on the client!
@@ -25,7 +26,9 @@ declare module "express-session" {
 }
 
 // Create a route for the user choosing their name
-expressApp.post( "/api/set-name", ( request, response ) => {
+expressApp.post( "/api/set-name", async ( request, response ) => {
+
+	console.debug( "/api/set-name" )
 
 	// Fail if the user has already set their name
 	if ( request.session.chosenName !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
@@ -57,8 +60,16 @@ expressApp.post( "/api/set-name", ( request, response ) => {
 
 	// Set the name in the session
 	request.session.chosenName = payload.name
+	console.debug( "set name in session" )
 
-	// TODO: Add user to Mongo
+	// Add the new guest to MongoDB
+	try {
+		console.debug( "adding to mongodb..." )
+		await mongoAddGuest( payload.name )
+		console.debug( "added to mongo" )
+	} catch ( error ) {
+		return console.error( "Failed to add new guest to MongoDB:", error )
+	}
 
 	// Display message in console
 	console.log( "New user:", payload.name )

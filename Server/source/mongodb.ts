@@ -15,5 +15,27 @@ const MONGO_DATABASE = process.env.MONGO_DATABASE
 const MONGO_USER_NAME = process.env.MONGO_USER_NAME
 const MONGO_USER_PASS = process.env.MONGO_USER_PASS
 
+// TODO: Make custom class for all MongoDB operations
+
 // Create a new MongoDB client
-export const mongoClient = new MongoClient( `mongodb://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }:${ MONGO_PORT }/${ MONGO_DATABASE }` )
+const mongoClient = new MongoClient( `mongodb://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }/${ MONGO_DATABASE }` )
+
+export async function mongoAddGuest( name: string ) {
+	try {
+		await mongoClient.connect()
+		const mongoDatabase = mongoClient.db( MONGO_DATABASE )
+		console.debug( "Connected to MongoDB" )
+	
+		const guestCollection = mongoDatabase.collection( "Guests" )
+		const insertResult = await guestCollection.insertOne( {
+			name: name
+		} )
+	
+		console.debug( "Inserted guest into MongoDB:", insertResult.insertedId )
+	
+		await mongoClient.close()
+		console.debug( "Disconnected from MongoDB" )
+	} catch ( error ) {
+		console.error( "mongoAddGuest:", error )
+	}
+}
