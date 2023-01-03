@@ -25,8 +25,6 @@ declare module "express-session" {
 // Create a route for the user choosing their name
 expressApp.post( "/api/set-name", async ( request, response ) => {
 
-	console.debug( "/api/set-name" )
-
 	// Fail if the user has already set their name
 	if ( request.session.chosenName !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 		error: ErrorCodes.NameAlreadySet
@@ -57,7 +55,6 @@ expressApp.post( "/api/set-name", async ( request, response ) => {
 
 	// Set the name in the session
 	request.session.chosenName = payload.name
-	console.debug( "set name in session" )
 
 	// Add the new guest to MongoDB
 	try {

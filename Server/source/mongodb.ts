@@ -20,25 +20,17 @@ const mongoClient = new MongoClient( `mongodb+srv://${ MONGO_USER_NAME }:${ MONG
 
 export async function mongoConnect() {
 	await mongoClient.connect()
-	console.debug( "Connected to MongoDB" )
-
-	const mongoDatabase = mongoClient.db( MONGO_DATABASE )
-	console.debug( "Got Mongo database" )
-
-	await mongoDatabase.command( { ping: 1 } )
-	console.debug( "Pinged MongoDB!" )
-
-	return mongoDatabase
+	return mongoClient.db( MONGO_DATABASE )
 }
 
 export async function mongoDisconnect() {
 	await mongoClient.close()
-	console.debug( "Disconnected from MongoDB" )
 }
 
 export async function mongoAddGuest( name: string ) {
 	try {
 		const mongoDatabase = await mongoConnect()
+		console.debug( "Connected to MongoDB" )
 	
 		const guestCollection = mongoDatabase.collection( "Guests" )
 		console.debug( "Got Mongo collection" )
@@ -49,6 +41,7 @@ export async function mongoAddGuest( name: string ) {
 		console.debug( "Inserted guest into MongoDB:", insertResult.insertedId )
 	
 		await mongoDisconnect()
+		console.debug( "Disconnected from MongoDB" )
 	} catch ( error ) {
 		console.error( "mongoAddGuest:", error )
 	}
