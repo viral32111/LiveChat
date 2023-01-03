@@ -12,7 +12,6 @@ if ( dotenv.config().parsed ) {
 }
 
 // Are we running in production mode?
-process.env.NODE_ENV = "production" // DEBUGGING
 export const isProduction = process.env.NODE_ENV === "production"
 console.log( "Production mode:", isProduction )
 
