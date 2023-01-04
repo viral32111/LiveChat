@@ -83,7 +83,7 @@ nameForm.submit( ( event ) => {
 			setFormLoading( false )
 
 			// Redirect to the room list page
-			window.location.href = "/room-list.html"
+			window.location.href = "/rooms.html"
 
 		},
 
@@ -118,5 +118,5 @@ nameForm.submit( ( event ) => {
 
 // Redirect to the room list page if we have already chosen a name
 $( () => $.getJSON( "/api/name", ( payload ) => {
-	if ( payload.hasName === true ) window.location.href = "/room-list.html"
+	if ( payload.hasName === true ) window.location.href = "/rooms.html"
 } ) )
