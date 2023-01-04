@@ -2,7 +2,7 @@
 function setFormLoading( formElement, isLoading ) {
 	if ( isLoading === true ) {
 		formElement.find( "input, button" ).prop( "disabled", true )
-		formElement.find( "button span.spinner-border" ).attr( "aria-hidden", "false" )
+		formElement.find( "button span.spinner-border" ).removeClass( "visually-hidden" ).attr( "aria-hidden", "false" )
 	} else {
 		formElement.find( "input, button" ).prop( "disabled", false )
 		formElement.find( "button span.spinner-border" ).addClass( "visually-hidden" ).attr( "aria-hidden", "true" )
