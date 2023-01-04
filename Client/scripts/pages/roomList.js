@@ -4,22 +4,18 @@
 const publicRoomsColumn1 = $( "#publicRoomsColumn1" )
 const publicRoomsColumn2 = $( "#publicRoomsColumn2" )
 const noPublicRoomsNotice = $( "#noPublicRoomsNotice" )
-
-// Gets the human readable representation for however long ago a given unix timestamp was
-function unixTimestampToHumanReadable( timestampMilliseconds ) {
-
-	// Calculate the difference between now and the given timestamp, in seconds
-	const secondsDifference = ( currentTimestamp - new Date().getTime() ) / 1000
-
-	if ( secondsDifference <= 10 ) return "right now" // Pretty much right this moment
-	else if ( secondsDifference < 60 ) return `${ secondsDifference } second(s) ago` // Seconds
-	else if ( secondsDifference >= 60 ) return `${ Math.floor( secondsDifference / 60 ) } minute(s) ago` // Minutes
-	else if ( secondsDifference >= 3600 ) return `${ Math.floor( secondsDifference / 3600 ) } hours(s) ago` // Hours
-	else if ( secondsDifference >= 86400 ) return `${ Math.floor( secondsDifference / 86400 ) } days(s) ago` // Days
-	else if ( secondsDifference >= 604800 ) return `${ Math.floor( secondsDifference / 604800 ) } week(s) ago` // Weeks
-	else if ( secondsDifference >= 2419200 ) return `a long time ago` // Longer than a month
-
-}
+const joinPrivateRoomForm = $( "#joinPrivateRoomForm" )
+const joinPrivateRoomCode = $( "#joinPrivateRoomCode" )
+const joinPrivateRoomButton = $( "#joinPrivateRoomButton" )
+const joinPrivateRoomButtonSpinner = $( "#joinPrivateRoomButtonSpinner" )
+const createRoomForm = $( "createRoomForm" )
+const createRoomName = $( "#createRoomName" )
+const createRoomNameVisibilityIcon = $( "#createRoomNameVisibilityIcon" )
+const createRoomVisibilityCheckbox = $( "#createRoomVisibilityCheckbox" )
+const createRoomButton = $( "#createRoomButton" )
+const createRoomButtonSpinner = $( "#createRoomButtonSpinner" )
+const endSessionButton = $( "#endSessionButton" )
+const endSessionButtonSpinner = $( "#endSessionButtonSpinner" )
 
 // Creates all the HTML for a new room element, using data from the server API
 function createRoomElement( name, participantCount, lastActiveTimestamp ) {
@@ -35,6 +31,8 @@ function createRoomElement( name, participantCount, lastActiveTimestamp ) {
 	const buttonSpinnerSpan = $( "<span></span>" ).addClass( "spinner-border spinner-border-sm visually-hidden" ).attr( "role", "status" ).attr( "aria-hidden", true )
 	const button = $( "<button></button>" ).addClass( "btn btn-primary w-100 h-100" ).attr( "type", "submit" ).append( buttonSpinnerSpan, buttonTextSpan )
 	const buttonColumnn = $( "<div></div>" ).addClass( "col-2" ).append( button )
+
+	// TODO: On click event for the button
 
 	// Bootstrap positioning & styling
 	const bootstrapRow = $( "<div></div>" ).addClass( "row" ).append( informationColumn, buttonColumnn )
@@ -56,6 +54,23 @@ function addRoomElementToPage( roomElement ) {
 	else publicRoomsColumn2.append( roomElement )
 
 }
+
+// TODO: On submit event for join private room form
+joinPrivateRoomForm.submit( ( event ) => {
+	event.preventDefault()
+	event.stopPropagation()
+} )
+
+// TODO: On submit event for create room form
+createRoomForm.submit( ( event ) => {
+	event.preventDefault()
+	event.stopPropagation()
+} )
+
+// TODO: On click event for end session button
+endSessionButton.click( () => {
+
+} )
 
 // When the page loads...
 $( () => {

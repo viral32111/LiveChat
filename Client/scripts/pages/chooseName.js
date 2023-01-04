@@ -10,28 +10,6 @@ const nameInput = $( "#nameInput" )
 // NOTE: Keep this the same as the one on the server!
 const nameValidationPattern = new RegExp( /^[A-Za-z0-9_]{2,30}$/ )
 
-// Changes the form's visual loading state
-function setFormLoading( isLoading ) {
-
-	// Disable form controls, and show the loading spinner
-	if ( isLoading === true ) {
-		nameInput.prop( "disabled", true )
-		continueButton.prop( "disabled", true )
-
-		continueButtonSpinner.removeClass( "visually-hidden" )
-		continueButtonSpinner.attr( "aria-hidden", "false" )
-	
-	// Otherwise enable form controls, and hide the loading spinner
-	} else {
-		nameInput.prop( "disabled", false )
-		continueButton.prop( "disabled", false )
-
-		continueButtonSpinner.addClass( "visually-hidden" )
-		continueButtonSpinner.attr( "aria-hidden", "true" )
-	}
-
-}
-
 // Runs when the name form is submitted...
 nameForm.submit( ( event ) => {
 
@@ -55,7 +33,7 @@ nameForm.submit( ( event ) => {
 	nameForm.addClass( "was-validated" )
 
 	// Change UI to indicate loading
-	setFormLoading( true )
+	setFormLoading( nameForm, true )
 
 	// Get the request information from the form attributes
 	const requestMethod = nameForm.attr( "method" )
@@ -76,10 +54,9 @@ nameForm.submit( ( event ) => {
 		// HTTP method must be upper-case
 		method: requestMethod.toUpperCase(),
 
-		// Change UI back & redirect to the room list page, if the request was successful
+		// Redirect to the room list page, if the request was successful
 		success: ( responseData, _, request ) => {
 			if ( responseData.chosenName === desiredName ) {
-				setFormLoading( false )
 				window.location.href = "/rooms.html"
 			} else {
 				console.error( `Server API sent back a name '${ responseData.chosenName }' that does not match the desired name '${ desiredName }'?` )
@@ -91,8 +68,11 @@ nameForm.submit( ( event ) => {
 		error: ( request, _, httpStatusMessage ) => {
 			console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when sending request to choose name` )
 			handleServerErrorCode( request.responseText )
-			setFormLoading( false ) // Change UI back too so they can attempt again
-		}
+		},
+
+		// Always change UI back after the request so the user can try again
+		complete: () => setFormLoading( nameForm, false )
+
 	} )
 
 } )

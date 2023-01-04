@@ -35,11 +35,11 @@
 
 						<!-- First column -->
 						<div class="col-6">
-							
+
 							<!-- Form for joining private room -->
 							<div class="row">
-								<form id="joinPrivateRoomForm" method="post" action="/api/join-room">
-		
+								<form id="joinPrivateRoomForm" method="get" action="/api/room">
+
 									<!-- Input for code -->
 									<div class="input-group has-validation mb-2">
 		
@@ -54,24 +54,24 @@
 										<!-- Message if input validation fails -->
 										<div class="invalid-feedback">Please enter a valid room code.</div>
 									</div>
-		
+
 									<!-- Submit button with spinner -->
 									<button id="joinPrivateRoomButton" class="btn btn-primary w-100" type="submit">
 										<span id="joinPrivateRoomButtonSpinner" class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
 										<span>Join Private Room</span>
 									</button>
-		
+
 								</form>
 							</div>
 
 						</div>
-	
+
 						<!-- Second column -->
 						<div class="col-6">
 
 							<!-- Form for creating new room -->
 							<div class="row">
-								<form id="createRoomForm" method="post" action="/api/create-room">
+								<form id="createRoomForm" method="post" action="/api/room">
 
 									<!-- Row for name input & visibility checkbox -->
 									<div class="row mb-2">
@@ -97,8 +97,8 @@
 										<!-- TODO: Make this expand! -->
 										<div class="col-3 ps-1">
 											<div class="input-group">
-												<span id="visibilityIcon" class="input-group-text">
-													<i class="bi bi-eye-fill"></i>
+												<span class="input-group-text">
+													<i id="createRoomNameVisibilityIcon" class="bi bi-eye-fill"></i>
 													<!-- <i class="bi bi-eye-slash-fill"></i> -->
 												</span>
 
@@ -122,11 +122,11 @@
 					</div>
 
 					<!-- Row with 2 columns for the public rooms -->
-					<div class="row mb-3 text-start">
+					<div class="row mb-2 text-start">
 
 						<!-- Notice for no public rooms, hidden once a room is added -->
 						<div id="noPublicRoomsNotice" class="col-12">
-							<div class="alert alert-info text-center">
+							<div class="alert alert-primary text-center">
 								<strong>There are no public rooms available to join at the moment. Please create a new room above.</strong>
 							</div>
 						</div>
@@ -180,8 +180,10 @@
 		<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js" integrity="sha384-Ft/vb48LwsAEtgltj7o+6vtS2esTU9PCpDqcXs4OCVQFZu5BqprHtUCZ4kjK+bpE" crossorigin="anonymous"></script>
 
 		<!-- Custom scripts -->
-		<script src="scripts/feedbackModal.js" type="text/javascript"></script>
-		<script src="scripts/serverErrorCodes.js" type="text/javascript"></script>
-		<script src="scripts/roomList.js" type="text/javascript"></script>
+		<script src="/scripts/helpers/feedbackModal.js" type="text/javascript"></script>
+		<script src="/scripts/helpers/serverErrorCodes.js" type="text/javascript"></script>
+		<script src="/scripts/helpers/dateTime.js" type="text/javascript"></script>
+		<script src="/scripts/helpers/formLoading.js" type="text/javascript"></script>
+		<script src="/scripts/pages/roomList.js" type="text/javascript"></script>
 	</body>
 </html>
