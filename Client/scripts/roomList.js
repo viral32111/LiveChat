@@ -5,56 +5,41 @@ const publicRoomsColumn1 = $( "#publicRoomsColumn1" )
 const publicRoomsColumn2 = $( "#publicRoomsColumn2" )
 const noPublicRoomsNotice = $( "#noPublicRoomsNotice" )
 
+// Gets the human readable representation for however long ago a given unix timestamp was
 function unixTimestampToHumanReadable( timestampMilliseconds ) {
-	const currentTimestamp = new Date().getTime()
-	const secondsDifference = ( currentTimestamp - timestampMilliseconds ) / 1000
 
-	// Right this moment
-	if ( secondsDifference <= 10 ) {
-		return "right now"
+	// Calculate the difference between now and the given timestamp, in seconds
+	const secondsDifference = ( currentTimestamp - new Date().getTime() ) / 1000
 
-	// Seconds
-	} else if ( secondsDifference < 60 ) {
-		return `${ secondsDifference } second(s) ago`
-
-	// Minutes
-	} else if ( secondsDifference >= 60 ) {
-		return `${ Math.floor( secondsDifference / 60 ) } minute(s) ago`
-
-	// Hours
-	} else if ( secondsDifference >= 3600 ) {
-		return `${ Math.floor( secondsDifference / 3600 ) } hours(s) ago`
-
-	// Days
-	} else if ( secondsDifference >= 86400 ) {
-		return `${ Math.floor( secondsDifference / 86400 ) } days(s) ago`
-	
-	// Weeks
-	} else if ( secondsDifference >= 604800 ) {
-		return `${ Math.floor( secondsDifference / 604800 ) } week(s) ago`
-
-	// Anything beyond month is a long time...
-	} else if ( secondsDifference >= 2419200 ) {
-		return `a long time ago`
-	}
+	if ( secondsDifference <= 10 ) return "right now" // Pretty much right this moment
+	else if ( secondsDifference < 60 ) return `${ secondsDifference } second(s) ago` // Seconds
+	else if ( secondsDifference >= 60 ) return `${ Math.floor( secondsDifference / 60 ) } minute(s) ago` // Minutes
+	else if ( secondsDifference >= 3600 ) return `${ Math.floor( secondsDifference / 3600 ) } hours(s) ago` // Hours
+	else if ( secondsDifference >= 86400 ) return `${ Math.floor( secondsDifference / 86400 ) } days(s) ago` // Days
+	else if ( secondsDifference >= 604800 ) return `${ Math.floor( secondsDifference / 604800 ) } week(s) ago` // Weeks
+	else if ( secondsDifference >= 2419200 ) return `a long time ago` // Longer than a month
 
 }
 
+// Creates all the HTML for a new room element, using data from the server API
 function createRoomElement( name, participantCount, lastActiveTimestamp ) {
+
+	// Name & description
 	const descriptionParagraphElement = $( "<p></p>" ).addClass( "m-0" ).text( `${ participantCount } participant(s), active ${ unixTimestampToHumanReadable( lastActiveTimestamp ) }` )
 	const nameStrong = $( "<strong></strong>" ).text( name )
 	const nameHeading = $( "<h5></h5>" ).addClass( "m-0" ).append( nameStrong )
 	const informationColumn = $( "<div></div>" ).addClass( "col-10" ).append( nameHeading, descriptionParagraphElement )
 
+	// Join button
 	const buttonTextSpan = $( "<span></span>" ).text( "Join" )
 	const buttonSpinnerSpan = $( "<span></span>" ).addClass( "spinner-border spinner-border-sm visually-hidden" ).attr( "role", "status" ).attr( "aria-hidden", true )
 	const button = $( "<button></button>" ).addClass( "btn btn-primary w-100 h-100" ).attr( "type", "submit" ).append( buttonSpinnerSpan, buttonTextSpan )
 	const buttonColumnn = $( "<div></div>" ).addClass( "col-2" ).append( button )
 
+	// Bootstrap positioning & styling
 	const bootstrapRow = $( "<div></div>" ).addClass( "row" ).append( informationColumn, buttonColumnn )
-	const box = $( "<div></div>" ).addClass( "p-2 mb-2 border rounded bg-light" ).append( bootstrapRow )
+	return $( "<div></div>" ).addClass( "p-2 mb-2 border rounded bg-light" ).append( bootstrapRow )
 
-	return box
 }
 
 // Adds a room element, created using the function above, to the page
