@@ -21,7 +21,7 @@ interface ChooseNamePayload {
 expressApp.post( "/api/name", async ( request, response ) => {
 
 	// Fail if the user has already chosen their name
-	if ( request.session.chosenName !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+	if ( request.session.guestId !== undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 		error: ErrorCodes.NameAlreadyChosen
 	} )
 
@@ -36,16 +36,25 @@ expressApp.post( "/api/name", async ( request, response ) => {
 	if ( requestPayload.desiredName === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMissingProperty } )
 	if ( validateChosenName( requestPayload.desiredName ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMalformedValue } )
 
-	// Set the name in the session (new session is created in-case one already exits)
-	request.session.regenerate( () => {
-		request.session.chosenName = requestPayload.desiredName
-		log.info( `Created session '${ request.sessionID }' for guest '${ requestPayload.desiredName }'.` )
-	} )
-
-	// Add the new guest to the database
+	// Trt to add the new guest to the database
 	try {
-		await MongoDB.AddGuest( requestPayload.desiredName )
-		log.info( `Added new guest '${ requestPayload.desiredName }' to the database.` )
+		// TODO: Check for guest with the same name already in the database
+
+		const newGuest = await MongoDB.AddGuest( requestPayload.desiredName )
+		log.info( `Added new guest '${ requestPayload.desiredName }' (${ newGuest.insertedId }) to the database.` )
+
+		// Set the guest ID in the session data (a new session is created in case one already exists)
+		request.session.regenerate( () => {
+			request.session.guestId = newGuest.insertedId
+			log.info( `Created session '${ request.sessionID }' for guest '${ requestPayload.desiredName }' (${ newGuest.insertedId }).` )
+
+			// Send the name back as confirmation
+			respondToRequest( response, HTTPStatusCodes.OK, {
+				chosenName: requestPayload.desiredName
+			} )
+		} )
+
+	// Send back an failure response if the database insert failed
 	} catch ( errorMessage ) {
 		log.error( `Failed to add new guest '${ requestPayload.desiredName }' to the database (${ errorMessage })!` )
 		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
@@ -53,17 +62,9 @@ expressApp.post( "/api/name", async ( request, response ) => {
 		} )
 	}
 
-	// Display name in the console
-	log.info( `Welcome, ${ requestPayload.desiredName }.` )
-
-	// Send the name back as confirmation
-	respondToRequest( response, HTTPStatusCodes.OK, {
-		chosenName: requestPayload.desiredName
-	} )
-
 } )
 
 // Route for checking if the guest has chosen a name
 expressApp.get( "/api/name", ( request, response ) => respondToRequest( response, HTTPStatusCodes.OK, {
-	hasName: request.session.chosenName !== undefined
+	hasName: request.session.guestId !== undefined
 } ) )

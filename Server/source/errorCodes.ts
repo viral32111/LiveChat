@@ -6,5 +6,7 @@ export enum ErrorCodes {
 	PayloadMalformedValue = 3,
 	NameAlreadyChosen = 4,
 	DatabaseInsertFailure = 5,
-	NameNotChosen = 6
+	NameNotChosen = 6,
+	ExpressSessionDestroyFailure = 7,
+	DatabaseDeleteFailure = 8
 }

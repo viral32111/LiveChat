@@ -188,11 +188,11 @@ endSessionButton.click( () => {
 	endSessionButtonSpinner.removeClass( "visually-hidden" ).attr( "aria-hidden", "false" )
 
 	// Request that the server-side API end our session
-	$.delete( "/api/session", () => {
+	httpRequest( "DELETE", "/api/session" ).done( () => {
 		showFeedbackModal( "Success", "Your chat session has been ended & all data has been erased. You will now be returned to the choose name page." )
 		window.location.href = "/"
 	} ).fail( ( request, _, httpStatusMessage ) => {
-		console.error( `Received HTTP status message '${ httpStatusMessage }' when trying to end our session` )
+		console.error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to end our session` )
 		handleServerErrorCode( request.responseText )
 	} ).always( () => { // Re-enable the button & hide the loading spinner
 		endSessionButton.prop( "disabled", false )
@@ -220,8 +220,5 @@ $( () => {
 		handleServerErrorCode( request.responseText )
 		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
 	} )
-
-	// Create fake room for testing
-	//addRoomElementToPage( createRoomElement( "Example Room", 12, new Date().getTime() - 3600 * 1000 ) )
 
 } )

@@ -3,6 +3,7 @@ import express from "express"
 import expressSession from "express-session"
 import MongoStore from "connect-mongo"
 import { getLogger } from "log4js"
+import { ObjectId } from "mongodb"
 
 // Import required data from other scripts
 import { isProduction } from "./main"
@@ -14,7 +15,7 @@ const log = getLogger( "express" )
 // Extend the Express session data interface to include our properties
 declare module "express-session" {
 	interface SessionData {
-		chosenName: string
+		guestId: ObjectId
 	}
 }
 

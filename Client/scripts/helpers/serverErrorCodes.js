@@ -7,7 +7,9 @@ const serverErrorCodeMessages = {
 	3: "One or more request payload values are malformed",
 	4: "You have already chosen a name",
 	5: "Failed to add data into the database",
-	6: "You have not chosen a name yet"
+	6: "You have not chosen a name yet",
+	7: "Failed to remove your session",
+	8: "Failed to remove data from the database"
 }
 
 // Shows the feedback modal for a server-side API error

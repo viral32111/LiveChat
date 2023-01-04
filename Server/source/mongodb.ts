@@ -119,4 +119,15 @@ export default class MongoDB {
 		return insertResult
 	}
 
+	// Remove a guest from the database
+	public static async RemoveGuest( guestId: ObjectId ) {
+		const deleteResult = await MongoDB.Database.collection( MongoDB.CollectionNames.Guests ).deleteOne( {
+			_id: guestId
+		} )
+
+		log.debug( `Deleted guest '${ guestId }'.` )
+
+		return deleteResult
+	}
+
 }

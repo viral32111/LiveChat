@@ -5,9 +5,9 @@ import { getLogger } from "log4js"
 import { expressApp } from "../main"
 import { HTTPStatusCodes } from "../httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
+import { validateRoomName } from "../helpers/validation"
 import { ErrorCodes } from "../errorCodes"
 import MongoDB from "../mongodb"
-import { validateRoomName } from "../helpers/validation"
 
 // Create the logger for this file
 const log = getLogger( "routes/room" )
@@ -29,7 +29,7 @@ interface CreateRoomPayload {
 expressApp.get( "/api/rooms", async ( request, response ) => {
 
 	// Fail if the user has not chosen a name yet
-	if ( request.session.chosenName === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
+	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
 		error: ErrorCodes.NameNotChosen
 	} )
 
@@ -38,14 +38,12 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 
 	// Fetch all public rooms
 	const publicRooms = await MongoDB.GetRooms( false )
-	log.debug( `Fetched ${ publicRooms.length } public rooms.` )
 
 	// Loop through those public rooms...
 	for ( const publicRoom of publicRooms ) {
 
 		// Fetch all the messages in this room
 		const roomMessages = await MongoDB.GetMessages( publicRoom._id )
-		log.debug( `Fetched ${ roomMessages.length } messages for room '${ publicRoom._id }'.` )
 
 		// Add this room to the list, with the time the latest message was sent
 		publicRoomsList.push( {
@@ -58,6 +56,9 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 	// Sort rooms by the number of participants from highest to lowest
 	publicRoomsList.sort( ( publicRoomA, publicRoomB ) => publicRoomB.participantCount - publicRoomA.participantCount )
 
+	// Display the number of rooms in the console
+	log.info( `Listing ${ publicRoomsList.length } public rooms for guest '${ request.session.guestId }'.` )
+
 	// Send back the list of public rooms
 	respondToRequest( response, HTTPStatusCodes.OK, {
 		publicRooms: publicRoomsList
@@ -69,7 +70,7 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 expressApp.put( "/api/room", async ( request, response ) => {
 
 	// Fail if the user has not chosen a name yet
-	if ( request.session.chosenName === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
+	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
 		error: ErrorCodes.NameNotChosen
 	} )
 
@@ -86,8 +87,10 @@ expressApp.put( "/api/room", async ( request, response ) => {
 
 	// Try to create a new room in the database
 	try {
-		await MongoDB.CreateRoom( createRoomPayload.name, createRoomPayload.isPrivate )
-	} catch {
+		const newRoom = await MongoDB.CreateRoom( createRoomPayload.name, createRoomPayload.isPrivate )
+		log.info( `Created new ${ createRoomPayload.isPrivate === true ? "private" : "public" } room '${ createRoomPayload.name }' (${ newRoom.insertedId }) for guest '${ request.session.guestId }'.` )
+	} catch ( errorMessage ) {
+		log.error( `Failed to insert new room '${ createRoomPayload.name }' into the database (${ errorMessage })!` )
 		return respondToRequest( response, HTTPStatusCodes.InternalServerError, { error: ErrorCodes.DatabaseInsertFailure } )
 	}
 
@@ -100,6 +103,47 @@ expressApp.put( "/api/room", async ( request, response ) => {
 
 expressApp.get( "/api/room", ( _, response ) => respondToRequest( response, HTTPStatusCodes.NotImplemented ) )
 
+// Route to end the current session
+expressApp.delete( "/api/session", ( request, response ) => {
 
+	// Fail if the user has not chosen a name yet
+	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
+		error: ErrorCodes.NameNotChosen
+	} )
 
-expressApp.delete( "/api/session", ( _, response ) => respondToRequest( response, HTTPStatusCodes.NotImplemented ) )
+	// Store the guest ID in a variable, so we can use it after the session is destroyed
+	const guestId = request.session.guestId
+
+	// Try to end the current Express session...
+	request.session.destroy( async ( errorMessage ) => {
+
+		// If all was good...
+		if ( errorMessage === undefined ) {
+
+			// Try to delete the guest from the databasae
+			try {
+				await MongoDB.RemoveGuest( guestId )
+			} catch ( mongoErrorMessage ) {
+				log.error( `Failed to delete guest '${ guestId }' from the database (${ errorMessage })!` )
+				respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+					error: ErrorCodes.DatabaseDeleteFailure
+				} )
+			}
+
+			// TODO: Remove messages sent by this guest?
+
+			// Send back a success response
+			respondToRequest( response, HTTPStatusCodes.OK, {} )
+			log.info( `Ended session for guest '${ guestId }'.` )
+
+		// Otherwise, send back an failure response
+		} else {
+			log.error( `Error while destroying Express session: '${ errorMessage }!` )
+			respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+				error: ErrorCodes.ExpressSessionDestroyFailure
+			} )
+		}
+
+	} )
+
+} )
