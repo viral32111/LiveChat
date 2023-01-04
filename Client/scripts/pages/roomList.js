@@ -7,15 +7,18 @@ const noPublicRoomsNotice = $( "#noPublicRoomsNotice" )
 const joinPrivateRoomForm = $( "#joinPrivateRoomForm" )
 const joinPrivateRoomCode = $( "#joinPrivateRoomCode" )
 const joinPrivateRoomButton = $( "#joinPrivateRoomButton" )
-const joinPrivateRoomButtonSpinner = $( "#joinPrivateRoomButtonSpinner" )
-const createRoomForm = $( "createRoomForm" )
+const createRoomForm = $( "#createRoomForm" )
 const createRoomName = $( "#createRoomName" )
 const createRoomNameVisibilityIcon = $( "#createRoomNameVisibilityIcon" )
-const createRoomVisibilityCheckbox = $( "#createRoomVisibilityCheckbox" )
+const createRoomVisibilityButton = $( "#createRoomVisibilityButton" )
 const createRoomButton = $( "#createRoomButton" )
-const createRoomButtonSpinner = $( "#createRoomButtonSpinner" )
 const endSessionButton = $( "#endSessionButton" )
 const endSessionButtonSpinner = $( "#endSessionButtonSpinner" )
+
+// The regular expressions for validating the room name & join codes
+// NOTE: Keep these the same as they are on the server!
+const roomNameValidationPattern = new RegExp( /^[\w\d .,()\[\]<>+=\-!:;$£%&*#@?|]{1,50}$/ )
+const joinCodeValidationPattern = new RegExp( /^[A-Za-z]{6}$/ )
 
 // Creates all the HTML for a new room element, using data from the server API
 function createRoomElement( name, participantCount, lastActiveTimestamp ) {
@@ -32,7 +35,10 @@ function createRoomElement( name, participantCount, lastActiveTimestamp ) {
 	const button = $( "<button></button>" ).addClass( "btn btn-primary w-100 h-100" ).attr( "type", "submit" ).append( buttonSpinnerSpan, buttonTextSpan )
 	const buttonColumnn = $( "<div></div>" ).addClass( "col-2" ).append( button )
 
-	// TODO: On click event for the button
+	// When the join button is clicked...
+	button.click( () => {
+		console.debug( "Joining:", name, participantCount, lastActiveTimestamp )
+	} )
 
 	// Bootstrap positioning & styling
 	const bootstrapRow = $( "<div></div>" ).addClass( "row" ).append( informationColumn, buttonColumnn )
@@ -55,20 +61,138 @@ function addRoomElementToPage( roomElement ) {
 
 }
 
-// TODO: On submit event for join private room form
+// When the join private room form is submitted...
 joinPrivateRoomForm.submit( ( event ) => {
+	
+	// Stop the default form redirect from happening
 	event.preventDefault()
 	event.stopPropagation()
+
+	// Show any Bootstrap input validation messages
+	joinPrivateRoomForm.addClass( "was-validated" )
+
+	// Do not continue if form validation fails
+	if ( joinPrivateRoomForm[ 0 ].checkValidity() !== true ) return
+
+	// Get the code from the input
+	const joinCode = joinPrivateRoomCode.val()
+
+	// Fail if the manual input validation fails
+	if ( joinCodeValidationPattern.test( joinCode ) !== true ) return showFeedbackModal( "Notice", "The join code you have entered is invalid." )
+
+	// Hide any Bootstrap input validation messages
+	joinPrivateRoomForm.removeClass( "was-validated" )
+
+	// Change UI to indicate loading
+	setFormLoading( joinPrivateRoomForm, true )
+
+	// Get the request information from the form attributes
+	const requestMethod = joinPrivateRoomForm.attr( "method" ), targetRoute = joinPrivateRoomForm.attr( "action" )
+
+	// Ask the server API if we can join this room
+	httpRequest( requestMethod, targetRoute, {
+		joinCode: joinCode,
+
+	// When the request is successful...
+	} ).done( ( responsePayload, _, request ) => {
+		if ( responsePayload.roomName === roomName ) {
+			// TODO: Redirect to new chat room
+		} else {
+			console.error( `Server API sent back a room name '${ responsePayload.roomName }' that does not match the expected name '${ roomName }'?` )
+			showErrorModal( "Server sent back mismatching room name" )
+		}
+
+	// Display any errors that occur if the request fails
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+		handleServerErrorCode( request.responseText )
+
+	// Always change UI back after the request so the user can try again
+	} ).always( () => setFormLoading( joinPrivateRoomForm, false ) )
+
 } )
 
-// TODO: On submit event for create room form
+// When the create room form is submitted...
 createRoomForm.submit( ( event ) => {
+
+	// Stop the default form redirect from happening
 	event.preventDefault()
 	event.stopPropagation()
+
+	// Show any Bootstrap input validation messages
+	createRoomForm.addClass( "was-validated" )
+
+	// Do not continue if form validation fails
+	if ( createRoomForm[ 0 ].checkValidity() !== true ) return
+
+	// Get the values from the inputs
+	const roomName = createRoomName.val(), isRoomPrivate = createRoomVisibilityButton.text() === "Private"
+
+	// Fail if the manual input validation fails
+	if ( roomNameValidationPattern.test( roomName ) !== true ) return showFeedbackModal( "Notice", "The room name you have entered is invalid." )
+
+	// Hide any Bootstrap input validation messages
+	createRoomForm.removeClass( "was-validated" )
+
+	// Change UI to indicate loading
+	setFormLoading( createRoomForm, true )
+
+	// Get the request information from the form attributes
+	const requestMethod = createRoomForm.attr( "method" ), targetRoute = createRoomForm.attr( "action" )
+
+	// Ask the server API to create the room...
+	httpRequest( requestMethod, targetRoute, {
+		roomName: roomName,
+		isPrivate: isRoomPrivate
+
+	// When the request is successful...
+	} ).done( ( responsePayload, _, request ) => {
+		if ( responsePayload.roomName === roomName ) {
+			// TODO: Redirect to new chat room
+		} else {
+			console.error( `Server API sent back a room name '${ responsePayload.roomName }' that does not match the expected name '${ roomName }'?` )
+			showErrorModal( "Server sent back mismatching room name" )
+		}
+
+	// Display any errors that occur if the request fails
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+		handleServerErrorCode( request.responseText )
+
+	// Always change UI back after the request so the user can try again
+	} ).always( () => setFormLoading( createRoomForm, false ) )
+
 } )
 
-// TODO: On click event for end session button
+// Swap the visibility button between public & private when clicked
+createRoomVisibilityButton.click( () => {
+	if ( createRoomVisibilityButton.text() === "Private" ) {
+		createRoomVisibilityButton.text( "Public" ).removeClass( "btn-danger" ).addClass( "btn-success" )
+		createRoomNameVisibilityIcon.removeClass( "bi-eye-slash-fill" ).addClass( "bi-eye-fill" )
+	} else {
+		createRoomVisibilityButton.text( "Private" ).removeClass( "btn-success" ).addClass( "btn-danger" )
+		createRoomNameVisibilityIcon.removeClass( "bi-eye-fill" ).addClass( "bi-eye-slash-fill" )
+	}
+} )
+
+// When the end session button is clicked...
 endSessionButton.click( () => {
+
+	// Disable the button & show the loading spinner
+	endSessionButton.prop( "disabled", true )
+	endSessionButtonSpinner.removeClass( "visually-hidden" ).attr( "aria-hidden", "false" )
+
+	// Request that the server-side API end our session
+	$.delete( "/api/session", () => {
+		showFeedbackModal( "Success", "Your chat session has been ended & all data has been erased. You will now be returned to the choose name page." )
+		window.location.href = "/"
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		console.error( `Received HTTP status message '${ httpStatusMessage }' when trying to end our session` )
+		handleServerErrorCode( request.responseText )
+	} ).always( () => { // Re-enable the button & hide the loading spinner
+		endSessionButton.prop( "disabled", false )
+		endSessionButtonSpinner.addClass( "visually-hidden" ).attr( "aria-hidden", "true" )
+	} )
 
 } )
 
@@ -76,8 +200,8 @@ endSessionButton.click( () => {
 $( () => {
 
 	// Redirect back to the choose name page if we haven't got a name yet
-	$.getJSON( "/api/name", ( payload ) => {
-		if ( payload.hasName === false ) window.location.href = "/"
+	$.getJSON( "/api/name", ( responsePayload ) => {
+		if ( responsePayload.hasName === false ) window.location.href = "/"
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		console.error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
 		handleServerErrorCode( request.responseText )
@@ -85,11 +209,14 @@ $( () => {
 	} )
 
 	// Populate the page with the public rooms fetched from the server-side API
-	$.getJSON( "/api/rooms", ( payload ) => payload.publicRooms.forEach( roomData => {
+	$.getJSON( "/api/rooms", ( responsePayload ) => responsePayload.publicRooms.forEach( roomData => {
 		addRoomElementToPage( createRoomElement( roomData.name, roomData.participantCount, roomData.lastActiveTimestamp ) )
 	} ) ).fail( ( request, _, httpStatusMessage ) => {
 		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
 		handleServerErrorCode( request.responseText )
 	} )
+
+	// Create fake room for testing
+	//addRoomElementToPage( createRoomElement( "Example Room", 12, new Date().getTime() - 3600 * 1000 ) )
 
 } )

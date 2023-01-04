@@ -57,7 +57,7 @@
 
 									<!-- Submit button with spinner -->
 									<button id="joinPrivateRoomButton" class="btn btn-primary w-100" type="submit">
-										<span id="joinPrivateRoomButtonSpinner" class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
+										<span class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
 										<span>Join Private Room</span>
 									</button>
 
@@ -86,24 +86,21 @@
 												</span>
 
 												<!-- Input with validation in attributes -->
-												<input id="createRoomName" class="form-control shadow-none" type="text" placeholder="Example Room..." required minlength="2" maxlength="30" aria-label="Example Room..." aria-describedby="createRoomIcon">
+												<input id="createRoomName" class="form-control shadow-none pe-3" type="text" placeholder="Example Room..." required minlength="2" maxlength="30" aria-label="Example Room..." aria-describedby="createRoomIcon">
 
 												<!-- Message if input validation fails -->
 												<div class="invalid-feedback">Please enter a name for the room.</div>
+
 											</div>
 										</div>
 
-										<!-- Checkbox button for visibility -->
-										<!-- TODO: Make this expand! -->
+										<!-- Toggle button for visibility -->
 										<div class="col-3 ps-1">
 											<div class="input-group">
 												<span class="input-group-text">
 													<i id="createRoomNameVisibilityIcon" class="bi bi-eye-fill"></i>
-													<!-- <i class="bi bi-eye-slash-fill"></i> -->
 												</span>
-
-												<input id="createRoomVisibilityCheckbox" class="btn-check" type="checkbox" aria-describedby="visibilityIcon">
-												<label class="btn btn-primary" for="createRoomVisibilityCheckbox">Public</label>
+												<button id="createRoomVisibilityButton" class="form-control btn btn-success shadow-none" type="button">Public</button>
 											</div>
 										</div>
 
@@ -111,7 +108,7 @@
 
 									<!-- Submit button with spinner -->
 									<button id="createRoomButton" class="btn btn-primary w-100" type="submit">
-										<span id="createRoomButtonSpinner" class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
+										<span class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
 										<span>Create New Room</span>
 									</button>
 
@@ -184,6 +181,7 @@
 		<script src="/scripts/helpers/serverErrorCodes.js" type="text/javascript"></script>
 		<script src="/scripts/helpers/dateTime.js" type="text/javascript"></script>
 		<script src="/scripts/helpers/formLoading.js" type="text/javascript"></script>
+		<script src="/scripts/helpers/httpRequest.js" type="text/javascript"></script>
 		<script src="/scripts/pages/roomList.js" type="text/javascript"></script>
 	</body>
 </html>
