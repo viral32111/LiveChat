@@ -71,7 +71,7 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 } )
 
 // Route to create a new room
-expressApp.put( "/api/room", async ( request, response ) => {
+expressApp.post( "/api/room", async ( request, response ) => {
 
 	// Fail if the user has not chosen a name yet
 	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
