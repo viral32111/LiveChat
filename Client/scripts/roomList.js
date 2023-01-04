@@ -1,14 +1,9 @@
 "use strict" // Enables strict mode
 
-// Redirect back to the choose name page if we haven't got a name yet
-/* $( () => $.getJSON( "/api/name", null, ( payload ) => {
-	if ( payload.hasName === false ) window.location.href = "/"
-} ).fail( ( jqXHR, statusText, httpStatusMessage ) => {
-	console.error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
-} ) ) */
-
+// Get all the relevant UI elements
 const publicRoomsColumn1 = $( "#publicRoomsColumn1" )
 const publicRoomsColumn2 = $( "#publicRoomsColumn2" )
+const noPublicRoomsNotice = $( "#noPublicRoomsNotice" )
 
 function unixTimestampToHumanReadable( timestampMilliseconds ) {
 	const currentTimestamp = new Date().getTime()
@@ -45,25 +40,8 @@ function unixTimestampToHumanReadable( timestampMilliseconds ) {
 
 }
 
-/*
-<div class="p-2 mb-2 border rounded bg-light">
-	<div class="row">
-		<div class="col-10">
-			<h5 class="m-0"><strong>Example Room #1</strong></h5>
-			<p class="m-0">12 participants, active 10 minutes ago.</p>
-		</div>
-		<div class="col-2">
-			<button id="joinRoomButton" class="btn btn-primary w-100 h-100" type="submit">
-				<span id="joinRoomButtonSpinner" class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
-				<span>Join</span>
-			</button>
-		</div>
-	</div>
-</div>
-*/
-
-function createRoomElement( name, participantCount, lastActiveTime ) {
-	const descriptionParagraphElement = $( "<p></p>" ).addClass( "m-0" ).text( `${ participantCount } participant(s), active ${ unixTimestampToHumanReadable( lastActiveTime ) }` )
+function createRoomElement( name, participantCount, lastActiveTimestamp ) {
+	const descriptionParagraphElement = $( "<p></p>" ).addClass( "m-0" ).text( `${ participantCount } participant(s), active ${ unixTimestampToHumanReadable( lastActiveTimestamp ) }` )
 	const nameStrong = $( "<strong></strong>" ).text( name )
 	const nameHeading = $( "<h5></h5>" ).addClass( "m-0" ).append( nameStrong )
 	const informationColumn = $( "<div></div>" ).addClass( "col-10" ).append( nameHeading, descriptionParagraphElement )
@@ -79,14 +57,39 @@ function createRoomElement( name, participantCount, lastActiveTime ) {
 	return box
 }
 
+// Adds a room element, created using the function above, to the page
 function addRoomElementToPage( roomElement ) {
+
+	// Get the number of room elements (children) in each column
 	const roomsInColumn1 = publicRoomsColumn1.children().length, roomsInColumn2 = publicRoomsColumn2.children().length
 
+	// Hide the no rooms notice, if this is the first room being added
+	if ( roomsInColumn1 === 0 && roomsInColumn2 === 0 ) noPublicRoomsNotice.addClass( "visually-hidden" )
+
+	// Add the room element to whichever column has the least rooms in it, for an even distribution
 	if ( roomsInColumn1 <= roomsInColumn2 ) publicRoomsColumn1.append( roomElement )
 	else publicRoomsColumn2.append( roomElement )
+
 }
 
+// When the page loads...
 $( () => {
-	addRoomElementToPage( createRoomElement( "Example Room #1", 12, new Date().getTime() - ( 60 * 10 * 1000 ) ) )
-	addRoomElementToPage( createRoomElement( "Example Room #2", 11, new Date().getTime() - ( 60 * 2 * 1000 ) ) )
+
+	// Redirect back to the choose name page if we haven't got a name yet
+	$.getJSON( "/api/name", ( payload ) => {
+		if ( payload.hasName === false ) window.location.href = "/"
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		console.error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
+		handleServerErrorCode( request.responseText )
+		// TODO: Redirect back to the choose name page anyway?
+	} )
+
+	// Populate the page with the public rooms fetched from the server-side API
+	$.getJSON( "/api/rooms", ( payload ) => payload.publicRooms.forEach( roomData => {
+		addRoomElementToPage( createRoomElement( roomData.name, roomData.participantCount, roomData.lastActiveTimestamp ) )
+	} ) ).fail( ( request, _, httpStatusMessage ) => {
+		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
+		handleServerErrorCode( request.responseText )
+	} )
+
 } )

@@ -42,11 +42,11 @@ nameForm.submit( ( event ) => {
 	// Show any Bootstrap input validation messages
 	nameForm.addClass( "was-validated" )
 
-	// Get the name that was entered
-	const desiredName = nameInput.val()
-
 	// Do not continue if form validation fails
 	if ( nameForm[ 0 ].checkValidity() !== true ) return
+
+	// Get the name that was entered
+	const desiredName = nameInput.val()
 
 	// Fail if the manual input validation fails
 	if ( nameValidationPattern.test( desiredName ) !== true ) return showFeedbackModal( "Notice", "The name you have entered is invalid." )
@@ -67,50 +67,31 @@ nameForm.submit( ( event ) => {
 		// Set the content type & payload
 		contentType: "application/json",
 		data: JSON.stringify( {
-			name: desiredName
+			desiredName: desiredName
 		} ),
 
-		// Set the expected response type
+		// Expected response type is JSON so it's automatically parsed
 		dataType: "json",
 
-		// Set the HTTP method (must be upper-case)
+		// HTTP method must be upper-case
 		method: requestMethod.toUpperCase(),
 
-		// Event handler for when the request is successful
-		success: ( responseData, textStatus, request ) => {
-
-			// Change UI back as we're finished
-			setFormLoading( false )
-
-			// Redirect to the room list page
-			window.location.href = "/rooms.html"
-
+		// Change UI back & redirect to the room list page, if the request was successful
+		success: ( responseData, _, request ) => {
+			if ( responseData.chosenName === desiredName ) {
+				setFormLoading( false )
+				window.location.href = "/rooms.html"
+			} else {
+				console.error( `Server API sent back a name '${ responseData.chosenName }' that does not match the desired name '${ desiredName }'?` )
+				showErrorModal( "Server sent back mismatching chosen name" )
+			}
 		},
 
-		// Event handler for when the request fails
-		error: ( request ) => {
-
-			// Convert the response body to JSON
-			try {
-				const payload = JSON.parse( request.responseText )
-
-				// Fail if the server didn't give us an error code
-				if ( payload.error === undefined ) return showErrorModal( "An unknown server error occured" )
-
-				// Fail if there is no message for this error code
-				if ( serverErrorCodeMessages[ payload.error ] === undefined ) return showErrorModal( `An unhandled server error occured (${ payload.error })` )
-
-				// Display the friendly error message as we have an error code
-				showErrorModal( serverErrorCodeMessages[ payload.error ] )
-
-			// Error if the response body cannot be converted to JSON
-			} catch {
-				return showErrorModal( "Failed to parse server response payload" )
-			}
-
-			// Change UI back as we're finished
-			setFormLoading( false )
-
+		// Display any errors that occur if the request fails
+		error: ( request, _, httpStatusMessage ) => {
+			console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when sending request to choose name` )
+			handleServerErrorCode( request.responseText )
+			setFormLoading( false ) // Change UI back too so they can attempt again
 		}
 	} )
 
@@ -119,4 +100,7 @@ nameForm.submit( ( event ) => {
 // Redirect to the room list page if we have already chosen a name
 $( () => $.getJSON( "/api/name", ( payload ) => {
 	if ( payload.hasName === true ) window.location.href = "/rooms.html"
+} ).fail( ( request, _, httpStatusMessage ) => {
+	console.error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
+	handleServerErrorCode( request.responseText )
 } ) )

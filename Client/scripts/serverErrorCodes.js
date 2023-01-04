@@ -8,3 +8,23 @@ const serverErrorCodeMessages = {
 	4: "You have already chosen a name",
 	5: "Failed to add data into the database"
 }
+
+// Shows the feedback modal for a server-side API error
+function handleServerErrorCode( responseText ) {
+	try {
+
+		// Parse server response as JSON
+		const errorPayload = JSON.parse( responseText )
+
+		// If the server didn't give us an error code
+		if ( errorPayload.error === undefined ) showErrorModal( "An unknown server error occured" )
+	
+		// If there is no message for this error code
+		else if ( serverErrorCodeMessages[ errorPayload.error ] === undefined ) showErrorModal( `An unhandled server error occured (${ payload.error })` )
+		
+		// Display the friendly error message, as we have an error code
+		else showErrorModal( serverErrorCodeMessages[ errorPayload.error ] )
+	
+	// If there was a problem parsing as JSON
+	} catch { showErrorModal( "Failed to parse server response payload" ) }
+}
