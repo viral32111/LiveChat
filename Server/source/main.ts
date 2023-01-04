@@ -18,7 +18,8 @@ configure( {
 		"routes/name": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
 		"tests/routes": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
 		"mongodb": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"express": { appenders: [ "console" ], level: isProduction ? "info" : "trace" }
+		"express": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
+		"routes/room": { appenders: [ "console" ], level: isProduction ? "info" : "trace" }
 	}
 } )
 

@@ -2,5 +2,6 @@
 export enum HTTPStatusCodes {
 	OK = 200,
 	BadRequest = 400,
-	InternalServerError = 500
+	InternalServerError = 500,
+	NotImplemented = 501
 }
