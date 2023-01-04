@@ -1,9 +1,23 @@
 // Import required third-party packages
-import { MongoClient, Db } from "mongodb"
+import { MongoClient, Db, ObjectId, WithId, Document } from "mongodb"
 import { getLogger } from "log4js"
 
 // Create the logger for this file
 const log = getLogger( "mongodb" )
+
+interface Room extends WithId<Document> {
+	name: string
+	isPrivate: boolean,
+	participantCount: number
+}
+
+interface Message extends WithId<Document> {
+	content: string
+	sentAt: Date,
+	guestName: string,
+	attachments: string[],
+	roomId: ObjectId
+}
 
 // Static class to encapsulate all our MongoDB functionality
 export default class MongoDB {
@@ -61,7 +75,34 @@ export default class MongoDB {
 		const insertResult = await MongoDB.Database.collection( MongoDB.CollectionNames.Guests ).insertOne( {
 			name: name
 		} )
+
 		log.debug( `Inserted new document with ID: ${ insertResult.insertedId }.` )
+
+		return insertResult
+	}
+
+	// Gets a list of the rooms in the database
+	public static async GetRooms( includePrivate = false ) {
+		const foundRooms = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms )
+			.find<Room>( includePrivate === true ? {} : { isPrivate: false } )
+			.toArray()
+
+		log.debug( `Found ${ foundRooms.length } rooms (included private: ${ includePrivate }).` )
+
+		return foundRooms
+	}
+
+	// Gets a list of the messages in the database
+	public static async GetMessages( roomId: ObjectId | undefined = undefined ) {
+		const foundMessages = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages )
+			.find<Message>( roomId === undefined ? {} : { roomId: roomId } )
+			.sort( { sentAt: -1 } ) // Newest messages first
+			.project<Message>( { _id: 0 } ) // removes _id from the results - https://stackoverflow.com/a/52250461
+			.toArray()
+
+		log.debug( `Found ${ foundMessages.length } messages for room '${ roomId }'.` )
+
+		return foundMessages
 	}
 
 }

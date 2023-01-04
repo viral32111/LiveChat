@@ -65,6 +65,6 @@ nameForm.submit( ( event ) => {
 $( () => $.getJSON( "/api/name", ( responsePayload ) => {
 	if ( responsePayload.hasName === true ) window.location.href = "/rooms.html"
 } ).fail( ( request, _, httpStatusMessage ) => {
-	console.error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
 	handleServerErrorCode( request.responseText )
+	throw new Error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
 } ) )

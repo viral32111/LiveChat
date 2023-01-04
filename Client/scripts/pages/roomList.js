@@ -21,10 +21,13 @@ const roomNameValidationPattern = new RegExp( /^[\w\d .,()\[\]<>+=\-!:;$£%&*#@?
 const joinCodeValidationPattern = new RegExp( /^[A-Za-z]{6}$/ )
 
 // Creates all the HTML for a new room element, using data from the server API
-function createRoomElement( name, participantCount, lastActiveTimestamp ) {
+function createRoomElement( name, participantCount, latestMessageSentAt ) {
+
+	// Construct last active text
+	const lastActiveText = latestMessageSentAt === null ? "never been active" : `last active ${ unixTimestampToHumanReadable( latestMessageSentAt ) }`
 
 	// Name & description
-	const descriptionParagraphElement = $( "<p></p>" ).addClass( "m-0" ).text( `${ participantCount } participant(s), active ${ unixTimestampToHumanReadable( lastActiveTimestamp ) }` )
+	const descriptionParagraphElement = $( "<p></p>" ).addClass( "m-0" ).text( `${ participantCount } participant(s), ${ lastActiveText }.` )
 	const nameStrong = $( "<strong></strong>" ).text( name )
 	const nameHeading = $( "<h5></h5>" ).addClass( "m-0" ).append( nameStrong )
 	const informationColumn = $( "<div></div>" ).addClass( "col-10" ).append( nameHeading, descriptionParagraphElement )
@@ -37,7 +40,7 @@ function createRoomElement( name, participantCount, lastActiveTimestamp ) {
 
 	// When the join button is clicked...
 	button.click( () => {
-		console.debug( "Joining:", name, participantCount, lastActiveTimestamp )
+		console.debug( "Joining:", name, participantCount, latestMessageSentAt )
 	} )
 
 	// Bootstrap positioning & styling
@@ -173,6 +176,8 @@ createRoomVisibilityButton.click( () => {
 		createRoomVisibilityButton.text( "Private" ).removeClass( "btn-success" ).addClass( "btn-danger" )
 		createRoomNameVisibilityIcon.removeClass( "bi-eye-fill" ).addClass( "bi-eye-slash-fill" )
 	}
+
+	createRoomVisibilityButton.blur() // Fixes an issue where the button goes white due to form-control Bootstrap class
 } )
 
 // When the end session button is clicked...
@@ -203,17 +208,17 @@ $( () => {
 	$.getJSON( "/api/name", ( responsePayload ) => {
 		if ( responsePayload.hasName === false ) window.location.href = "/"
 	} ).fail( ( request, _, httpStatusMessage ) => {
-		console.error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
 		handleServerErrorCode( request.responseText )
+		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
 		// TODO: Redirect back to the choose name page anyway?
 	} )
 
 	// Populate the page with the public rooms fetched from the server-side API
 	$.getJSON( "/api/rooms", ( responsePayload ) => responsePayload.publicRooms.forEach( roomData => {
-		addRoomElementToPage( createRoomElement( roomData.name, roomData.participantCount, roomData.lastActiveTimestamp ) )
+		addRoomElementToPage( createRoomElement( roomData.name, roomData.participantCount, roomData.latestMessageSentAt ) )
 	} ) ).fail( ( request, _, httpStatusMessage ) => {
-		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
 		handleServerErrorCode( request.responseText )
+		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
 	} )
 
 	// Create fake room for testing

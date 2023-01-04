@@ -5,5 +5,6 @@ export enum ErrorCodes {
 	PayloadMissingProperty = 2,
 	PayloadMalformedValue = 3,
 	NameAlreadyChosen = 4,
-	DatabaseInsertFailure = 5
+	DatabaseInsertFailure = 5,
+	NameNotChosen = 6
 }

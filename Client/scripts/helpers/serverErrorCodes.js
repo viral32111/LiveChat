@@ -6,7 +6,8 @@ const serverErrorCodeMessages = {
 	2: "Request payload missing one or more properties",
 	3: "One or more request payload values are malformed",
 	4: "You have already chosen a name",
-	5: "Failed to add data into the database"
+	5: "Failed to add data into the database",
+	6: "You have not chosen a name yet"
 }
 
 // Shows the feedback modal for a server-side API error
