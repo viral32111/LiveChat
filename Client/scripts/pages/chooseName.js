@@ -57,7 +57,7 @@ nameForm.submit( ( event ) => {
 		handleServerErrorCode( request.responseText )
 
 	// Always change UI back after the request so the user can try again
-	} ).always( () => setFormLoading( createRoomForm, false ) )
+	} ).always( () => setFormLoading( nameForm, false ) )
 
 } )
 
