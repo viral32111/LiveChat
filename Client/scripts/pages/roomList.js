@@ -17,7 +17,7 @@ const endSessionButtonSpinner = $( "#endSessionButtonSpinner" )
 
 // The regular expressions for validating the room name & join codes
 // NOTE: Keep these the same as they are on the server!
-const roomNameValidationPattern = new RegExp( /^[\w\d .,()\[\]<>+=\-!:;$£%&*#@?|]{1,50}$/ )
+const roomNameValidationPattern = new RegExp( /^[\w\d .,()[\]<>+=\-!:;$£%&*#@?|]{1,50}$/ )
 const joinCodeValidationPattern = new RegExp( /^[A-Za-z]{6}$/ )
 
 // Creates all the HTML for a new room element, using data from the server API
@@ -97,11 +97,11 @@ joinPrivateRoomForm.submit( ( event ) => {
 		joinCode: joinCode,
 
 	// When the request is successful...
-	} ).done( ( responsePayload, _, request ) => {
-		if ( responsePayload.roomName === roomName ) {
+	} ).done( ( roomJoinedPayload, _, request ) => {
+		if ( roomJoinedPayload.joinCode === joinCode ) {
 			// TODO: Redirect to new chat room
 		} else {
-			console.error( `Server API sent back a room name '${ responsePayload.roomName }' that does not match the expected name '${ roomName }'?` )
+			console.error( `Server API sent back a room code '${ roomJoinedPayload.joinCode }' that does not match the expected code '${ joinCode }'?` )
 			showErrorModal( "Server sent back mismatching room name" )
 		}
 
@@ -145,15 +145,15 @@ createRoomForm.submit( ( event ) => {
 
 	// Ask the server API to create the room...
 	httpRequest( requestMethod, targetRoute, {
-		roomName: roomName,
+		name: roomName,
 		isPrivate: isRoomPrivate
 
 	// When the request is successful...
-	} ).done( ( responsePayload, _, request ) => {
-		if ( responsePayload.roomName === roomName ) {
+	} ).done( ( roomCreatedPayload, _, request ) => {
+		if ( roomCreatedPayload.name === roomName ) {
 			// TODO: Redirect to new chat room
 		} else {
-			console.error( `Server API sent back a room name '${ responsePayload.roomName }' that does not match the expected name '${ roomName }'?` )
+			console.error( `Server API sent back a room name '${ roomCreatedPayload.name }' that does not match the expected name '${ roomName }'?` )
 			showErrorModal( "Server sent back mismatching room name" )
 		}
 

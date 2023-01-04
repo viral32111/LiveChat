@@ -7,6 +7,7 @@ import { HTTPStatusCodes } from "../httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
 import { ErrorCodes } from "../errorCodes"
 import MongoDB from "../mongodb"
+import { validateRoomName } from "../helpers/validation"
 
 // Create the logger for this file
 const log = getLogger( "routes/room" )
@@ -16,6 +17,12 @@ interface PublicRoom {
 	name: string,
 	participantCount: number,
 	latestMessageSentAt: number | null // Unix timestamp
+}
+
+// Structure of the create room payload
+interface CreateRoomPayload {
+	name: string,
+	isPrivate: boolean
 }
 
 // Route to list all public rooms
@@ -58,7 +65,41 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 
 } )
 
+// Route to create a new room
+expressApp.put( "/api/room", async ( request, response ) => {
+
+	// Fail if the user has not chosen a name yet
+	if ( request.session.chosenName === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
+		error: ErrorCodes.NameNotChosen
+	} )
+
+	// Fail if the request payload is not JSON, or there is no request payload
+	if ( request.is( "application/json" ) === false ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.InvalidContentType } )
+	if ( request.body.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.MissingPayload } )
+
+	// Cast the request body to the expected JSON structure
+	const createRoomPayload: CreateRoomPayload = request.body
+
+	// Fail if any properties are missing or invalid
+	if ( createRoomPayload.name === undefined || createRoomPayload.isPrivate === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMissingProperty } )
+	if ( validateRoomName( createRoomPayload.name ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMalformedValue } )
+
+	// Try to create a new room in the database
+	try {
+		await MongoDB.CreateRoom( createRoomPayload.name, createRoomPayload.isPrivate )
+	} catch {
+		return respondToRequest( response, HTTPStatusCodes.InternalServerError, { error: ErrorCodes.DatabaseInsertFailure } )
+	}
+
+	// Send back the room name as confirmation
+	respondToRequest( response, HTTPStatusCodes.OK, {
+		name: createRoomPayload.name
+	} )
+
+} )
+
 expressApp.get( "/api/room", ( _, response ) => respondToRequest( response, HTTPStatusCodes.NotImplemented ) )
-expressApp.post( "/api/room", ( _, response ) => respondToRequest( response, HTTPStatusCodes.NotImplemented ) )
+
+
 
 expressApp.delete( "/api/session", ( _, response ) => respondToRequest( response, HTTPStatusCodes.NotImplemented ) )

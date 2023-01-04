@@ -25,28 +25,16 @@ expressApp.post( "/api/name", async ( request, response ) => {
 		error: ErrorCodes.NameAlreadyChosen
 	} )
 
-	// Fail if the request payload is not JSON
-	if ( request.is( "application/json" ) === false ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
-		error: ErrorCodes.InvalidContentType
-	} )
-
-	// Fail if there is no request payload
-	if ( request.body.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
-		error: ErrorCodes.MissingPayload
-	} )
+	// Fail if the request payload is not JSON, or there is no request payload
+	if ( request.is( "application/json" ) === false ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.InvalidContentType } )
+	if ( request.body.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.MissingPayload } )
 
 	// Cast the request body to the expected JSON structure
 	const requestPayload: ChooseNamePayload = request.body
 
-	// Fail if there is no name property in the payload
-	if ( requestPayload.desiredName === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
-		error: ErrorCodes.PayloadMissingProperty
-	} )
-
-	// Fail if the name does not meet validation requirements
-	if ( validateChosenName( requestPayload.desiredName ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
-		error: ErrorCodes.PayloadMalformedValue
-	} )
+	// Fail if there is no name property in the payload, or it is invalid
+	if ( requestPayload.desiredName === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMissingProperty } )
+	if ( validateChosenName( requestPayload.desiredName ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMalformedValue } )
 
 	// Set the name in the session (new session is created in-case one already exits)
 	request.session.regenerate( () => {

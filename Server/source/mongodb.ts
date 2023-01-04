@@ -76,7 +76,7 @@ export default class MongoDB {
 			name: name
 		} )
 
-		log.debug( `Inserted new document with ID: ${ insertResult.insertedId }.` )
+		log.debug( `Inserted new guest '${ name }' with ID: ${ insertResult.insertedId }.` )
 
 		return insertResult
 	}
@@ -103,6 +103,20 @@ export default class MongoDB {
 		log.debug( `Found ${ foundMessages.length } messages for room '${ roomId }'.` )
 
 		return foundMessages
+	}
+
+	// Creates a new room in the database
+	public static async CreateRoom( name: string, isPrivate: boolean ) {
+		const insertResult = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).insertOne( {
+			_id: new ObjectId(), // This shuts TypeScript up about the _id not being set
+			name: name,
+			isPrivate: isPrivate,
+			participantCount: 0
+		} )
+
+		log.debug( `Inserted new room '${ name }' with ID: ${ insertResult.insertedId }.` )
+
+		return insertResult
 	}
 
 }
