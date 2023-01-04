@@ -21,7 +21,7 @@ const roomNameValidationPattern = new RegExp( /^[\w\d .,()[\]<>+=\-!:;$£%&*#@?|
 const joinCodeValidationPattern = new RegExp( /^[A-Za-z]{6}$/ )
 
 // Creates all the HTML for a new room element, using data from the server API
-function createRoomElement( name, participantCount, latestMessageSentAt ) {
+function createRoomElement( name, participantCount, latestMessageSentAt, joinCode ) {
 
 	// Construct last active text
 	const lastActiveText = latestMessageSentAt === null ? "never been active" : `last active ${ unixTimestampToHumanReadable( latestMessageSentAt ) }`
@@ -33,18 +33,45 @@ function createRoomElement( name, participantCount, latestMessageSentAt ) {
 	const informationColumn = $( "<div></div>" ).addClass( "col-10" ).append( nameHeading, descriptionParagraphElement )
 
 	// Join button
-	const buttonTextSpan = $( "<span></span>" ).text( "Join" )
-	const buttonSpinnerSpan = $( "<span></span>" ).addClass( "spinner-border spinner-border-sm visually-hidden" ).attr( "role", "status" ).attr( "aria-hidden", true )
-	const button = $( "<button></button>" ).addClass( "btn btn-primary w-100 h-100" ).attr( "type", "submit" ).append( buttonSpinnerSpan, buttonTextSpan )
-	const buttonColumnn = $( "<div></div>" ).addClass( "col-2" ).append( button )
+	const joinButtonTextSpan = $( "<span></span>" ).text( "Join" )
+	const joinButtonSpinnerSpan = $( "<span></span>" ).addClass( "spinner-border spinner-border-sm visually-hidden" ).attr( "role", "status" ).attr( "aria-hidden", true )
+	const joinButton = $( "<button></button>" ).addClass( "btn btn-primary w-100 h-100" ).attr( "type", "submit" ).append( joinButtonSpinnerSpan, joinButtonTextSpan )
+	const joinButtonColumnn = $( "<div></div>" ).addClass( "col-2" ).append( joinButton )
 
 	// When the join button is clicked...
-	button.click( () => {
-		console.debug( "Joining:", name, participantCount, latestMessageSentAt )
+	joinButton.click( () => {
+
+		// Disable the button & show the spinner
+		joinButton.prop( "disabled", true )
+		joinButtonSpinnerSpan.removeClass( "visually-hidden" ).attr( "aria-hidden", "false" )
+
+		// Get the request information from the join private room form attributes as they are the same
+		const requestMethod = joinPrivateRoomForm.attr( "method" ), targetRoute = joinPrivateRoomForm.attr( "action" )
+
+		// Request that the server put us in this room
+		httpRequest( requestMethod, `${ targetRoute }/${ joinCode }` ).done( ( roomJoinedPayload, _, request ) => {
+			if ( roomJoinedPayload.code === joinCode ) {
+				window.location.href = "/chat.html"
+			} else {
+				console.error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
+				showErrorModal( "Server sent back mismatching room name" )
+			}
+
+		// Show any errors that occur if the request fails
+		} ).fail( ( request, _, httpStatusMessage ) => {
+			console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+			handleServerErrorCode( request.responseText )
+
+		// Always enable the button & hide the spinner after the request is finished
+		} ).always( () => {
+			joinButton.prop( "disabled", false )
+			joinButtonSpinnerSpan.addClass( "visually-hidden" ).attr( "aria-hidden", "true" )
+		} )
+
 	} )
 
 	// Bootstrap positioning & styling
-	const bootstrapRow = $( "<div></div>" ).addClass( "row" ).append( informationColumn, buttonColumnn )
+	const bootstrapRow = $( "<div></div>" ).addClass( "row" ).append( informationColumn, joinButtonColumnn )
 	return $( "<div></div>" ).addClass( "p-2 mb-2 border rounded bg-light" ).append( bootstrapRow )
 
 }
@@ -92,16 +119,12 @@ joinPrivateRoomForm.submit( ( event ) => {
 	// Get the request information from the form attributes
 	const requestMethod = joinPrivateRoomForm.attr( "method" ), targetRoute = joinPrivateRoomForm.attr( "action" )
 
-	// Ask the server API if we can join this room
-	httpRequest( requestMethod, targetRoute, {
-		joinCode: joinCode,
-
-	// When the request is successful...
-	} ).done( ( roomJoinedPayload, _, request ) => {
-		if ( roomJoinedPayload.joinCode === joinCode ) {
-			// TODO: Redirect to new chat room
+	// Request the server API to put us into this room
+	httpRequest( requestMethod, `${targetRoute}/${joinCode}` ).done( ( roomJoinedPayload, _, request ) => {
+		if ( roomJoinedPayload.code === joinCode ) {
+			window.location.href = "/chat.html"
 		} else {
-			console.error( `Server API sent back a room code '${ roomJoinedPayload.joinCode }' that does not match the expected code '${ joinCode }'?` )
+			console.error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
 			showErrorModal( "Server sent back mismatching room name" )
 		}
 
@@ -212,8 +235,8 @@ $( () => {
 			} )
 
 		// We have a name, so populate the page with the public room's fetched the server API
-		} else $.getJSON( "/api/rooms", ( responsePayload ) => responsePayload.publicRooms.forEach( roomData => {
-			addRoomElementToPage( createRoomElement( roomData.name, roomData.participantCount, roomData.latestMessageSentAt ) )
+		} else $.getJSON( "/api/rooms", ( publicRoomsPayload ) => publicRoomsPayload.publicRooms.forEach( publicRoom => {
+			addRoomElementToPage( createRoomElement( publicRoom.name, publicRoom.participantCount, publicRoom.latestMessageSentAt, publicRoom.joinCode ) )
 		} ) ).fail( ( request, _, httpStatusMessage ) => {
 			handleServerErrorCode( request.responseText )
 			throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )

@@ -5,7 +5,7 @@ import { getLogger } from "log4js"
 import { expressApp } from "../main"
 import { HTTPStatusCodes } from "../httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
-import { validateRoomName } from "../helpers/validation"
+import { validateRoomJoinCode, validateRoomName } from "../helpers/validation"
 import { ErrorCodes } from "../errorCodes"
 import MongoDB from "../mongodb"
 
@@ -16,7 +16,8 @@ const log = getLogger( "routes/room" )
 interface PublicRoom {
 	name: string,
 	participantCount: number,
-	latestMessageSentAt: number | null // Unix timestamp
+	latestMessageSentAt: number | null, // Unix timestamp
+	joinCode: string
 }
 
 // Structure of the create room payload
@@ -37,7 +38,9 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 	const publicRoomsList: PublicRoom[] = []
 
 	// Fetch all public rooms
-	const publicRooms = await MongoDB.GetRooms( false )
+	const publicRooms = await MongoDB.GetRooms( {
+		isPrivate: false
+	} )
 
 	// Loop through those public rooms...
 	for ( const publicRoom of publicRooms ) {
@@ -49,7 +52,8 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 		publicRoomsList.push( {
 			name: publicRoom.name,
 			participantCount: publicRoom.participantCount,
-			latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ 0 ].sentAt ).getTime() / 1000 : null
+			latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ 0 ].sentAt ).getTime() / 1000 : null,
+			joinCode: publicRoom.joinCode
 		} )
 	}
 
@@ -101,7 +105,39 @@ expressApp.put( "/api/room", async ( request, response ) => {
 
 } )
 
-expressApp.get( "/api/room", ( _, response ) => respondToRequest( response, HTTPStatusCodes.NotImplemented ) )
+// Route to join a room
+expressApp.get( "/api/room/:code", async ( request, response ) => {
+
+	// Fail if the user has not chosen a name yet
+	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
+		error: ErrorCodes.NameNotChosen
+	} )
+
+	// Fail if the join code property is missing or invalid
+	if ( request.params.code === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMissingProperty } )
+	if ( validateRoomJoinCode( request.params.code ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMalformedValue } )
+
+	// Try to get the room with the provided join code
+	try {
+		const room = await MongoDB.GetRooms( {
+			joinCode: request.params.code
+		} )
+
+		// Set the room ID in the session
+		request.session.roomId = room[ 0 ]._id
+	} catch ( errorMessage ) {
+		log.error( `Failed to get room from join code '${ request.params.code }' from the database (${ errorMessage })!` )
+		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseFindFailure
+		} )
+	}
+
+	// Respond with the join code for confirmation
+	respondToRequest( response, HTTPStatusCodes.OK, {
+		code: request.params.code
+	} )
+
+} )
 
 // Route to end the current session
 expressApp.delete( "/api/session", ( request, response ) => {
@@ -125,7 +161,7 @@ expressApp.delete( "/api/session", ( request, response ) => {
 				await MongoDB.RemoveGuest( guestId )
 			} catch ( mongoErrorMessage ) {
 				log.error( `Failed to delete guest '${ guestId }' from the database (${ errorMessage })!` )
-				respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+				return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
 					error: ErrorCodes.DatabaseDeleteFailure
 				} )
 			}

@@ -7,3 +7,7 @@ export const validateChosenName = ( chosenName: string ) => chosenNamePattern.te
 // The regular expression & helper function for validating room names
 const roomNameValidationPattern = new RegExp( /^[\w\d .,()[\]<>+=\-!:;$£%&*#@?|]{1,50}$/ )
 export const validateRoomName = ( roomName: string ) => roomNameValidationPattern.test( roomName )
+
+// The regular expression & helper function for validating room join codes
+const roomJoinCodeValidationPattern = new RegExp( /^[A-Za-z]{6}$/ )
+export const validateRoomJoinCode = ( roomJoinCode: string ) => roomJoinCodeValidationPattern.test( roomJoinCode )

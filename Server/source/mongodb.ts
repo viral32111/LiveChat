@@ -2,13 +2,17 @@
 import { MongoClient, Db, ObjectId, WithId, Document } from "mongodb"
 import { getLogger } from "log4js"
 
+// Import required functions from helper scripts
+import { generateRoomJoinCode } from "./helpers/random"
+
 // Create the logger for this file
 const log = getLogger( "mongodb" )
 
 interface Room extends WithId<Document> {
 	name: string
 	isPrivate: boolean,
-	participantCount: number
+	participantCount: number,
+	joinCode: string
 }
 
 interface Message extends WithId<Document> {
@@ -82,12 +86,9 @@ export default class MongoDB {
 	}
 
 	// Gets a list of the rooms in the database
-	public static async GetRooms( includePrivate = false ) {
-		const foundRooms = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms )
-			.find<Room>( includePrivate === true ? {} : { isPrivate: false } )
-			.toArray()
-
-		log.debug( `Found ${ foundRooms.length } rooms (included private: ${ includePrivate }).` )
+	public static async GetRooms( filter = {} ) {
+		const foundRooms = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).find<Room>( filter ).toArray()
+		log.debug( `Found ${ foundRooms.length } rooms using filter: '${ JSON.stringify( filter ) }'.` )
 
 		return foundRooms
 	}
@@ -111,7 +112,8 @@ export default class MongoDB {
 			_id: new ObjectId(), // This shuts TypeScript up about the _id not being set
 			name: name,
 			isPrivate: isPrivate,
-			participantCount: 0
+			participantCount: 0,
+			joinCode: generateRoomJoinCode()
 		} )
 
 		log.debug( `Inserted new room '${ name }' with ID: ${ insertResult.insertedId }.` )

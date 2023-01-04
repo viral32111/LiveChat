@@ -8,5 +8,6 @@ export enum ErrorCodes {
 	DatabaseInsertFailure = 5,
 	NameNotChosen = 6,
 	ExpressSessionDestroyFailure = 7,
-	DatabaseDeleteFailure = 8
+	DatabaseDeleteFailure = 8,
+	DatabaseFindFailure = 9
 }

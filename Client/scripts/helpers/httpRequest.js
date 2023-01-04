@@ -1,14 +1,20 @@
 // Sends a JSON request to the server-side API
-const httpRequest = ( method, route, payload = {} ) => $.ajax( route, {
+function httpRequest( method, route, payload = {} ) {
+	method = method.toUpperCase() // HTTP method must be upper-case
 
-	// Set the content type & payload
-	contentType: "application/json",
-	data: JSON.stringify( payload ),
+	// GET requests must have their payload as a query string
+	if ( method === "GET" ) return $.ajax( route, {
+		method: method.toUpperCase(),
+		data: payload,
+		dataType: "json"
+	} )
 
-	// Expected response type is JSON so it's automatically parsed
-	dataType: "json",
+	// All other requests will sent their data as JSON in the request body
+	else return $.ajax( route, {
+		method: method.toUpperCase(),
+		contentType: "application/json",
+		data: JSON.stringify( payload ),
+		dataType: "json"
+	} )
 
-	// HTTP method must be upper-case
-	method: method.toUpperCase()
-
-} )
+}

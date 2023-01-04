@@ -16,6 +16,7 @@ const log = getLogger( "express" )
 declare module "express-session" {
 	interface SessionData {
 		guestId: ObjectId
+		roomId: ObjectId
 	}
 }
 
@@ -33,6 +34,9 @@ export default function() {
 	log.info( "Initialised the Express app." )
 
 	// Add support for various middlewares for the Express application
+	/*expressApp.use( express.urlencoded( {
+		extended: true
+	} ) )*/
 	expressApp.use( express.json() )
 	expressApp.use( expressSession( {
 		name: "sessionIdentifier",

@@ -9,7 +9,8 @@ const serverErrorCodeMessages = {
 	5: "Failed to add data into the database",
 	6: "You have not chosen a name yet",
 	7: "Failed to remove your session",
-	8: "Failed to remove data from the database"
+	8: "Failed to remove data from the database",
+	9: "Failed to find data in the database"
 }
 
 // Shows the feedback modal for a server-side API error
