@@ -206,19 +206,25 @@ $( () => {
 
 	// Redirect back to the choose name page if we haven't got a name yet
 	$.getJSON( "/api/name", ( responsePayload ) => {
-		if ( responsePayload.hasName === false ) window.location.href = "/"
-	} ).fail( ( request, _, httpStatusMessage ) => {
-		handleServerErrorCode( request.responseText )
-		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
-		// TODO: Redirect back to the choose name page anyway?
-	} )
+		if ( responsePayload.hasName === false ) {
+			showFeedbackModal( "Notice", "You have not yet chosen a name yet. Close this popup to be redirected to the choose name page.", () => {
+				window.location.href = "/"
+			} )
 
-	// Populate the page with the public rooms fetched from the server-side API
-	$.getJSON( "/api/rooms", ( responsePayload ) => responsePayload.publicRooms.forEach( roomData => {
-		addRoomElementToPage( createRoomElement( roomData.name, roomData.participantCount, roomData.latestMessageSentAt ) )
-	} ) ).fail( ( request, _, httpStatusMessage ) => {
-		handleServerErrorCode( request.responseText )
-		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
+		// We have a name, so populate the page with the public room's fetched the server API
+		} else $.getJSON( "/api/rooms", ( responsePayload ) => responsePayload.publicRooms.forEach( roomData => {
+			addRoomElementToPage( createRoomElement( roomData.name, roomData.participantCount, roomData.latestMessageSentAt ) )
+		} ) ).fail( ( request, _, httpStatusMessage ) => {
+			handleServerErrorCode( request.responseText )
+			throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
+		} )
+
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		handleServerErrorCode( request.responseText, () => {
+			window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
+		} )
+
+		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
 	} )
 
 } )

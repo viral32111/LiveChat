@@ -18,19 +18,19 @@ nameForm.submit( ( event ) => {
 	event.stopPropagation()
 
 	// Show any Bootstrap input validation messages
-	nameForm.addClass( "was-validated" )
+	//nameForm.addClass( "was-validated" )
 
 	// Do not continue if form validation fails
-	if ( nameForm[ 0 ].checkValidity() !== true ) return
+	//if ( nameForm[ 0 ].checkValidity() !== true ) return
 
 	// Get the name that was entered
 	const desiredName = nameInput.val()
 
 	// Fail if the manual input validation fails
-	if ( chosenNameValidationPattern.test( desiredName ) !== true ) return showFeedbackModal( "Notice", "The name you have entered is invalid." )
+	//if ( chosenNameValidationPattern.test( desiredName ) !== true ) return showFeedbackModal( "Notice", "The name you have entered is invalid." )
 
 	// Hide any Bootstrap input validation messages
-	nameForm.removeClass( "was-validated" )
+	//nameForm.removeClass( "was-validated" )
 
 	// Change UI to indicate loading
 	setFormLoading( nameForm, true )
@@ -63,7 +63,11 @@ nameForm.submit( ( event ) => {
 
 // Redirect to the room list page if we have already chosen a name
 $( () => $.getJSON( "/api/name", ( responsePayload ) => {
-	if ( responsePayload.hasName === true ) window.location.href = "/rooms.html"
+	if ( responsePayload.hasName === true ) {
+		showFeedbackModal( "Notice", "You have already chosen a name. Close this popup to be redirected to the room list page.", () => {
+			window.location.href = "/rooms.html"
+		} )
+	}
 } ).fail( ( request, _, httpStatusMessage ) => {
 	handleServerErrorCode( request.responseText )
 	throw new Error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
