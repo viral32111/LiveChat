@@ -29,8 +29,8 @@ suite( "API routes", () => {
 
 			chai.assert.equal( response.status, 200, "Expected HTTP response status code to be 200 OK" )
 			chai.assert.deepEqual( JSON.parse( response.text ), { chosenName: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )
+			//chai.assert.containIgnoreSpaces( response.header[ "set-cookie" ], "sessionIdentifier=", "Expected HTTP response to set a session identifier cookie" )
 
-			// TODO: Check for sessionIdentifier cookie
 			// TODO: Check if the name is now in MongoDB
 		} )
 
@@ -60,9 +60,37 @@ suite( "API routes", () => {
 
 	} )
 
+	// Test the check name API route
+	test( "Check Name", () => {
+
+		// Should return false as no name has been chosen yet
+		chai.request( expressApp ).get( "/api/name" ).end( ( _, response ) => {
+			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+
+			chai.assert.equal( response.status, 200, "Expected HTTP response status code to be 200 OK" )
+			chai.assert.deepEqual( JSON.parse( response.text ), { hasName: false }, "Expected HTTP response body to be a JSON object containing false" )
+		} )
+
+		// Should return true as we choose a name, then check
+		chai.request( expressApp ).post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( ( _, chooseNameResponse ) => {
+			chai.assert.containIgnoreCase( chooseNameResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+			chai.assert.equal( chooseNameResponse.status, 200, "Expected HTTP response status code to be 200 OK" )
+			chai.assert.deepEqual( JSON.parse( chooseNameResponse.text ), { chosenName: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )
+
+			// Get the value of the session identifier cookie, so we can use it in the next request to appear as if we're logged in
+			const sessionIdentifier = chooseNameResponse.header[ "set-cookie" ].toString().split( "sessionIdentifier=" )[ 1 ].split( ";" )[ 0 ]
+
+			chai.request( expressApp ).get( "/api/name" ).set( "cookie", `sessionIdentifier=${ sessionIdentifier }` ).end( ( _, checkNameResponse ) => {
+				chai.assert.containIgnoreCase( checkNameResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+				chai.assert.equal( checkNameResponse.status, 200, "Expected HTTP response status code to be 200 OK" )
+				chai.assert.deepEqual( JSON.parse( checkNameResponse.text ), { hasName: true }, "Expected HTTP response body to be a JSON object containing true" )
+			} )
+		} )
+	} )
+
 	// Stop everything after all tests have completed
 	// TODO: This doesn't seem to exit the program?
-	suiteTeardown( () => {
+	/*suiteTeardown( () => {
 		MongoDB.Disconnect().then( () => {
 			//console.debug( "DISCONNECTED FROM MONGODB" )
 			httpServer.close( () => {
@@ -70,6 +98,6 @@ suite( "API routes", () => {
 				//process.exit( 0 )
 			} )
 		} )
-	} )
+	} )*/
 
 } )
