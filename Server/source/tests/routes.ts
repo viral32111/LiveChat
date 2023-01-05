@@ -11,8 +11,6 @@ import MongoDB from "../mongodb"
 chai.use( chaiHTTP )
 chai.use( chaiString )
 
-// TODO: These can't be tested in CI because they require a MongoDB instance to be running
-
 // Create a testing suite for the API routes
 suite( "API routes", () => {
 
