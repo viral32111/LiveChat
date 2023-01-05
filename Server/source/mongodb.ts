@@ -154,4 +154,11 @@ export default class MongoDB {
 		return deleteResult
 	}
 
+	// Remove all rooms from the database
+	public static async PurgeRooms() {
+		const deleteResult = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).deleteMany( {} )
+		log.debug( `Removed ${ deleteResult.deletedCount } rooms.` )
+		return deleteResult
+	}
+
 }
