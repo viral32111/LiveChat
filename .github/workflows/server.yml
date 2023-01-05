@@ -49,7 +49,7 @@ jobs:
 
       - name: Generate Express session secret
         id: express
-        run:
+        run: |
           openssl version
           openssl help
           openssl help rand
