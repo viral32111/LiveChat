@@ -31,8 +31,8 @@ configure( {
 const log = getLogger( "main" )
 
 // Attempt to load the environment variables file
-if ( dotenv.config().parsed ) log.info( "Loaded the environment variables file." )
-else log.warn( "Failed to load the environment variables file." )
+if ( dotenv.config( { path: `./${ process.env.NODE_ENV }.env` } ).parsed ) log.info( `Loaded the '${ process.env.NODE_ENV }' environment variables file.` )
+else log.warn( `Failed to load '${ process.env.NODE_ENV }' the environment variables file.` )
 
 // Fail if the required environment variables are not set & assign them to constants for easier access
 if ( !process.env.HTTP_SERVER_ADDRESS ) throw new Error( "The HTTP_SERVER_ADDRESS environment variable is not set" )

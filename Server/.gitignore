@@ -6,3 +6,7 @@ dist/
 
 # Server-side logs
 logs/
+
+# Development & test environment variables
+development.env
+test.env

@@ -2,10 +2,6 @@
 import chai from "chai"
 import chaiHTTP from "chai-http"
 import chaiString from "chai-string"
-//import { getLogger } from "log4js"
-
-// Set the environment to testing
-process.env.NODE_ENV = "test"
 
 // Import required code from other scripts
 import { expressApp, httpServer } from "../main"
@@ -20,18 +16,26 @@ chai.use( chaiString )
 // Create a testing suite for the API routes
 suite( "API routes", () => {
 
+	// Purge the database after each test
+	teardown( async () => {
+		await MongoDB.PurgeGuests()
+	} )
+
 	// Test the choose name API route
 	test( "Choose Name", () => {
 
 		// Should succeed when sending a POST request with a valid name
-		chai.request( expressApp ).post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( ( _, response ) => {
+		chai.request( expressApp ).post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( async ( _, response ) => {
 			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
 
 			chai.assert.equal( response.status, 200, "Expected HTTP response status code to be 200 OK" )
 			chai.assert.deepEqual( JSON.parse( response.text ), { chosenName: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )
-			//chai.assert.containIgnoreSpaces( response.header[ "set-cookie" ], "sessionIdentifier=", "Expected HTTP response to set a session identifier cookie" )
+			chai.assert.startsWith( response.header[ "set-cookie" ], "sessionIdentifier=", "Expected HTTP response to set a session identifier cookie" )
 
-			// TODO: Check if the name is now in MongoDB
+			// Check if the name is now in MongoDB
+			const guest = await MongoDB.GetGuest( "JohnSmith" )
+			chai.assert.isNotNull( guest, "Expected the guest to be in MongoDB" )
+			chai.assert.equal( guest?.name, "JohnSmith", "Expected the guest's name to be what was sent" )
 		} )
 
 		// Should error when sending an invalid content type
@@ -72,7 +76,7 @@ suite( "API routes", () => {
 		} )
 
 		// Should return true as we choose a name, then check
-		chai.request( expressApp ).post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( ( _, chooseNameResponse ) => {
+		chai.request( expressApp ).post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( async ( _, chooseNameResponse ) => {
 			chai.assert.containIgnoreCase( chooseNameResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
 			chai.assert.equal( chooseNameResponse.status, 200, "Expected HTTP response status code to be 200 OK" )
 			chai.assert.deepEqual( JSON.parse( chooseNameResponse.text ), { chosenName: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )

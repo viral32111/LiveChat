@@ -8,6 +8,10 @@ import { generateRoomJoinCode } from "./helpers/random"
 // Create the logger for this file
 const log = getLogger( "mongodb" )
 
+interface Guest extends WithId<Document> {
+	name: string
+}
+
 interface Room extends WithId<Document> {
 	name: string
 	isPrivate: boolean,
@@ -61,11 +65,11 @@ export default class MongoDB {
 	// Connects to & disconnects from the database
 	public static async Connect() {
 		await MongoDB.Client.connect()
-		log.info( "Connected to the database." )
+		log.info( "Connected to MongoDB." )
 	}
 	public static async Disconnect() {
 		await MongoDB.Client.close()
-		log.info( "Disconnected from the database." )
+		log.info( "Disconnected from MongoDB." )
 	}
 
 	// Checks the connection
@@ -129,6 +133,24 @@ export default class MongoDB {
 
 		log.debug( `Deleted guest '${ guestId }'.` )
 
+		return deleteResult
+	}
+
+	// Get a guest by name from the database
+	public static async GetGuest( name: string ) {
+		const foundGuest = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).findOne( {
+			name: name
+		} )
+
+		log.debug( `Found guest '${ foundGuest }'.` )
+
+		return foundGuest
+	}
+
+	// Remove all guests from the database
+	public static async PurgeGuests() {
+		const deleteResult = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).deleteMany( {} )
+		log.debug( `Removed ${ deleteResult.deletedCount } guests.` )
 		return deleteResult
 	}
 
