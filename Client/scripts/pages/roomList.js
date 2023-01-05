@@ -6,14 +6,11 @@ const publicRoomsColumn2 = $( "#publicRoomsColumn2" )
 const noPublicRoomsNotice = $( "#noPublicRoomsNotice" )
 const joinPrivateRoomForm = $( "#joinPrivateRoomForm" )
 const joinPrivateRoomCode = $( "#joinPrivateRoomCode" )
-const joinPrivateRoomButton = $( "#joinPrivateRoomButton" )
 const createRoomForm = $( "#createRoomForm" )
 const createRoomName = $( "#createRoomName" )
 const createRoomNameVisibilityIcon = $( "#createRoomNameVisibilityIcon" )
 const createRoomVisibilityButton = $( "#createRoomVisibilityButton" )
-const createRoomButton = $( "#createRoomButton" )
 const endSessionButton = $( "#endSessionButton" )
-const endSessionButtonSpinner = $( "#endSessionButtonSpinner" )
 
 // The regular expressions for validating the room name & join codes
 // NOTE: Keep these the same as they are on the server!
@@ -223,9 +220,8 @@ createRoomVisibilityButton.click( () => {
 // When the end session button is clicked...
 endSessionButton.click( () => {
 
-	// Disable the button & show the loading spinner
-	endSessionButton.prop( "disabled", true )
-	endSessionButtonSpinner.removeClass( "visually-hidden" ).attr( "aria-hidden", "false" )
+	// Make the button appear to be loading
+	setButtonLoading( endSessionButton, true )
 
 	// Request that the server-side API end our session
 	httpRequest( "DELETE", "/api/session" ).done( () => {
@@ -234,10 +230,7 @@ endSessionButton.click( () => {
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		console.error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to end our session` )
 		handleServerErrorCode( request.responseText )
-	} ).always( () => { // Re-enable the button & hide the loading spinner
-		endSessionButton.prop( "disabled", false )
-		endSessionButtonSpinner.addClass( "visually-hidden" ).attr( "aria-hidden", "true" )
-	} )
+	} ).always( () => setButtonLoading( endSessionButton, false ) ) // Return the button to normal
 
 } )
 

@@ -1,10 +1,17 @@
-// Enables/disables all form controls & shows/hides the button's loading spinner, to make a form appear to be loading
+// Enables/disables all form controls, to make a form appear to be loading
 function setFormLoading( formElement, isLoading ) {
+	if ( isLoading === true ) formElement.find( "input, button" ).prop( "disabled", true )
+	else formElement.find( "input, button" ).prop( "disabled", false )
+	setButtonLoading( formElement.find( "button" ), isLoading )
+}
+
+// Enables/disables a button & shows/hides the button's loading spinner, to make a button appear to be loading
+function setButtonLoading( buttonElement, isLoading ) {
 	if ( isLoading === true ) {
-		formElement.find( "input, button" ).prop( "disabled", true )
-		formElement.find( "button span.spinner-border" ).removeClass( "visually-hidden" ).attr( "aria-hidden", "false" )
+		buttonElement.prop( "disabled", true )
+		buttonElement.find( "span.spinner-border" ).removeClass( "visually-hidden" ).attr( "aria-hidden", "false" )
 	} else {
-		formElement.find( "input, button" ).prop( "disabled", false )
-		formElement.find( "button span.spinner-border" ).addClass( "visually-hidden" ).attr( "aria-hidden", "true" )
+		buttonElement.prop( "disabled", false )
+		buttonElement.find( "span.spinner-border" ).addClass( "visually-hidden" ).attr( "aria-hidden", "true" )
 	}
 }

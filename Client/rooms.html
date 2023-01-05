@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 	<head>
-		<title>Chat Rooms - Live Chat</title>
+		<title>Room List - Live Chat</title>
 
+		<!-- Character encoding & responsiveness -->
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width,initial-scale=1">
 
@@ -10,11 +11,9 @@
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous">
 
-		<style>
-			body {
-				background: radial-gradient( circle, rgba( 255, 255, 255, 1 ) 70%, rgba( 240, 240, 240, 1 ) 100% );
-			}
-		</style>
+		<!-- Custom stylesheets -->
+		<link rel="stylesheet" href="/stylesheets/background.css" type="text/css">
+		<link rel="stylesheet" href="/stylesheets/links.css" type="text/css">
 	</head>
 	<body>
 		<!-- Container with space above it -->
@@ -26,36 +25,26 @@
 
 					<!-- Title & instructions -->
 					<div class="row">
-						<h1><strong>Chat Rooms</strong></h1>
+						<h1><strong>Room List</strong></h1>
 						<p>Join either a public or private room,<br>or create a new room to start chatting.</p>
 					</div>
 
 					<!-- Row for forms -->
 					<div class="row mb-4">
 
-						<!-- First column -->
+						<!-- Form for joining private room -->
 						<div class="col-6">
-
-							<!-- Form for joining private room -->
 							<div class="row">
-								<form id="joinPrivateRoomForm" method="get" action="/api/room">
+								<form id="joinPrivateRoomForm" method="get" action="/api/room" novalidate>
 
-									<!-- Input for code -->
+									<!-- Input (with icon) for code -->
 									<div class="input-group has-validation mb-2">
-		
-										<!-- Icon -->
-										<span id="joinPrivateRoomIcon" class="input-group-text">
-											<i class="bi bi-incognito"></i>
-										</span>
-		
-										<!-- Input with validation in attributes -->
+										<span id="joinPrivateRoomIcon" class="input-group-text"><i class="bi bi-incognito"></i></span>
 										<input id="joinPrivateRoomCode" class="form-control shadow-none" type="text" placeholder="AbCdEf..." required minlength="6" maxlength="6" aria-label="AbCdEf..." aria-describedby="joinPrivateRoomIcon">
-										
-										<!-- Message if input validation fails -->
-										<div class="invalid-feedback">Please enter a valid room code.</div>
+										<div class="invalid-feedback">Please enter a valid room code.</div> <!-- Message if Bootstrap validation fails -->
 									</div>
 
-									<!-- Submit button with spinner -->
+									<!-- Button (with spinner) to submit form -->
 									<button id="joinPrivateRoomButton" class="btn btn-primary w-100" type="submit">
 										<span class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
 										<span>Join Private Room</span>
@@ -63,50 +52,36 @@
 
 								</form>
 							</div>
-
 						</div>
 
-						<!-- Second column -->
+						<!-- Form for creating new room -->
 						<div class="col-6">
-
-							<!-- Form for creating new room -->
 							<div class="row">
-								<form id="createRoomForm" method="post" action="/api/room">
+								<form id="createRoomForm" method="post" action="/api/room" novalidate>
 
 									<!-- Row for name input & visibility checkbox -->
 									<div class="row mb-2">
 
-										<!-- Input for name -->
+										<!-- Input (with icon) for name -->
 										<div class="col-9 pe-1">
 											<div class="input-group has-validation">
-
-												<!-- Icon -->
-												<span id="createRoomIcon" class="input-group-text">
-													<i class="bi bi-house"></i>
-												</span>
-
-												<!-- Input with validation in attributes -->
+												<span id="createRoomIcon" class="input-group-text"><i class="bi bi-house"></i></span>
 												<input id="createRoomName" class="form-control shadow-none pe-3" type="text" placeholder="Example Room..." required minlength="2" maxlength="30" aria-label="Example Room..." aria-describedby="createRoomIcon">
-
-												<!-- Message if input validation fails -->
-												<div class="invalid-feedback">Please enter a name for the room.</div>
-
+												<div class="invalid-feedback">Please enter a name for the room.</div> <!-- Message if Bootstrap validation fails -->
 											</div>
 										</div>
 
-										<!-- Toggle button for visibility -->
+										<!-- Button (with icon) to toggle visibility -->
 										<div class="col-3 ps-1">
 											<div class="input-group">
-												<span class="input-group-text">
-													<i id="createRoomNameVisibilityIcon" class="bi bi-eye-fill"></i>
-												</span>
+												<span class="input-group-text"><i id="createRoomNameVisibilityIcon" class="bi bi-eye-fill"></i></span>
 												<button id="createRoomVisibilityButton" class="form-control btn btn-success shadow-none" type="button">Public</button>
 											</div>
 										</div>
 
 									</div>
 
-									<!-- Submit button with spinner -->
+									<!-- Button (with spinner) to submit form -->
 									<button id="createRoomButton" class="btn btn-primary w-100" type="submit">
 										<span class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
 										<span>Create New Room</span>
@@ -118,7 +93,7 @@
 						</div>
 					</div>
 
-					<!-- Row with 2 columns for the public rooms -->
+					<!-- Row for the public rooms -->
 					<div class="row mb-2 text-start">
 
 						<!-- Notice for no public rooms, hidden once a room is added -->
@@ -128,15 +103,17 @@
 							</div>
 						</div>
 
+						<!-- Columns for displaying public rooms -->
 						<div id="publicRoomsColumn1" class="col-6"></div>
 						<div id="publicRoomsColumn2" class="col-6"></div>
+
 					</div>
 
-					<!-- Row for end session button -->
+					<!-- Button (with spinner) to end session -->
 					<div class="row">
 						<div class="col-12">
 							<button id="endSessionButton" class="btn btn-danger w-100" type="submit">
-								<span id="endSessionButtonSpinner" class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
+								<span class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
 								<span>End Session</span>
 							</button>
 						</div>
