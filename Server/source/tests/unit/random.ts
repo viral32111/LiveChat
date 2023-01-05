@@ -2,10 +2,10 @@
 import chai from "chai"
 
 // Import required functions from the helper script
-import { generateRandomString, generateRoomJoinCode } from "../helpers/random"
+import { generateRandomString, generateRoomJoinCode } from "../../helpers/random"
 
 // Create a testing suite for testing the random functions
-suite( "Random", () => {
+suite( "Unit - Random", () => {
 
 	// Test generating random strings
 	test( "String", () => {

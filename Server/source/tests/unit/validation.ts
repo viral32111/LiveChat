@@ -2,10 +2,10 @@
 import chai from "chai"
 
 // Import required functions from the helper script
-import { validateGuestName, validateRoomJoinCode, validateRoomName } from "../helpers/validation"
+import { validateGuestName, validateRoomJoinCode, validateRoomName } from "../../helpers/validation"
 
 // Create a testing suite for testing input validation
-suite( "Input Validation", () => {
+suite( "Unit - Input Validation", () => {
 
 	// Test input validation for guest names
 	test( "Guest Name", () => {

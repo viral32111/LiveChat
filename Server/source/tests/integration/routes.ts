@@ -4,15 +4,15 @@ import chaiHTTP from "chai-http"
 import chaiString from "chai-string"
 
 // Import required code from other scripts
-import { expressApp } from "../main"
-import MongoDB from "../mongodb"
+import { expressApp } from "../../main"
+import MongoDB from "../../mongodb"
 
 // Enable support for HTTP requests & strings in Chai
 chai.use( chaiHTTP )
 chai.use( chaiString )
 
 // Create a testing suite for the API routes
-suite( "API routes", () => {
+suite( "Integration - API routes", () => {
 
 	// Purge the database after each test
 	teardown( async () => {
