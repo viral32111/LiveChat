@@ -91,6 +91,22 @@ function addRoomElementToPage( roomElement ) {
 
 }
 
+// Populates the page with the public room's fetched the server API
+function populateRoomsOnPage() {
+	$.getJSON( "/api/rooms", ( publicRoomsPayload ) => {
+		publicRoomsColumn1.empty()
+		publicRoomsColumn2.empty()
+		noPublicRoomsNotice.removeClass( "visually-hidden" )
+
+		for ( const publicRoom of publicRoomsPayload.publicRooms ) {
+			addRoomElementToPage( createRoomElement( publicRoom.name, publicRoom.participantCount, publicRoom.latestMessageSentAt, publicRoom.joinCode ) )
+		}
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		handleServerErrorCode( request.responseText )
+		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
+	} )
+}
+
 // When the join private room form is submitted...
 joinPrivateRoomForm.submit( ( event ) => {
 	
@@ -174,6 +190,7 @@ createRoomForm.submit( ( event ) => {
 	// When the request is successful...
 	} ).done( ( roomCreatedPayload, _, request ) => {
 		if ( roomCreatedPayload.name === roomName ) {
+			populateRoomsOnPage()
 			// TODO: Redirect to new chat room
 		} else {
 			console.error( `Server API sent back a room name '${ roomCreatedPayload.name }' that does not match the expected name '${ roomName }'?` )
@@ -233,15 +250,9 @@ $( () => {
 			showFeedbackModal( "Notice", "You have not yet chosen a name yet. Close this popup to be redirected to the choose name page.", () => {
 				window.location.href = "/"
 			} )
-
-		// We have a name, so populate the page with the public room's fetched the server API
-		} else $.getJSON( "/api/rooms", ( publicRoomsPayload ) => publicRoomsPayload.publicRooms.forEach( publicRoom => {
-			addRoomElementToPage( createRoomElement( publicRoom.name, publicRoom.participantCount, publicRoom.latestMessageSentAt, publicRoom.joinCode ) )
-		} ) ).fail( ( request, _, httpStatusMessage ) => {
-			handleServerErrorCode( request.responseText )
-			throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
-		} )
-
+		} else {
+			populateRoomsOnPage() // Initially populate the page with the rooms
+		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText, () => {
 			window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
