@@ -6,7 +6,7 @@ import { expressApp } from "../main"
 import { ErrorCodes } from "../errorCodes"
 import { HTTPStatusCodes } from "../httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
-import { validateChosenName } from "../helpers/validation"
+import { validateGuestName } from "../helpers/validation"
 import MongoDB from "../mongodb"
 
 // Create the logger for this file
@@ -34,7 +34,7 @@ expressApp.post( "/api/name", async ( request, response ) => {
 
 	// Fail if there is no name property in the payload, or it is invalid
 	if ( requestPayload.desiredName === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMissingProperty } )
-	if ( validateChosenName( requestPayload.desiredName ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMalformedValue } )
+	if ( validateGuestName( requestPayload.desiredName ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMalformedValue } )
 
 	// Trt to add the new guest to the database
 	try {
