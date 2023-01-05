@@ -20,10 +20,10 @@ configure( {
 		"default": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"main": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"routes/name": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
-		"tests/routes": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"mongodb": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"express": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
-		"routes/room": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" }
+		"routes/room": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"routes/chat": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" }
 	}
 } )
 

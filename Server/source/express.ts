@@ -72,6 +72,7 @@ export default function() {
 	import( "./routes/name" )
 	import( "./routes/favicon" )
 	import( "./routes/room" )
+	import( "./routes/chat" )
 	log.info( "Loaded all API routes." )
 
 	// Return the Express app for use in other scripts

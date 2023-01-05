@@ -1,14 +1,14 @@
-// Import required third-party packages
+// Import required code from third-party packages
 import { getLogger } from "log4js"
+import { ObjectId } from "mongodb"
 
-// Import required data from other scripts
+// Import required code from other scripts
 import { expressApp } from "../main"
 import { ErrorCodes } from "../enumerations/errorCodes"
 import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
 import { validateGuestName } from "../helpers/validation"
 import MongoDB from "../mongodb"
-import { ObjectId } from "mongodb"
 
 // Create the logger for this file
 const log = getLogger( "routes/name" )
