@@ -91,17 +91,24 @@ expressApp.post( "/api/room", async ( request, response ) => {
 
 	// Try to create a new room in the database
 	try {
-		const newRoom = await MongoDB.CreateRoom( createRoomPayload.name, createRoomPayload.isPrivate )
-		log.info( `Created new ${ createRoomPayload.isPrivate === true ? "private" : "public" } room '${ createRoomPayload.name }' (${ newRoom.insertedId }) for guest '${ request.session.guestId }'.` )
+		const roomInsert = await MongoDB.CreateRoom( createRoomPayload.name, createRoomPayload.isPrivate )
+		log.info( `Created new ${ createRoomPayload.isPrivate === true ? "private" : "public" } room '${ createRoomPayload.name }' (${ roomInsert.insertedId }) for guest '${ request.session.guestId }'.` )
+	
+		// Get the new room from the database
+		const newRooms = await MongoDB.GetRooms( { _id: roomInsert.insertedId } )
+		if ( newRooms.length <= 0 ) throw new Error( "Room somehow not found in database right after insert?" )
+
+		// Send back the room data as confirmation
+		respondToRequest( response, HTTPStatusCodes.OK, {
+			name: newRooms[ 0 ].name,
+			isPrivate: newRooms[ 0 ].isPrivate,
+			joinCode: newRooms[ 0 ].joinCode
+		} )
+
 	} catch ( errorMessage ) {
 		log.error( `Failed to insert new room '${ createRoomPayload.name }' into the database (${ errorMessage })!` )
 		return respondToRequest( response, HTTPStatusCodes.InternalServerError, { error: ErrorCodes.DatabaseInsertFailure } )
 	}
-
-	// Send back the room name as confirmation
-	respondToRequest( response, HTTPStatusCodes.OK, {
-		name: createRoomPayload.name
-	} )
 
 } )
 
