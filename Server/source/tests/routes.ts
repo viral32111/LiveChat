@@ -4,7 +4,7 @@ import chaiHTTP from "chai-http"
 import chaiString from "chai-string"
 
 // Import required code from other scripts
-import { expressApp, httpServer } from "../main"
+import { expressApp } from "../main"
 import MongoDB from "../mongodb"
 
 // Enable support for HTTP requests & strings in Chai
@@ -91,17 +91,5 @@ suite( "API routes", () => {
 			} )
 		} )
 	} )
-
-	// Stop everything after all tests have completed
-	// TODO: This doesn't seem to exit the program?
-	/*suiteTeardown( () => {
-		MongoDB.Disconnect().then( () => {
-			//console.debug( "DISCONNECTED FROM MONGODB" )
-			httpServer.close( () => {
-				//console.log( "HTTP SERVER STOPPED" )
-				//process.exit( 0 )
-			} )
-		} )
-	} )*/
 
 } )
