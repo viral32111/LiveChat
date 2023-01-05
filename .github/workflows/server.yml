@@ -60,8 +60,8 @@ jobs:
         env:
           MONGO_HOST: ${{ secrets.MONGO_HOST }}
           MONGO_DATABASE: LiveChat-Test
-          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          MONGO_USER_NAME: ${{ secrets.MONGO_USERNAME }}
+          MONGO_USER_PASS: ${{ secrets.MONGO_PASSWORD }}
           EXPRESS_SESSION_SECRET: ${{ steps.express.outputs.EXPRESS_SESSION_SECRET }}
         run: npm test
 
