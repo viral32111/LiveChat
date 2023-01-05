@@ -102,7 +102,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: ./Build/
+          path: ./Server/Build/
 
       - name: Remove unit & integration test scripts
         run: rm --verbose --recursive ./Build/dist/tests/
@@ -142,7 +142,7 @@ jobs:
         with:
           push: ${{ github.event_name != 'pull_request' }}
           file: ./Server/Dockerfile
-          context: ./Build/
+          context: ./Server/Build/
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           no-cache: true
