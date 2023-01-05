@@ -2,13 +2,14 @@
 import chai from "chai"
 import chaiHTTP from "chai-http"
 import chaiString from "chai-string"
-import { getLogger } from "log4js"
+//import { getLogger } from "log4js"
 
-// Import required variables from the main script
+// Set the environment to testing
+process.env.NODE_ENV = "test"
+
+// Import required code from other scripts
 import { expressApp, httpServer } from "../main"
-
-// Create the logger for this file
-const log = getLogger( "tests/routes" )
+import MongoDB from "../mongodb"
 
 // Enable support for HTTP requests & strings in Chai
 chai.use( chaiHTTP )
@@ -23,35 +24,26 @@ suite( "API routes", () => {
 	test( "Choose Name", () => {
 
 		// Should succeed when sending a POST request with a valid name
-		chai.request( expressApp ).post( "/api/set-name" ).send( { name: "JohnSmith" } ).end( ( _, response ) => {
+		chai.request( expressApp ).post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( ( _, response ) => {
 			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
 
 			chai.assert.equal( response.status, 200, "Expected HTTP response status code to be 200 OK" )
-			chai.assert.deepEqual( JSON.parse( response.text ), { name: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )
+			chai.assert.deepEqual( JSON.parse( response.text ), { chosenName: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )
 
 			// TODO: Check for sessionIdentifier cookie
 			// TODO: Check if the name is now in MongoDB
 		} )
 
 		// Should error when sending an invalid content type
-		chai.request( expressApp ).post( "/api/set-name" ).set( "content-type", "application/x-www-form-urlencoded" ).send( "" ).end( ( _, response ) => {
+		chai.request( expressApp ).post( "/api/name" ).set( "content-type", "application/x-www-form-urlencoded" ).send( "" ).end( ( _, response ) => {
 			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
 
 			chai.assert.equal( response.status, 400, "Expected HTTP response status code to be 400 Bad Request" )
 			chai.assert.deepEqual( JSON.parse( response.text ), { error: 0 }, "Expected HTTP response payload to contain error code 0" )
 		} )
 
-		// Should error when sending an empty POST request
-		// TODO: Returns error code 2?
-		/*chai.request( expressApp ).post( "/api/set-name" ).set( "content-type", "application/json" ).send( "" ).end( ( _, response ) => {
-			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
-
-			chai.assert.equal( response.status, 400, "Expected HTTP response status code to be 400 Bad Request" )
-			chai.assert.deepEqual( JSON.parse( response.text ), { error: 1 }, "Expected HTTP response payload to contain error code 1" )
-		} )*/
-
 		// Should error when sending POST request without a name
-		chai.request( expressApp ).post( "/api/set-name" ).set( "content-type", "application/json" ).send( {} ).end( ( _, response ) => {
+		chai.request( expressApp ).post( "/api/name" ).set( "content-type", "application/json" ).send( {} ).end( ( _, response ) => {
 			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
 
 			chai.assert.equal( response.status, 400, "Expected HTTP response status code to be 400 Bad Request" )
@@ -59,7 +51,7 @@ suite( "API routes", () => {
 		} )
 
 		// Should error when sending a POST request with an invalid name
-		chai.request( expressApp ).post( "/api/set-name" ).set( "content-type", "application/json" ).send( { name: "John&Smith" } ).end( ( _, response ) => {
+		chai.request( expressApp ).post( "/api/name" ).set( "content-type", "application/json" ).send( { desiredName: "John&Smith" } ).end( ( _, response ) => {
 			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
 
 			chai.assert.equal( response.status, 400, "Expected HTTP response status code to be 400 Bad Request" )
@@ -68,11 +60,16 @@ suite( "API routes", () => {
 
 	} )
 
-	// Stop the HTTP server after all tests have completed
-	// TODO: Doesn't seem to work? Runs BEFORE the async MongoDB stuff finishes!
+	// Stop everything after all tests have completed
+	// TODO: This doesn't seem to exit the program?
 	suiteTeardown( () => {
-		log.debug( "Tests completed, stopping HTTP server..." )
-		httpServer.close()
+		MongoDB.Disconnect().then( () => {
+			//console.debug( "DISCONNECTED FROM MONGODB" )
+			httpServer.close( () => {
+				//console.log( "HTTP SERVER STOPPED" )
+				//process.exit( 0 )
+			} )
+		} )
 	} )
 
 } )

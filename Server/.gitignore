@@ -3,3 +3,6 @@ node_modules/
 
 # TypeScript
 dist/
+
+# Server-side logs
+logs/

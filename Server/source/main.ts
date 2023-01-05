@@ -6,20 +6,24 @@ import { configure, getLogger } from "log4js"
 import initialiseExpress from "./express"
 import MongoDB from "./mongodb"
 
-// Are we running in production mode?
+// Which environment mode are we running in?
 export const isProduction = process.env.NODE_ENV === "production"
+export const isTest = process.env.NODE_ENV === "test"
 
 // Configure the logger library
 configure( {
-	appenders: { console: { type: "stdout" } },
+	appenders: {
+		console: { type: "stdout" },
+		file: { type: "file", filename: "./logs/server.log" }
+	},
 	categories: {
-		"default": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"main": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"routes/name": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"tests/routes": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"mongodb": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"express": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"routes/room": { appenders: [ "console" ], level: isProduction ? "info" : "trace" }
+		"default": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"main": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"routes/name": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"tests/routes": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"mongodb": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"express": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"routes/room": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" }
 	}
 } )
 
@@ -57,7 +61,11 @@ export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRE
 // When CTRL+C is pressed, stop everything gracefully...
 process.on( "SIGINT", async () => {
 	log.info( "Stopping..." )
-	httpServer.close()
-	await MongoDB.Disconnect()
-	process.exit( 0 ) // Success exit code
+
+	httpServer.close( () => {
+		log.info( "Stopped HTTP server." )
+		MongoDB.Disconnect().then( () => {
+			process.exit( 0 ) // Success exit code
+		} )
+	} )
 } )

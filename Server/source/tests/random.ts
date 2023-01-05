@@ -1,5 +1,10 @@
 // Import required third-party packages
 import chai from "chai"
+
+// Set the environment to testing
+process.env.NODE_ENV = "test"
+
+// Import required functions from the helper script
 import { generateRandomString, generateRoomJoinCode } from "../helpers/random"
 
 // Create a testing suite for testing the random functions
