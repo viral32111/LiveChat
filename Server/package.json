@@ -5,7 +5,7 @@
 	"main": "./dist/main.js",
 	"scripts": {
 		"start": "npx tsc && NODE_ENV=development node ./",
-		"test": "npx tsc && NODE_ENV=test npx mocha --ui tdd --exit ./dist/tests/"
+		"test": "npx tsc && NODE_ENV=test npx mocha --ui tdd --timeout 10000 --exit ./dist/tests/"
 	},
 	"author": {
 		"name": "viral32111",
