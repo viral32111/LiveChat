@@ -4,8 +4,8 @@
 	"description": "Real-time, ephemeral, room-based chat system.",
 	"main": "./dist/main.js",
 	"scripts": {
-		"start": "npx tsc && NODE_ENV=development node ./",
-		"test": "npx tsc && NODE_ENV=test npx mocha --ui tdd --timeout 10000 --exit ./dist/tests/"
+		"start": "npx tsc && cross-env NODE_ENV=development node ./",
+		"test": "npx tsc && cross-env NODE_ENV=test npx mocha --ui tdd --timeout 10000 --exit ./dist/tests/"
 	},
 	"author": {
 		"name": "viral32111",
@@ -39,6 +39,7 @@
 		"chai": "^4.3.7",
 		"chai-http": "^4.3.0",
 		"chai-string": "^1.5.0",
+		"cross-env": "^7.0.3",
 		"eslint": "^8.29.0",
 		"mocha": "^10.2.0",
 		"typescript": "^4.9.4"
