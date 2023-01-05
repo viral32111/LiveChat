@@ -52,7 +52,9 @@ jobs:
         run:
           EXPRESS_SESSION_SECRET=$(openssl rand -hex 16)
           echo "EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET}" >> $GITHUB_OUTPUT
-          echo "${EXPRESS_SESSION_SECRET}"
+
+          openssl rand -hex 16
+          echo "The secret is '${EXPRESS_SESSION_SECRET}'"
 
       - name: Create environment variables file
         run: cp --verbose --archive ./production.env ./test.env
