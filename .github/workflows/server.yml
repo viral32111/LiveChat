@@ -22,7 +22,7 @@ env:
 
 jobs:
   build:
-    name: Build
+    name: Build & Test
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -47,7 +47,19 @@ jobs:
       - name: Compile TypeScript
         run: npx tsc
 
+      - name: Generate Express session secret
+        id: generate
+        run:
+          EXPRESS_SESSION_SECRET=$(openssl rand -hex 16)
+          echo "EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET}" >> $GITHUB_OUTPUT
+
       - name: Run Unit Tests
+        env:
+          MONGO_HOST: ${{ secrets.MONGO_HOST }}
+          MONGO_DATABASE: LiveChat-Test
+          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          EXPRESS_SESSION_SECRET: ${{ steps.generate.outputs.EXPRESS_SESSION_SECRET }}
         run: npm test
 
       - name: Upload build
@@ -58,6 +70,7 @@ jobs:
             ./Server/dist/
             ./Server/package.json
             ./Server/package-lock.json
+            ./Server/production.env
 
   docker:
     name: Docker Image
