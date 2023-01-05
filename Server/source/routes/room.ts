@@ -3,10 +3,10 @@ import { getLogger } from "log4js"
 
 // Import required code from other scripts
 import { expressApp } from "../main"
-import { HTTPStatusCodes } from "../httpStatusCodes"
+import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
 import { validateRoomJoinCode, validateRoomName } from "../helpers/validation"
-import { ErrorCodes } from "../errorCodes"
+import { ErrorCodes } from "../enumerations/errorCodes"
 import MongoDB from "../mongodb"
 
 // Create the logger for this file

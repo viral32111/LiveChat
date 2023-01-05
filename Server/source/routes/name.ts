@@ -3,8 +3,8 @@ import { getLogger } from "log4js"
 
 // Import required data from other scripts
 import { expressApp } from "../main"
-import { ErrorCodes } from "../errorCodes"
-import { HTTPStatusCodes } from "../httpStatusCodes"
+import { ErrorCodes } from "../enumerations/errorCodes"
+import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
 import { validateGuestName } from "../helpers/validation"
 import MongoDB from "../mongodb"
