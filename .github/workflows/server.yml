@@ -48,10 +48,11 @@ jobs:
         run: npx tsc
 
       - name: Generate Express session secret
-        id: generate
+        id: express
         run:
           EXPRESS_SESSION_SECRET=$(openssl rand -hex 16)
           echo "EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET}" >> $GITHUB_OUTPUT
+          echo "${EXPRESS_SESSION_SECRET}"
 
       - name: Create environment variables file
         run: cp --verbose --archive ./production.env ./test.env
@@ -62,7 +63,7 @@ jobs:
           MONGO_DATABASE: LiveChat-Test
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-          EXPRESS_SESSION_SECRET: ${{ steps.generate.outputs.EXPRESS_SESSION_SECRET }}
+          EXPRESS_SESSION_SECRET: ${{ steps.express.outputs.EXPRESS_SESSION_SECRET }}
         run: npm test
 
       - name: Upload build
