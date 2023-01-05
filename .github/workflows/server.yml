@@ -50,6 +50,10 @@ jobs:
       - name: Generate Express session secret
         id: express
         run:
+          openssl version
+          openssl help
+          openssl help rand
+
           EXPRESS_SESSION_SECRET=$(openssl rand -hex 16)
           echo "EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET}" >> $GITHUB_OUTPUT
 
