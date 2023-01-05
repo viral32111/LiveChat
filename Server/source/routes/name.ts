@@ -8,6 +8,7 @@ import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
 import { validateGuestName } from "../helpers/validation"
 import MongoDB from "../mongodb"
+import { ObjectId } from "mongodb"
 
 // Create the logger for this file
 const log = getLogger( "routes/name" )
@@ -64,7 +65,37 @@ expressApp.post( "/api/name", async ( request, response ) => {
 
 } )
 
-// Route for checking if the guest has chosen a name
-expressApp.get( "/api/name", ( request, response ) => respondToRequest( response, HTTPStatusCodes.OK, {
-	hasName: request.session.guestId !== undefined
-} ) )
+// Route for getting the guest's name
+expressApp.get( "/api/name", async ( request, response ) => {
+
+	// No name if the user has not chosen one yet
+	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.OK, {
+		name: null
+	} )
+
+	// Try to get the guest from the database
+	try {
+		const foundGuests = await MongoDB.GetGuests( {
+			_id: new ObjectId( request.session.guestId ) // Apparently .guestId is not already an ObjectId, despite that being the type of the property in the interface...
+		} )
+
+		// Fail if no guest was found?
+		if ( foundGuests.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseFindFailure
+		} )
+
+		// Send the name back
+		log.info( `Found name '${ foundGuests[ 0 ].name }' for guest '${ foundGuests[ 0 ].id }.'` )
+		respondToRequest( response, HTTPStatusCodes.OK, {
+			name: foundGuests[ 0 ].name
+		} )
+
+	// Fail if an error occurred
+	} catch ( errorMessage ) {
+		log.error( `Failed to get guest '${ request.session.guestId }' from database (${ errorMessage })!` )
+		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseFindFailure
+		} )
+	}
+
+} )

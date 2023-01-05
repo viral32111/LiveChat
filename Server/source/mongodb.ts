@@ -1,5 +1,5 @@
 // Import required third-party packages
-import { MongoClient, Db, ObjectId, WithId, Document } from "mongodb"
+import { MongoClient, Db, ObjectId, WithId, Document, Filter } from "mongodb"
 import { getLogger } from "log4js"
 
 // Import required functions from helper scripts
@@ -90,9 +90,9 @@ export default class MongoDB {
 	}
 
 	// Gets a list of the rooms in the database
-	public static async GetRooms( filter = {} ) {
+	public static async GetRooms( filter: Filter<Room> = {} ) {
 		const foundRooms = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).find<Room>( filter ).toArray()
-		log.debug( `Found ${ foundRooms.length } rooms using filter: '${ JSON.stringify( filter ) }'.` )
+		log.debug( `Found ${ foundRooms.length } rooms using filter '${ JSON.stringify( filter ) }'.` )
 
 		return foundRooms
 	}
@@ -136,15 +136,11 @@ export default class MongoDB {
 		return deleteResult
 	}
 
-	// Get a guest by name from the database
-	public static async GetGuest( name: string ) {
-		const foundGuest = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).findOne( {
-			name: name
-		} )
-
-		log.debug( `Found guest '${ foundGuest }'.` )
-
-		return foundGuest
+	// Get a guest from the database
+	public static async GetGuests( filter: Filter<Guest> = {} ) {
+		const foundGuests = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).find( filter ).toArray()
+		log.debug( `Found ${ foundGuests.length } guests using filter '${ JSON.stringify( filter ) }'.` )
+		return foundGuests
 	}
 
 	// Remove all guests from the database

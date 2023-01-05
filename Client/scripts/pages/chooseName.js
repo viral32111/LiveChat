@@ -61,12 +61,12 @@ nameForm.submit( ( event ) => {
 
 // Redirect to the room list page if we have already chosen a name
 $( () => $.getJSON( "/api/name", ( responsePayload ) => {
-	if ( responsePayload.hasName === true ) {
+	if ( responsePayload.name !== null ) {
 		showFeedbackModal( "Notice", "You have already chosen a name. Close this popup to be redirected to the room list page.", () => {
 			window.location.href = "/rooms.html"
 		} )
 	}
 } ).fail( ( request, _, httpStatusMessage ) => {
 	handleServerErrorCode( request.responseText )
-	throw new Error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
+	throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 } ) )

@@ -119,23 +119,22 @@ leaveRoomButton.on( "click", () => {
 // When the page loads...
 $( () => {
 
-	// Redirect back to the choose name page if we haven't got a name yet
+	// Try to fetch our name from the Server API
 	$.getJSON( "/api/name", ( responsePayload ) => {
-		if ( responsePayload.hasName === false ) {
+		if ( responsePayload.name !== null ) {
+			sendMessageInput.focus()
+			// TODO: Fetch chat history for this room, redirect back to room list if we aren't in a room
+		} else {
 			showFeedbackModal( "Notice", "You have not yet chosen a name yet. Close this popup to be redirected to the choose name page.", () => {
 				window.location.href = "/"
 			} )
-		} else {
-			// Focus on the send message input
-			sendMessageInput.focus()
-
-			// TODO: Fetch chat history for this room, redirect back to room list if we aren't in a room
 		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText, () => {
 			window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
 		} )
-		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
+
+		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 	} )
 
 	// DEBUGGING

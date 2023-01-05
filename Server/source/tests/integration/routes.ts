@@ -25,40 +25,36 @@ suite( "Integration - API routes", () => {
 
 		// Should succeed when sending a POST request with a valid name
 		chai.request( expressApp ).post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( async ( _, response ) => {
-			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
-
 			chai.assert.equal( response.status, 200, "Expected HTTP response status code to be 200 OK" )
-			chai.assert.deepEqual( JSON.parse( response.text ), { chosenName: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )
+			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+			chai.assert.deepEqual( response.body, { chosenName: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )
 			chai.assert.startsWith( response.header[ "set-cookie" ], "sessionIdentifier=", "Expected HTTP response to set a session identifier cookie" )
 
 			// Check if the name is now in MongoDB
-			const guest = await MongoDB.GetGuest( "JohnSmith" )
-			chai.assert.isNotNull( guest, "Expected the guest to be in MongoDB" )
-			chai.assert.equal( guest?.name, "JohnSmith", "Expected the guest's name to be what was sent" )
+			const guests = await MongoDB.GetGuests( { name: "JohnSmith" } )
+			chai.assert.lengthOf( guests, 1, "Expected the guest to be in MongoDB" )
+			chai.assert.equal( guests[ 0 ].name, "JohnSmith", "Expected the guest's name to be what was sent" )
 		} )
 
 		// Should error when sending an invalid content type
 		chai.request( expressApp ).post( "/api/name" ).set( "content-type", "application/x-www-form-urlencoded" ).send( "" ).end( ( _, response ) => {
-			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
-
 			chai.assert.equal( response.status, 400, "Expected HTTP response status code to be 400 Bad Request" )
-			chai.assert.deepEqual( JSON.parse( response.text ), { error: 0 }, "Expected HTTP response payload to contain error code 0" )
+			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+			chai.assert.deepEqual( response.body, { error: 0 }, "Expected HTTP response payload to contain error code 0" )
 		} )
 
 		// Should error when sending POST request without a name
 		chai.request( expressApp ).post( "/api/name" ).set( "content-type", "application/json" ).send( {} ).end( ( _, response ) => {
-			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
-
 			chai.assert.equal( response.status, 400, "Expected HTTP response status code to be 400 Bad Request" )
-			chai.assert.deepEqual( JSON.parse( response.text ), { error: 2 }, "Expected HTTP response payload to contain error code 2" )
+			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+			chai.assert.deepEqual( response.body, { error: 2 }, "Expected HTTP response payload to contain error code 2" )
 		} )
 
 		// Should error when sending a POST request with an invalid name
 		chai.request( expressApp ).post( "/api/name" ).set( "content-type", "application/json" ).send( { desiredName: "John&Smith" } ).end( ( _, response ) => {
-			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
-
 			chai.assert.equal( response.status, 400, "Expected HTTP response status code to be 400 Bad Request" )
-			chai.assert.deepEqual( JSON.parse( response.text ), { error: 3 }, "Expected HTTP response payload to contain error code 3" )
+			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+			chai.assert.deepEqual( response.body, { error: 3 }, "Expected HTTP response payload to contain error code 3" )
 		} )
 
 	} )
@@ -66,35 +62,35 @@ suite( "Integration - API routes", () => {
 	// Test the check name API route
 	test( "Check Name", () => {
 
-		// Should return false as no name has been chosen yet
+		// Should be null as no name has been chosen yet
 		chai.request( expressApp ).get( "/api/name" ).end( ( _, response ) => {
-			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
-
 			chai.assert.equal( response.status, 200, "Expected HTTP response status code to be 200 OK" )
-			chai.assert.deepEqual( JSON.parse( response.text ), { hasName: false }, "Expected HTTP response body to be a JSON object containing false" )
+			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+			chai.assert.deepEqual( response.body, { name: null }, "Expected HTTP response payload to contain null" )
 		} )
 
-		// Should return true as we choose a name, then check
-		chai.request( expressApp ).post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( async ( _, chooseNameResponse ) => {
-			chai.assert.containIgnoreCase( chooseNameResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+		// Create an agent to persist cookies/session state, then choose a name...
+		const userAgent = chai.request.agent( expressApp )
+		userAgent.post( "/api/name" ).send( { desiredName: "JohnSmith" } ).end( async ( _, chooseNameResponse ) => {
 			chai.assert.equal( chooseNameResponse.status, 200, "Expected HTTP response status code to be 200 OK" )
-			chai.assert.deepEqual( JSON.parse( chooseNameResponse.text ), { chosenName: "JohnSmith" }, "Expected HTTP response body to be a JSON object containing the chosen name" )
+			chai.assert.containIgnoreCase( chooseNameResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+			chai.assert.deepEqual( chooseNameResponse.body, { chosenName: "JohnSmith" }, "Expected HTTP response payload to contain the name" )
+			chai.assert.startsWith( chooseNameResponse.header[ "set-cookie" ], "sessionIdentifier=", "Expected HTTP response to set a session identifier cookie" )
 
-			// Get the value of the session identifier cookie, so we can use it in the next request to appear as if we're logged in
-			const sessionIdentifier = chooseNameResponse.header[ "set-cookie" ].toString().split( "sessionIdentifier=" )[ 1 ].split( ";" )[ 0 ]
-
-			chai.request( expressApp ).get( "/api/name" ).set( "cookie", `sessionIdentifier=${ sessionIdentifier }` ).end( ( _, checkNameResponse ) => {
-				chai.assert.containIgnoreCase( checkNameResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+			// Should succeed
+			userAgent.get( "/api/name" ).end( ( _, checkNameResponse ) => {
 				chai.assert.equal( checkNameResponse.status, 200, "Expected HTTP response status code to be 200 OK" )
-				chai.assert.deepEqual( JSON.parse( checkNameResponse.text ), { hasName: true }, "Expected HTTP response body to be a JSON object containing true" )
+				chai.assert.containIgnoreCase( checkNameResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+				chai.assert.deepEqual( checkNameResponse.body, { name: "JohnSmith" }, "Expected HTTP response payload to contain the name" )
 			} )
 		} )
+
 	} )
 
 	// Test the create new room API route
 	test( "Create New Room", () => {
 
-		// Should fail as no name has been chosen
+		// Should fail as no name has been chosen yet
 		chai.request( expressApp ).post( "/api/room" ).send( { name: "John's Room" } ).end( ( _, response ) => {
 			chai.assert.equal( response.status, 401, "Expected HTTP response status code to be 401 Unauthorized" )
 			chai.assert.containIgnoreCase( response.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )

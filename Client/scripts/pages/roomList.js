@@ -11,6 +11,7 @@ const createRoomName = $( "#createRoomName" )
 const createRoomNameVisibilityIcon = $( "#createRoomNameVisibilityIcon" )
 const createRoomVisibilityButton = $( "#createRoomVisibilityButton" )
 const endSessionButton = $( "#endSessionButton" )
+const guestName = $( "#guestName" )
 
 // The regular expressions for validating the room name & join codes
 // NOTE: Keep these the same as they are on the server!
@@ -234,24 +235,20 @@ endSessionButton.click( () => {
 
 } )
 
-// When the page loads...
-$( () => {
-
-	// Redirect back to the choose name page if we haven't got a name yet
-	$.getJSON( "/api/name", ( responsePayload ) => {
-		if ( responsePayload.hasName === false ) {
-			showFeedbackModal( "Notice", "You have not yet chosen a name yet. Close this popup to be redirected to the choose name page.", () => {
-				window.location.href = "/"
-			} )
-		} else {
-			populateRoomsOnPage() // Initially populate the page with the rooms
-		}
-	} ).fail( ( request, _, httpStatusMessage ) => {
-		handleServerErrorCode( request.responseText, () => {
-			window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
+// Try to fetch our name from the server API when the page loads...
+$( () => $.getJSON( "/api/name", ( responsePayload ) => {
+	if ( responsePayload.name !== null ) {
+		guestName.text( responsePayload.name )
+		populateRoomsOnPage()
+	} else {
+		showFeedbackModal( "Notice", "You have not yet chosen a name yet. Close this popup to be redirected to the choose name page.", () => {
+			window.location.href = "/"
 		} )
-
-		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when checking if we have chosen a name` )
+	}
+} ).fail( ( request, _, httpStatusMessage ) => {
+	handleServerErrorCode( request.responseText, () => {
+		window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
 	} )
 
-} )
+	throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
+} ) )
