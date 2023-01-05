@@ -11,7 +11,7 @@ export const isProduction = process.env.NODE_ENV === "production"
 export const isTest = process.env.NODE_ENV === "test"
 
 // Configure the logger library
-/* configure( {
+configure( {
 	appenders: {
 		console: { type: "stdout" },
 		file: { type: "file", filename: "./logs/server.log" }
@@ -24,21 +24,6 @@ export const isTest = process.env.NODE_ENV === "test"
 		"mongodb": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"express": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"routes/room": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" }
-	}
-} ) */
-
-configure( {
-	appenders: {
-		console: { type: "stdout" },
-	},
-	categories: {
-		"default": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"main": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"routes/name": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"tests/routes": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"mongodb": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"express": { appenders: [ "console" ], level: isProduction ? "info" : "trace" },
-		"routes/room": { appenders: [ "console" ], level: isProduction ? "info" : "trace" }
 	}
 } )
 

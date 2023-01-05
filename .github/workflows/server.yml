@@ -75,6 +75,12 @@ jobs:
             ./Server/package-lock.json
             ./Server/production.env
 
+      - name: Upload log
+        uses: actions/upload-artifact@v3
+        with:
+          name: Server Log
+          path: ./Server/logs/server.log
+
   docker:
     name: Docker Image
     runs-on: ubuntu-22.04
