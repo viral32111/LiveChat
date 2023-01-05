@@ -4,8 +4,8 @@
 	"description": "Real-time, ephemeral, room-based chat system.",
 	"main": "./dist/main.js",
 	"scripts": {
-		"start": "npx tsc && node ./",
-		"test": "npx tsc && npx mocha --ui tdd ./dist/tests/"
+		"start": "npx tsc && NODE_ENV=development node ./",
+		"test": "npx tsc && NODE_ENV=test npx mocha --ui tdd --exit ./dist/tests/"
 	},
 	"author": {
 		"name": "viral32111",
