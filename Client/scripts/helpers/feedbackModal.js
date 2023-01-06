@@ -12,8 +12,8 @@ const feedbackBootstrapModal = new bootstrap.Modal( feedbackModal )
 function showFeedbackModal( title, message, onClosedCallback = undefined ) {
 
 	// Fail if invalid parameters were given
-	if ( title === undefined || title.length <= 0 ) return console.error( "Title is required for the feedback modal" )
-	if ( message === undefined || message.length <= 0 ) return console.error( "Message is required for the feedback modal" )
+	if ( title === undefined || title.length <= 0 ) throw new Error( "Title is required for the feedback modal" )
+	if ( message === undefined || message.length <= 0 ) throw new Error( "Message is required for the feedback modal" )
 
 	// Set the title & message text on the modal
 	feedbackModalTitle.text( title )

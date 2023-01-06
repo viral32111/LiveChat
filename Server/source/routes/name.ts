@@ -13,7 +13,7 @@ import MongoDB from "../mongodb"
 // Create the logger for this file
 const log = getLogger( "routes/name" )
 
-// Structure of the choose name payload
+// Structure of the choose name API route request payload
 interface ChooseNamePayload {
 	desiredName: string
 }
@@ -37,25 +37,21 @@ expressApp.post( "/api/name", async ( request, response ) => {
 	if ( requestPayload.desiredName === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMissingProperty } )
 	if ( validateGuestName( requestPayload.desiredName ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMalformedValue } )
 
-	// Trt to add the new guest to the database
+	// Attempt to add the new guest to the database
 	try {
 		// TODO: Check for guest with the same name already in the database
-
 		const newGuest = await MongoDB.AddGuest( requestPayload.desiredName )
-		log.info( `Added new guest '${ requestPayload.desiredName }' (${ newGuest.insertedId }) to the database.` )
 
 		// Set the guest ID in the session data (a new session is created in case one already exists)
 		request.session.regenerate( () => {
 			request.session.guestId = newGuest.insertedId
-			log.info( `Created session '${ request.sessionID }' for guest '${ requestPayload.desiredName }' (${ newGuest.insertedId }).` )
 
 			// Send the name back as confirmation
 			respondToRequest( response, HTTPStatusCodes.OK, {
 				chosenName: requestPayload.desiredName
 			} )
+			log.info( `Created session '${ request.sessionID }' for guest '${ requestPayload.desiredName }' (${ newGuest.insertedId }).` )
 		} )
-
-	// Send back an failure response if the database insert failed
 	} catch ( errorMessage ) {
 		log.error( `Failed to add new guest '${ requestPayload.desiredName }' to the database (${ errorMessage })!` )
 		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
@@ -85,12 +81,10 @@ expressApp.get( "/api/name", async ( request, response ) => {
 		} )
 
 		// Send their name back
-		log.info( `Found name '${ foundGuests[ 0 ].name }' for guest '${ foundGuests[ 0 ]._id }.'` )
 		respondToRequest( response, HTTPStatusCodes.OK, {
 			name: foundGuests[ 0 ].name
 		} )
-
-	// Fail if an error occurred
+		log.info( `Found name '${ foundGuests[ 0 ].name }' for guest '${ foundGuests[ 0 ]._id }.'` )
 	} catch ( errorMessage ) {
 		log.error( `Failed to get guest '${ request.session.guestId }' from database (${ errorMessage })!` )
 		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {

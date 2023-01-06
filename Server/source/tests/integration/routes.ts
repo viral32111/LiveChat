@@ -224,6 +224,8 @@ suite( "Integration - API routes", () => {
 
 	} )
 
+	// TODO: Get current room data API route - GET /api/room
+
 	// Test the end session API route
 	test( "End Session", () => {
 
@@ -252,5 +254,9 @@ suite( "Integration - API routes", () => {
 		} )
 
 	} )
+
+	// TODO: Upload file API route - PUT /api/upload
+
+	// TODO: Upgrade to WebSocket connection API route - GET /api/chat
 
 } )

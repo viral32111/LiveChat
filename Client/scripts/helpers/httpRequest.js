@@ -1,4 +1,5 @@
-// Sends a JSON request to the server-side API
+// Sends a JSON request to the server API
+// TODO: Half of client-side requests are done via this function, the other half are still using $.ajax(), $.getJSON(), etc...
 function httpRequest( method, route, payload = {} ) {
 	method = method.toUpperCase() // HTTP method must be upper-case
 

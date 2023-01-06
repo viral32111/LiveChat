@@ -39,23 +39,17 @@ nameForm.submit( ( event ) => {
 	// Ask the server API to give us this name...
 	httpRequest( requestMethod, targetRoute, {
 		desiredName: desiredName
-
-	// Redirect to the room list page, if the request was successful
 	} ).done( ( responsePayload, _, request ) => {
 		if ( responsePayload.chosenName === desiredName ) {
-			window.location.href = "/rooms.html"
+			window.location.href = "/rooms.html" // Redirect to the room list page, if the request was successful
 		} else {
-			console.error( `Server API sent back a name '${ responsePayload.chosenName }' that does not match the desired name '${ desiredName }'?` )
 			showErrorModal( "Server sent back mismatching chosen name" )
+			throw new Error( `Server API sent back a name '${ responsePayload.chosenName }' that does not match the desired name '${ desiredName }'?` )
 		}
-
-	// Display any errors that occur if the request fails
 	} ).fail( ( request, _, httpStatusMessage ) => {
-		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
 		handleServerErrorCode( request.responseText )
-
-	// Always change UI back after the request so the user can try again
-	} ).always( () => setFormLoading( nameForm, false ) )
+		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+	} ).always( () => setFormLoading( nameForm, false ) ) // Always change UI back after the request so the user can try again
 
 } )
 

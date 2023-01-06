@@ -166,7 +166,6 @@ export default class MongoDB {
 		const findResult = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages )
 			.find<Message>( filter )
 			.sort( { sentAt: -1 } ) // Newest messages first
-			.project<Message>( { _id: 0 } ) // removes _id from the results - https://stackoverflow.com/a/52250461
 			.toArray()
 		log.debug( `Found ${ findResult.length } messages using filter '${ JSON.stringify( filter ) }'.` )
 		return findResult

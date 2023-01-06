@@ -1,10 +1,14 @@
+// Custom class to encapsulate WebSocket functionality
 class WebSocketClient {
+	
+	// The WebSocket instance & custom payload types (same as the ones on the server API)
 	static #webSocket = null
 	static PayloadTypes = {
 		Message: 0,
 		Acknowledgement: 1
 	}
 
+	// Initialises the WebSocket client & registers event listeners
 	static Initialise() {
 		if ( WebSocketClient.#webSocket !== null ) throw new Error( "WebSocket client has already been initialised" )
 
@@ -16,6 +20,7 @@ class WebSocketClient {
 		WebSocketClient.#webSocket.addEventListener( "error", WebSocketClient.#onError.bind( this ) )
 	}
 
+	// Sends a payload to the server
 	static SendPayload( type, data = {} ) {
 		if ( WebSocketClient.#webSocket === null ) throw new Error( "WebSocket client has not yet been initialised" )
 		if ( WebSocketClient.#webSocket.readyState !== WebSocket.OPEN ) throw new Error( "WebSocket client is not yet connected" )
@@ -26,17 +31,21 @@ class WebSocketClient {
 		} ) )
 	}
 
+	// Runs when the WebSocket connection is opened...
 	static #onOpen() {
 		console.debug( "Connected to WebSocket!" )
 	}
 
-	static #onClose() {
-		console.debug( "Disconnected from WebSocket!" )
+	// Runs when the WebSocket connection closes...
+	static #onClose( event ) {
+		console.debug( "Disconnected from WebSocket!", event.code, event.reason, event.wasClean )
 	}
 
+	// Runs when the WebSocket client receives a message from the server...
 	static #onMessage( message ) {
 		console.debug( "Server sent:", message.data.toString() )
 
+		// Attempt to parse the message as JSON
 		try {
 			const serverPayload = JSON.parse( message.data.toString() )
 			console.dir( serverPayload )
@@ -45,8 +54,10 @@ class WebSocketClient {
 		}
 	}
 
+	// Runs when the WebSocket client encounters an error...
 	static #onError( error ) {
 		console.warn( "WebSocket error:", error )
+		WebSocketClient.#webSocket.close()
 	}
 
 }

@@ -40,31 +40,23 @@ function createRoomElement( name, participantCount, latestMessageSentAt, joinCod
 	joinButton.click( () => {
 
 		// Disable the button & show the spinner
-		joinButton.prop( "disabled", true )
-		joinButtonSpinnerSpan.removeClass( "visually-hidden" ).attr( "aria-hidden", "false" )
+		setButtonLoading( joinButton, true )
 
 		// Get the request information from the join private room form attributes as they are the same
 		const requestMethod = joinPrivateRoomForm.attr( "method" ), targetRoute = joinPrivateRoomForm.attr( "action" )
 
-		// Request that the server put us in this room
+		// Request the server API to put us in this room
 		httpRequest( requestMethod, `${ targetRoute }/${ joinCode }` ).done( ( roomJoinedPayload, _, request ) => {
 			if ( roomJoinedPayload.code === joinCode ) {
 				window.location.href = "/chat.html"
 			} else {
-				console.error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
 				showErrorModal( "Server sent back mismatching room name" )
+				throw new Error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
 			}
-
-		// Show any errors that occur if the request fails
 		} ).fail( ( request, _, httpStatusMessage ) => {
-			console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
 			handleServerErrorCode( request.responseText )
-
-		// Always enable the button & hide the spinner after the request is finished
-		} ).always( () => {
-			joinButton.prop( "disabled", false )
-			joinButtonSpinnerSpan.addClass( "visually-hidden" ).attr( "aria-hidden", "true" )
-		} )
+			throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+		} ).always( () => setButtonLoading( joinButton, false ) )
 
 	} )
 
@@ -138,17 +130,13 @@ joinPrivateRoomForm.submit( ( event ) => {
 		if ( roomJoinedPayload.code === joinCode ) {
 			window.location.href = "/chat.html"
 		} else {
-			console.error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
 			showErrorModal( "Server sent back mismatching room name" )
+			throw new Error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
 		}
-
-	// Display any errors that occur if the request fails
 	} ).fail( ( request, _, httpStatusMessage ) => {
-		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
 		handleServerErrorCode( request.responseText )
-
-	// Always change UI back after the request so the user can try again
-	} ).always( () => setFormLoading( joinPrivateRoomForm, false ) )
+		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+	} ).always( () => setFormLoading( joinPrivateRoomForm, false ) ) // Always change UI back after the request so the user can try again
 
 } )
 
@@ -180,28 +168,22 @@ createRoomForm.submit( ( event ) => {
 	// Get the request information from the form attributes
 	const requestMethod = createRoomForm.attr( "method" ), targetRoute = createRoomForm.attr( "action" )
 
-	// Ask the server API to create the room...
+	// Request the server API to create the room
 	httpRequest( requestMethod, targetRoute, {
 		name: roomName,
 		isPrivate: isRoomPrivate
-
-	// When the request is successful...
 	} ).done( ( roomCreatedPayload, _, request ) => {
 		if ( roomCreatedPayload.name === roomName ) {
 			populateRoomsOnPage()
 			// TODO: Redirect to new chat room
 		} else {
-			console.error( `Server API sent back a room name '${ roomCreatedPayload.name }' that does not match the expected name '${ roomName }'?` )
 			showErrorModal( "Server sent back mismatching room name" )
+			throw new Error( `Server API sent back a room name '${ roomCreatedPayload.name }' that does not match the expected name '${ roomName }'?` )
 		}
-
-	// Display any errors that occur if the request fails
 	} ).fail( ( request, _, httpStatusMessage ) => {
-		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
 		handleServerErrorCode( request.responseText )
-
-	// Always change UI back after the request so the user can try again
-	} ).always( () => setFormLoading( createRoomForm, false ) )
+		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+	} ).always( () => setFormLoading( createRoomForm, false ) ) // Always change UI back after the request so the user can try again
 
 } )
 
@@ -224,13 +206,13 @@ endSessionButton.click( () => {
 	// Make the button appear to be loading
 	setButtonLoading( endSessionButton, true )
 
-	// Request that the server-side API end our session
+	// Request the server API to end our session
 	httpRequest( "DELETE", "/api/session" ).done( () => {
 		showFeedbackModal( "Success", "Your chat session has been ended & all data has been erased. You will now be returned to the choose name page." )
 		window.location.href = "/"
 	} ).fail( ( request, _, httpStatusMessage ) => {
-		console.error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to end our session` )
 		handleServerErrorCode( request.responseText )
+		throw new Error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to end our session` )
 	} ).always( () => setButtonLoading( endSessionButton, false ) ) // Return the button to normal
 
 } )
@@ -249,6 +231,5 @@ $( () => $.getJSON( "/api/name", ( responsePayload ) => {
 	handleServerErrorCode( request.responseText, () => {
 		window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
 	} )
-
 	throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 } ) )

@@ -16,11 +16,11 @@ const serverErrorCodeMessages = {
 	12: "No files uploaded"
 }
 
-// Shows the feedback modal for a server-side API error
+// Shows the feedback modal for a server API error
 function handleServerErrorCode( responseText ) {
-	try {
 
-		// Parse server response as JSON
+	// Attempt to parse the response as JSON
+	try {
 		const errorPayload = JSON.parse( responseText )
 
 		// If the server didn't give us an error code
@@ -31,7 +31,8 @@ function handleServerErrorCode( responseText ) {
 		
 		// Display the friendly error message, as we have an error code
 		else showErrorModal( serverErrorCodeMessages[ errorPayload.error ] )
-	
-	// If there was a problem parsing as JSON
-	} catch { showErrorModal( "Failed to parse server response payload" ) }
+	} catch {
+		showErrorModal( "Failed to parse server response payload" )
+	}
+
 }

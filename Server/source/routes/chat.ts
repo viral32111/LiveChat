@@ -1,6 +1,5 @@
 // Import required third-party packages
 import { getLogger } from "log4js"
-import { ObjectId } from "mongodb"
 
 // Import required code from other scripts
 import { expressApp, webSocketServer } from "../main"
@@ -9,10 +8,15 @@ import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { ErrorCodes } from "../enumerations/errorCodes"
 import { WebSocketPayloadTypes, WebSocketCloseCodes } from "../enumerations/webSocket"
 import { respondToRequest } from "../helpers/requests"
-import MongoDB from "../mongodb"
 
 // Create the logger for this file
 const log = getLogger( "routes/chat" )
+
+// Structure for upload files response
+interface FilePayload {
+	type: string,
+	path: string
+}
 
 // Create a route for upgrading to a WebSocket connection
 expressApp.get( "/api/chat", ( request, response ) => {
@@ -40,32 +44,6 @@ expressApp.get( "/api/chat", ( request, response ) => {
 
 } )
 
-webSocketServer.on( "connection", ( webSocketClient ) => {
-	log.debug( "New connection" )
-	webSocketClient.send( JSON.stringify( {
-		type: WebSocketPayloadTypes.Acknowledgement,
-		data: {}
-	} ) )
-
-	webSocketClient.on( "message", ( message ) => {
-		log.debug( "Client sent", message.toString() )
-
-		try {
-			const clientPayload = JSON.parse( message.toString() )
-			console.dir( clientPayload )
-
-			webSocketClient.send( JSON.stringify( {
-				type: WebSocketPayloadTypes.Acknowledgement,
-				data: {}
-			} ) )
-
-		} catch ( errorMessage ) {
-			log.error( `Failed to parse WebSocket message '${ message.toString() }' as JSON!` )
-			return webSocketClient.close( WebSocketCloseCodes.CannotAccept, "Invalid JSON" )
-		}
-	} )
-} )
-
 // Route for uploading files to use as message attachments
 expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => {
 
@@ -84,25 +62,59 @@ expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => 
 		error: ErrorCodes.InvalidContentType
 	} )
 
-	//log.debug( "file upload attempt:", request.files )
-
+	// Fail if no files were uploaded
 	if ( request.files === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 		error: ErrorCodes.NoFilesUploaded
 	} )
 
+	// Cast because TypeScript doesn't know how to do this automatically
+	const uploadedFiles = request.files as Express.Multer.File[]
+
+	// Loop through the uploaded files & add their type and URL to a payload for the response
 	const filesPayload: FilePayload[] = []
-	for ( const file of request.files as Express.Multer.File[] ) filesPayload.push( {
+	for ( const file of uploadedFiles ) filesPayload.push( {
 		type: file.mimetype,
 		path: `/attachments/${ file.filename }`
 	} )
 
+	// Send back the list of uploaded files
 	respondToRequest( response, HTTPStatusCodes.OK, {
 		files: filesPayload
 	} )
+	log.info( `Guest '${ request.session.guestId }' uploaded ${ uploadedFiles.length } files.` )
 
 } )
 
-interface FilePayload {
-	type: string,
-	path: string
-}
+// When a new WebSocket connection is established...
+webSocketServer.on( "connection", ( webSocketClient ) => {
+
+	// Acknowledge the connection
+	log.debug( "New connection" )
+	webSocketClient.send( JSON.stringify( {
+		type: WebSocketPayloadTypes.Acknowledgement,
+		data: {}
+	} ) )
+
+	// When a message is received from this client...
+	webSocketClient.on( "message", ( message ) => {
+		log.debug( "Client sent", message.toString() )
+
+		// Attempt to parse the message as JSON
+		try {
+			const clientPayload = JSON.parse( message.toString() )
+			console.dir( clientPayload )
+
+			// Acknowledge the message
+			webSocketClient.send( JSON.stringify( {
+				type: WebSocketPayloadTypes.Acknowledgement,
+				data: {}
+			} ) )
+		
+		// Disconnect the client if the message is not JSON
+		} catch ( errorMessage ) {
+			log.error( `Failed to parse WebSocket message '${ message.toString() }' as JSON!` )
+			return webSocketClient.close( WebSocketCloseCodes.CannotAccept, "Invalid JSON" )
+		}
+	} )
+
+} )

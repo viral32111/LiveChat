@@ -61,15 +61,12 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 			const fileAttachmentLink = $( "<a></a>" ).addClass( "ms-2" ).attr( "href", attachment.url ).text( `Download ${ getAttachmentFileName( attachment.url ) }` )
 			bootstrapColumn.append( fileAttachmentLink )
 		} else {
-			console.error( "Unrecognised attachment:", attachment )
+			console.warn( "Unrecognised attachment:", attachment )
 		}
 	}
 
 	// Bootstrap row
 	const bootstrapRow = $( "<div></div>" ).addClass( "row" ).append( bootstrapColumn )
-
-	// Hide the notice if this is the first message
-	if ( chatMessages.children().length === 1 ) noMessagesNotice.addClass( "visually-hidden" )
 
 	// Prepend horizontal rule if this isn't the first message
 	if ( chatMessages.children().length >= 2 ) chatMessages.append( $( "<hr>" ) )
@@ -199,11 +196,14 @@ function fetchRoomData() {
 			}
 
 			// Populate the participants list
+			participantsList.clear()
 			for ( const guest of roomDataPayload.room.guests ) {
 				createParticipantElement( guest.name, guest.isRoomCreator )
 			}
 
 			// Populate the message history
+			chatMessages.clear()
+			noMessagesNotice.addClass( "visually-hidden" )
 			for ( const message of roomDataPayload.room.messages ) {
 				createMessageElement( message.sentBy, message.content, message.attachments, message.sentAt )
 			}
@@ -245,7 +245,6 @@ $( () => {
 		handleServerErrorCode( request.responseText, () => {
 			window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
 		} )
-
 		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 	} )
 

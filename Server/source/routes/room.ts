@@ -5,29 +5,29 @@ import { ObjectId } from "mongodb"
 // Import required code from other scripts
 import { expressApp } from "../main"
 import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
+import { ErrorCodes } from "../enumerations/errorCodes"
 import { respondToRequest } from "../helpers/requests"
 import { validateRoomJoinCode, validateRoomName } from "../helpers/validation"
-import { ErrorCodes } from "../enumerations/errorCodes"
 import MongoDB from "../mongodb"
 
 // Create the logger for this file
 const log = getLogger( "routes/room" )
 
-// Structure of the public room data
-interface PublicRoom {
+// Structure of the get public rooms API route response
+interface PublicRoomPayload {
 	name: string,
 	guestCount: number,
 	latestMessageSentAt: number | null, // Unix timestamp
 	joinCode: string
 }
 
-// Structure of the create room payload
+// Structure of the create room API route request
 interface CreateRoomPayload {
 	name: string,
 	isPrivate: boolean
 }
 
-// Interfaces for the payload returned by the get current room route
+// Structure of the get current room API route response
 interface GuestPayload {
 	name: string,
 	isRoomCreator: boolean
@@ -55,45 +55,50 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 	} )
 
 	// Will hold the list of public rooms to return
-	const publicRoomsList: PublicRoom[] = []
+	const publicRoomsList: PublicRoomPayload[] = []
 
-	// Fetch all public rooms
-	const publicRooms = await MongoDB.GetRooms( {
-		isPrivate: false
-	} )
-
-	// Loop through those public rooms...
-	for ( const publicRoom of publicRooms ) {
-
-		// Fetch all the messages in this room
-		const roomMessages = await MongoDB.GetMessages( {
-			roomId: publicRoom._id
+	// Attempt to fetch all public rooms
+	try {
+		const publicRooms = await MongoDB.GetRooms( {
+			isPrivate: false
 		} )
 
-		// Fetch all the guests in this room
-		const roomGuests = await MongoDB.GetGuests( {
-			roomId: publicRoom._id
-		} )
+		// Loop through those public rooms...
+		for ( const publicRoom of publicRooms ) {
 
-		// Add this room to the list, with the time the latest message was sent
-		publicRoomsList.push( {
-			name: publicRoom.name,
-			guestCount: roomGuests.length,
-			latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ 0 ].sentAt ).getTime() / 1000 : null,
-			joinCode: publicRoom.joinCode
+			// Fetch all the messages in this room
+			const roomMessages = await MongoDB.GetMessages( {
+				roomId: publicRoom._id
+			} )
+
+			// Fetch all the guests in this room
+			const roomGuests = await MongoDB.GetGuests( {
+				roomId: publicRoom._id
+			} )
+
+			// Add this room to the list, with the time the latest message was sent
+			publicRoomsList.push( {
+				name: publicRoom.name,
+				guestCount: roomGuests.length,
+				latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ 0 ].sentAt ).getTime() / 1000 : null,
+				joinCode: publicRoom.joinCode
+			} )
+		}
+
+		// Sort rooms by the number of participants from highest to lowest
+		publicRoomsList.sort( ( publicRoomA, publicRoomB ) => publicRoomB.guestCount - publicRoomA.guestCount )
+
+		// Send back the list of public rooms
+		respondToRequest( response, HTTPStatusCodes.OK, {
+			publicRooms: publicRoomsList
+		} )
+		log.info( `Listing ${ publicRoomsList.length } public rooms for guest '${ request.session.guestId }'.` )
+	} catch ( errorMessage ) {
+		log.error( `Failed to find public rooms in the database (${ errorMessage })!` )
+		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseInsertFailure
 		} )
 	}
-
-	// Sort rooms by the number of participants from highest to lowest
-	publicRoomsList.sort( ( publicRoomA, publicRoomB ) => publicRoomB.guestCount - publicRoomA.guestCount )
-
-	// Display the number of rooms in the console
-	log.info( `Listing ${ publicRoomsList.length } public rooms for guest '${ request.session.guestId }'.` )
-
-	// Send back the list of public rooms
-	respondToRequest( response, HTTPStatusCodes.OK, {
-		publicRooms: publicRoomsList
-	} )
 
 } )
 
@@ -119,8 +124,7 @@ expressApp.post( "/api/room", async ( request, response ) => {
 	// Try to create a new room in the database
 	try {
 		const roomInsert = await MongoDB.AddRoom( createRoomPayload.name, createRoomPayload.isPrivate, request.session.guestId )
-		log.info( `Created new ${ createRoomPayload.isPrivate === true ? "private" : "public" } room '${ createRoomPayload.name }' (${ roomInsert.insertedId }) for guest '${ request.session.guestId }'.` )
-	
+
 		// Get the new room from the database
 		const newRooms = await MongoDB.GetRooms( { _id: roomInsert.insertedId } )
 		if ( newRooms.length <= 0 ) throw new Error( "Room somehow not found in database right after insert?" )
@@ -131,10 +135,12 @@ expressApp.post( "/api/room", async ( request, response ) => {
 			isPrivate: newRooms[ 0 ].isPrivate,
 			joinCode: newRooms[ 0 ].joinCode
 		} )
-
+		log.info( `Created new ${ createRoomPayload.isPrivate === true ? "private" : "public" } room '${ createRoomPayload.name }' (${ roomInsert.insertedId }) for guest '${ request.session.guestId }'.` )
 	} catch ( errorMessage ) {
 		log.error( `Failed to insert new room '${ createRoomPayload.name }' into the database (${ errorMessage })!` )
-		return respondToRequest( response, HTTPStatusCodes.InternalServerError, { error: ErrorCodes.DatabaseInsertFailure } )
+		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseInsertFailure
+		} )
 	}
 
 } )
@@ -166,7 +172,6 @@ expressApp.get( "/api/room/:code", async ( request, response ) => {
 		await MongoDB.UpdateGuest( request.session.guestId, {
 			inRoom: new ObjectId( rooms[ 0 ]._id )
 		} )
-		log.info( `Guest '${ request.session.guestId }' joined room '${ rooms[ 0 ].name }' (${ rooms[ 0 ]._id })` )
 
 		// Set the room ID in the session
 		request.session.roomId = rooms[ 0 ]._id
@@ -175,7 +180,7 @@ expressApp.get( "/api/room/:code", async ( request, response ) => {
 		respondToRequest( response, HTTPStatusCodes.OK, {
 			code: rooms[ 0 ].joinCode
 		} )
-
+		log.info( `Guest '${ request.session.guestId }' joined room '${ rooms[ 0 ].name }' (${ rooms[ 0 ]._id })` )
 	} catch ( errorMessage ) {
 		log.error( `Failed to get room from join code '${ request.params.code }' from the database (${ errorMessage })!` )
 		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
@@ -235,7 +240,10 @@ expressApp.get( "/api/room", async ( request, response ) => {
 		} )
 
 		// Send back the completed payload
-		respondToRequest( response, HTTPStatusCodes.OK, { room: roomPayload } )
+		respondToRequest( response, HTTPStatusCodes.OK, {
+			room: roomPayload
+		} )
+		log.info( `Gave data for room '${ rooms[ 0 ]._id }' to guest '${ request.session.guestId }'.` )
 	} catch ( errorMessage ) {
 		log.error( `Error while finding room '${ request.session.roomId }' in the database (${ errorMessage })!` )
 		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
@@ -262,11 +270,11 @@ expressApp.delete( "/api/session", ( request, response ) => {
 		// If all was good...
 		if ( errorMessage === undefined ) {
 
-			// Try to delete the guest from the databasae
+			// Attempt to delete the guest from the databasae
 			try {
 				await MongoDB.RemoveGuest( guestId )
 			} catch ( mongoErrorMessage ) {
-				log.error( `Failed to delete guest '${ guestId }' from the database (${ errorMessage })!` )
+				log.error( `Failed to delete guest '${ guestId }' from the database (${ mongoErrorMessage })!` )
 				return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
 					error: ErrorCodes.DatabaseDeleteFailure
 				} )

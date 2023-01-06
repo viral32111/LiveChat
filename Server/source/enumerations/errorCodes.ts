@@ -1,4 +1,4 @@
-// Status codes for errors that can be returned by the server
+// Custom status codes for errors returned by Express
 export enum ErrorCodes {
 	InvalidContentType = 0,
 	MissingPayload = 1,
