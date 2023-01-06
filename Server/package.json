@@ -53,5 +53,9 @@
 		"log4js": "^6.7.1",
 		"mongodb": "^4.13.0",
 		"ws": "^8.11.0"
+	},
+	"optionalDependencies": {
+		"bufferutil": "^4.0.7",
+		"utf-8-validate": "^5.0.10"
 	}
 }

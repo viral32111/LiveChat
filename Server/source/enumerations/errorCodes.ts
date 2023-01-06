@@ -9,5 +9,6 @@ export enum ErrorCodes {
 	NameNotChosen = 6,
 	ExpressSessionDestroyFailure = 7,
 	DatabaseDeleteFailure = 8,
-	DatabaseFindFailure = 9
+	DatabaseFindFailure = 9,
+	MustUpgradeToWebSocket = 10
 }

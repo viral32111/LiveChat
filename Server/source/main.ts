@@ -5,6 +5,7 @@ import { configure, getLogger } from "log4js"
 // Import required code from other scripts
 import initialiseExpress from "./express"
 import MongoDB from "./mongodb"
+import { webSocketServer } from "./routes/chat"
 
 // Which environment mode are we running in?
 export const isProduction = process.env.NODE_ENV === "production"
@@ -59,11 +60,16 @@ export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRE
 } )
 
 // When CTRL+C is pressed, stop everything gracefully...
-process.on( "SIGINT", async () => {
+process.once( "SIGINT", async () => {
 	log.info( "Stopping..." )
 
 	httpServer.close( () => {
 		log.info( "Stopped HTTP server." )
+
+		webSocketServer.close( () => {
+			log.info( "Stopped WebSocket server." )
+		} )
+
 		MongoDB.Disconnect().then( () => {
 			process.exit( 0 ) // Success exit code
 		} )
