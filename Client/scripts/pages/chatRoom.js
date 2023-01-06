@@ -6,6 +6,7 @@ const guestName = $( "#guestName" )
 const participantCount = $( "#participantCount" )
 const roomVisibility = $( "#roomVisibility" )
 const joinCode = $( "#joinCode" )
+const joinCodeMessage = $( "#joinCodeMessage" )
 const chatMessages = $( "#chatMessages" )
 const participantsList = $( "#participantsList" )
 const sendMessageForm = $( "#sendMessageForm" )
@@ -53,15 +54,15 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 
 	// Attachments, if any
 	for ( const attachment of attachments ) {
-		if ( attachment.type === "image" ) {
-			const attachmentImage = $( "<img></img>" ).addClass( "img-thumbnail mt-2" ).attr( "src", attachment.url ).attr( "alt", "Image attachment" ).attr( "width", "256" ).attr( "height", "256" )
-			const attachmentLink = $( "<a></a>" ).attr( "href", attachment.url ).append( attachmentImage )
+		const attachmentFileName = getAttachmentFileName( attachment.path )
+
+		if ( attachment.type.startsWith( "image/" ) ) {
+			const attachmentImage = $( "<img></img>" ).addClass( "img-thumbnail mt-2" ).attr( "src", attachment.path ).attr( "alt", "Image attachment" ).attr( "width", "256" ).attr( "height", "256" )
+			const attachmentLink = $( "<a></a>" ).attr( "href", attachment.path ).append( attachmentImage )
 			bootstrapColumn.append( attachmentLink )
-		} else if ( attachment.type === "file" ) {
-			const fileAttachmentLink = $( "<a></a>" ).addClass( "ms-2" ).attr( "href", attachment.url ).text( `Download ${ getAttachmentFileName( attachment.url ) }` )
-			bootstrapColumn.append( fileAttachmentLink )
 		} else {
-			console.warn( "Unrecognised attachment:", attachment )
+			const fileAttachmentLink = $( "<a></a>" ).addClass( "ms-2" ).attr( "href", attachment.path ).attr( "download", attachmentFileName ).text( `Download ${ attachmentFileName }` )
+			bootstrapColumn.append( fileAttachmentLink )
 		}
 	}
 
@@ -115,7 +116,7 @@ function fetchRoomData() {
 			// Populate & show join code, if it was sent
 			if ( roomDataPayload.room.joinCode !== null ) {
 				joinCode.text( roomDataPayload.room.joinCode )
-				joinCode.removeClass( "visually-hidden" )
+				joinCodeMessage.removeClass( "visually-hidden" )
 			}
 
 			// Populate the participants list
@@ -164,42 +165,38 @@ sendMessageForm.on( "submit", ( event ) => {
 	// Fail if the manual input validation fails
 	if ( chatMessageValidationPattern.test( content ) !== true ) return showFeedbackModal( "Notice", "The chat message you have entered is invalid." )
 
-	// Change UI to indicate loading
-	sendMessageButton.text( "" )
+	// Disable inputs while we're sending the message
 	setFormLoading( sendMessageForm, true )
 
+	// If there are files to upload, upload them before sending the message
 	if ( filesToUpload.length > 0 ) {
 		const formData = new FormData()
-
-		let counter = 1
-		for ( const file of filesToUpload ) {
-			console.debug( counter, file.name, file.lastModified, file.size, file.type )
-			formData.append( counter.toString(), file, file.name )
-			counter++
+		for ( let fieldName = 1; fieldName <= filesToUpload.length; fieldName++ ) {
+			formData.append( fieldName.toString(), filesToUpload[ fieldName - 1 ] )
 		}
-		console.debug( formData )
 
-		// https://stackoverflow.com/a/5976031
 		$.ajax( {
 			method: "PUT",
 			url: "/api/upload",
-			//contentType: "multipart/form-data", // required for file uploads?
-			contentType: false,
-			cache: false,
 			data: formData,
-			dataType: "json", // expected data type from server
-			processData: false // don't let jQuery convert the data
-		}, ( uploadFilesResponse ) => {
-			console.debug( uploadFilesResponse )
+			dataType: "json", // Expected response type
 
-			WebSocketClient.SendPayload( WebSocketClient.PayloadTypes.Message, {
+			// https://stackoverflow.com/a/5976031
+			contentType: false, // Prevents jQuery from setting the Content-Type header, as it removes the multipart/form-data boundary
+			processData: false, // Prevent jQuery from modifying the data before sending it
+
+			// Server sends back the paths of our files, so we just send those references back along with the content
+			success: ( uploadFilesResponse ) => WebSocketClient.SendPayload( WebSocketClient.PayloadTypes.Message, {
 				content: content,
 				attachments: uploadFilesResponse.files
-			} )
-		} ).fail( ( request, _, httpStatusMessage ) => {
-			handleServerErrorCode( request.responseText )
-			throw new Error( `Received HTTP status message '${ httpStatusMessage }' when uploading message attachments` )
+			} ),
+			error: ( request, _, httpStatusMessage ) => {
+				handleServerErrorCode( request.responseText )
+				throw new Error( `Received HTTP status message '${ httpStatusMessage }' when uploading message attachments` )
+			}
 		} )
+
+	// Otherwise, just send the message without any attachments
 	} else {
 		WebSocketClient.SendPayload( WebSocketClient.PayloadTypes.Message, {
 			content: content,
@@ -207,11 +204,8 @@ sendMessageForm.on( "submit", ( event ) => {
 		} )
 	}
 
-	// Change UI back to normal
-	sendMessageButton.text( "Send" )
+	// Reset the form
 	setFormLoading( sendMessageForm, false )
-
-	// Clear all the inputs
 	sendMessageForm[ 0 ].reset()
 
 	// Refocus the send message input
@@ -220,6 +214,7 @@ sendMessageForm.on( "submit", ( event ) => {
 } )
 
 // Submit the form if the enter key is pressed in the send message input
+// TODO: This shows the form's input validation error AFTER submitting the form
 sendMessageInput.on( "keydown", ( event ) => {
 	if ( event.key === "Enter" ) sendMessageForm.submit()
 } )

@@ -15,7 +15,7 @@ const guestName = $( "#guestName" )
 
 // The regular expressions for validating the room name & join codes
 // NOTE: Keep these the same as they are on the server!
-const roomNameValidationPattern = new RegExp( /^[\w\d .,()[\]<>+=\-!:;$£%&*#@?|]{1,50}$/ )
+const roomNameValidationPattern = new RegExp( /^[\w\d .,'()[\]<>+=\-!:;$£%&*#@?|]{1,50}$/ )
 const joinCodeValidationPattern = new RegExp( /^[A-Za-z]{6}$/ )
 
 // Creates all the HTML for a new room element, using data from the server API

@@ -40,6 +40,7 @@ class WebSocketClient {
 	}
 
 	// Runs when the WebSocket connection closes...
+	// TODO: Always reconnect on close, in case of any connection issues
 	static #onClose( event ) {
 		console.debug( "Disconnected from WebSocket!", event.code, event.reason, event.wasClean )
 	}
@@ -52,6 +53,7 @@ class WebSocketClient {
 			const serverPayload = JSON.parse( message.data.toString() )
 			//console.dir( serverPayload )
 			
+			// TODO: Broadcast for whenever guest joins/leaves the chat so the participants list & room information can be updated
 			if ( serverPayload.type === WebSocketClient.PayloadTypes.Broadcast ) {
 				WebSocketClient.#broadcastMessageCallback( serverPayload.data )
 			} else {

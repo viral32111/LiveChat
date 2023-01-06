@@ -114,6 +114,14 @@ function onWebSocketConnection( client: WebSocket, _: Request, guestId: ObjectId
 	// Register the required event handlers
 	client.on( "message", ( message ) => onWebSocketMessage( client, message, guestId, roomId ) )
 	client.once( "close", ( code, reason ) => onWebSocketClose( client, code, reason.toString(), guestId, roomId ) )
+
+	/*
+	client.on( "ping", () => log.debug( "Received WebSocket PING" ) )
+	client.on( "pong", () => log.debug( "Received WebSocket PONG" ) )
+	setInterval( () => {
+		client.ping( () => log.debug( `Sent WebSocket ping to guest '${ guestId } in room '${ roomId }''.` ) )
+	}, 5000 ) // 5 seconds
+	*/
 }
 
 // When a WebSocket connection is closed...

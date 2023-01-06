@@ -81,7 +81,7 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 			publicRoomsList.push( {
 				name: publicRoom.name,
 				guestCount: roomGuests.length,
-				latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ 0 ].sentAt ) : null,
+				latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ roomMessages.length - 1 ].sentAt ) : null,
 				joinCode: publicRoom.joinCode
 			} )
 		}
