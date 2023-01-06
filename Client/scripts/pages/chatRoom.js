@@ -20,6 +20,9 @@ const markdownUnderlinePattern = new RegExp( /__(.*)__/g )
 const markdownItalicsPattern = new RegExp( /\*(.*)\*/g )
 const markdownStrikethroughPattern = new RegExp( /~~(.*)~~/g )
 
+// Regular expressions for validating chat messages
+const chatMessageValidationPattern = new RegExp( /^.{1,200}$/ )
+
 // Helper function to get the file name from the end of a path
 const getAttachmentFileName = ( path ) => path.split( "/" ).pop()
 
@@ -97,12 +100,65 @@ sendMessageInput.on( "input", () => {
 
 // When the send message form is submitted...
 sendMessageForm.on( "submit", ( event ) => {
+
+	// Stop the default form redirect from happening
 	event.preventDefault()
 	event.stopPropagation()
 
+	// Show any Bootstrap input validation messages
+	sendMessageForm.addClass( "was-validated" )
+
+	// Do not continue if form validation fails
+	if ( sendMessageForm[ 0 ].checkValidity() !== true ) return
+
+	// Get the message & files from the inputs
 	const messageContent = sendMessageInput.val()
 	const messageAttachments = sendMessageFiles.prop( "files" )
-	console.debug( "send message", messageContent, messageAttachments )
+
+	// Fail if the manual input validation fails
+	if ( chatMessageValidationPattern.test( messageContent ) !== true ) return showFeedbackModal( "Notice", "The chat message you have entered is invalid." )
+
+	// Hide any Bootstrap input validation messages
+	sendMessageForm.removeClass( "was-validated" )
+
+	// Change UI to indicate loading
+	setFormLoading( sendMessageForm, true )
+
+	if ( messageAttachments.length > 0 ) {
+		const formData = new FormData()
+		for ( const file of messageAttachments ) {
+			console.debug( file )
+			formData.append( "myExampleFile", file )
+		}
+		console.debug( formData )
+
+		// https://stackoverflow.com/a/34327151
+		/*$.put( {
+			url: "/api/upload",
+			contentType: "multipart/form-data",
+			data: formData,
+		}, ( uploadFileResponse ) => {
+			console.debug( uploadFileResponse )
+			WebSocketClient.SendPayload( {
+				type: 0,
+				data: {
+					content: messageContent,
+					attachments: uploadFileResponse.files
+				}
+			} )
+		} ).fail( ( request, _, httpStatusMessage ) => {
+			console.warn( httpStatusMessage )
+		} )*/
+	} else {
+		WebSocketClient.SendPayload( {
+			type: 0,
+			data: {
+				content: messageContent,
+				attachments: []
+			}
+		} )
+	}
+
 } )
 
 // Submit the form if the enter key is pressed in the send message input
@@ -116,14 +172,60 @@ leaveRoomButton.on( "click", () => {
 	// TODO: API request to leave the room, then redirect back to room list
 } )
 
+// Fetches all the data for the current room from the server API...
+function fetchRoomData() {
+	$.getJSON( "/api/room", ( roomDataPayload ) => {
+		if ( roomDataPayload.room !== null ) {
+
+			// Populate room information
+			roomName.text( roomDataPayload.room.name )
+			participantCount.text( Math.max( 0, roomDataPayload.room.guests.length - 1 ) )
+			roomVisibility.text( roomDataPayload.room.isPrivate === true ? "private" : "public" )
+			
+			// Populate & show join code, if it was sent
+			if ( roomDataPayload.room.joinCode !== null ) {
+				joinCode.text( roomDataPayload.room.joinCode )
+				joinCode.removeClass( "visually-hidden" )
+			}
+
+			// Populate the participants list
+			for ( const guest of roomDataPayload.room.guests ) {
+				createParticipantElement( guest.name, guest.isRoomCreator )
+			}
+
+			// Populate the message history
+			for ( const message of roomDataPayload.room.messages ) {
+				createMessageElement( message.sentBy, message.content, message.attachments, message.sentAt )
+			}
+
+			// TODO: Scroll to the bottom of the chat history
+
+			// Start the WebSocket connection
+			//WebSocketClient.Initialise()
+
+		// We aren't in a room, so redirect back to the room list page
+		} else {
+			showFeedbackModal( "Notice", "You have not joined a room yet. Close this popup to be redirected to the room list page.", () => {
+				window.location.href = "/rooms.html"
+			} )
+		}
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		handleServerErrorCode( request.responseText )
+		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching chat history` )
+	} )
+}
+
 // When the page loads...
 $( () => {
 
-	// Try to fetch our name from the Server API
+	// Focus on the send message input so the user can start typing straight away
+	sendMessageInput.focus()
+
+	// Try to fetch our name from the Server API, then populate the room information
 	$.getJSON( "/api/name", ( responsePayload ) => {
 		if ( responsePayload.name !== null ) {
-			sendMessageInput.focus()
-			// TODO: Fetch chat history for this room, redirect back to room list if we aren't in a room
+			guestName.text( responsePayload.name )
+			fetchRoomData()
 		} else {
 			showFeedbackModal( "Notice", "You have not yet chosen a name yet. Close this popup to be redirected to the choose name page.", () => {
 				window.location.href = "/"
@@ -136,31 +238,5 @@ $( () => {
 
 		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 	} )
-
-	// DEBUGGING
-	createMessageElement( "JohnDoe1", "Hello World!", [], ( new Date().getTime() / 1000 ) - 60 * 31 )
-	createMessageElement( "JohnDoe2", "This is a message that contains styling such as **bold**, __underline__, *italics* and ~~strikethrough~~.", [], ( new Date().getTime() / 1000 ) - 60 * 30 )
-	createMessageElement( "JohnDoe3", "This message contains an image attachment, which is shown as a preview.", [ {
-		type: "image",
-		url: "https://via.placeholder.com/256"
-	} ], ( new Date().getTime() / 1000 ) - 60 * 27 )
-	createMessageElement( "JohnDoe4", "This message contains a regular file attachment, which is shown as a link.", [ {
-		type: "file",
-		url: "/attachments/document.txt"
-	} ], ( new Date().getTime() / 1000 ) - 60 * 10 )
-
-	createParticipantElement( "JohnDoe1", false )
-	createParticipantElement( "JohnDoe2", false )
-	createParticipantElement( "JohnDoe3", false )
-	createParticipantElement( "JohnDoe4", false )
-	createParticipantElement( "JohnDoe5", true )
-	createParticipantElement( "JohnDoe6", false )
-	createParticipantElement( "JohnDoe7", false )
-
-	roomName.text( "Example Room" )
-	guestName.text( "JohnDoe2" )
-	participantCount.text( "6" )
-	roomVisibility.text( "public" )
-	joinCode.text( "AABBCC" )
 
 } )

@@ -10,5 +10,6 @@ export enum ErrorCodes {
 	ExpressSessionDestroyFailure = 7,
 	DatabaseDeleteFailure = 8,
 	DatabaseFindFailure = 9,
-	MustUpgradeToWebSocket = 10
+	MustUpgradeToWebSocket = 10,
+	RoomNotJoined = 11
 }

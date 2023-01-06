@@ -15,7 +15,7 @@ const log = getLogger( "routes/room" )
 // Structure of the public room data
 interface PublicRoom {
 	name: string,
-	participantCount: number,
+	guestCount: number,
 	latestMessageSentAt: number | null, // Unix timestamp
 	joinCode: string
 }
@@ -46,19 +46,26 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 	for ( const publicRoom of publicRooms ) {
 
 		// Fetch all the messages in this room
-		const roomMessages = await MongoDB.GetMessages( publicRoom._id )
+		const roomMessages = await MongoDB.GetMessages( {
+			roomId: publicRoom._id
+		} )
+
+		// Fetch all the guests in this room
+		const roomGuests = await MongoDB.GetGuests( {
+			roomId: publicRoom._id
+		} )
 
 		// Add this room to the list, with the time the latest message was sent
 		publicRoomsList.push( {
 			name: publicRoom.name,
-			participantCount: publicRoom.participantCount,
+			guestCount: roomGuests.length,
 			latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ 0 ].sentAt ).getTime() / 1000 : null,
 			joinCode: publicRoom.joinCode
 		} )
 	}
 
 	// Sort rooms by the number of participants from highest to lowest
-	publicRoomsList.sort( ( publicRoomA, publicRoomB ) => publicRoomB.participantCount - publicRoomA.participantCount )
+	publicRoomsList.sort( ( publicRoomA, publicRoomB ) => publicRoomB.guestCount - publicRoomA.guestCount )
 
 	// Display the number of rooms in the console
 	log.info( `Listing ${ publicRoomsList.length } public rooms for guest '${ request.session.guestId }'.` )
@@ -91,7 +98,7 @@ expressApp.post( "/api/room", async ( request, response ) => {
 
 	// Try to create a new room in the database
 	try {
-		const roomInsert = await MongoDB.CreateRoom( createRoomPayload.name, createRoomPayload.isPrivate )
+		const roomInsert = await MongoDB.CreateRoom( createRoomPayload.name, createRoomPayload.isPrivate, request.session.guestId )
 		log.info( `Created new ${ createRoomPayload.isPrivate === true ? "private" : "public" } room '${ createRoomPayload.name }' (${ roomInsert.insertedId }) for guest '${ request.session.guestId }'.` )
 	
 		// Get the new room from the database

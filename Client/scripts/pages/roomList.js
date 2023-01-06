@@ -97,7 +97,7 @@ function populateRoomsOnPage() {
 		noPublicRoomsNotice.removeClass( "visually-hidden" )
 
 		for ( const publicRoom of publicRoomsPayload.publicRooms ) {
-			addRoomElementToPage( createRoomElement( publicRoom.name, publicRoom.participantCount, publicRoom.latestMessageSentAt, publicRoom.joinCode ) )
+			addRoomElementToPage( createRoomElement( publicRoom.name, publicRoom.guestCount, publicRoom.latestMessageSentAt, publicRoom.joinCode ) )
 		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )

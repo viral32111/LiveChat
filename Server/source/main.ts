@@ -1,11 +1,11 @@
 // Import required third-party packages
 import * as dotenv from "dotenv"
 import { configure, getLogger } from "log4js"
+import { Server } from "ws"
 
 // Import required code from other scripts
 import initialiseExpress from "./express"
 import MongoDB from "./mongodb"
-import { webSocketServer } from "./routes/chat"
 
 // Which environment mode are we running in?
 export const isProduction = process.env.NODE_ENV === "production"
@@ -46,6 +46,18 @@ MongoDB.Initialise()
 
 // Initialise the Express app
 export const expressApp = initialiseExpress()
+
+// Import Express routes from other scripts
+import( "./routes/name" )
+import( "./routes/favicon" )
+import( "./routes/room" )
+import( "./routes/chat" )
+log.info( "Loaded all API routes." )
+
+// Create a WebSocket server without a HTTP server, as we will handle the upgrade ourselves
+export const webSocketServer = new Server( {
+	noServer: true
+} )
 
 // Start the Express HTTP server...
 export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRESS, async () => {

@@ -10,7 +10,9 @@ const serverErrorCodeMessages = {
 	6: "You have not chosen a name yet",
 	7: "Failed to remove your session",
 	8: "Failed to remove data from the database",
-	9: "Failed to find data in the database"
+	9: "Failed to find data in the database",
+	10: "Connection must be upgraded to WebSocket",
+	11: "You have not joined a room yet"
 }
 
 // Shows the feedback modal for a server-side API error

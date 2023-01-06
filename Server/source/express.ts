@@ -68,13 +68,6 @@ export default function() {
 	expressApp.use( express.static( "../Client/" ) )
 	log.info( "Setup serving the client-side files." )
 
-	// Import routes from other scripts
-	import( "./routes/name" )
-	import( "./routes/favicon" )
-	import( "./routes/room" )
-	import( "./routes/chat" )
-	log.info( "Loaded all API routes." )
-
 	// Return the Express app for use in other scripts
 	return expressApp
 

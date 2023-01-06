@@ -9,22 +9,23 @@ import { generateRoomJoinCode } from "./helpers/random"
 const log = getLogger( "mongodb" )
 
 interface Guest extends WithId<Document> {
-	name: string
+	name: string,
+	inRoom: ObjectId | null
 }
 
 interface Room extends WithId<Document> {
 	name: string
 	isPrivate: boolean,
-	participantCount: number,
-	joinCode: string
+	joinCode: string,
+	createdBy: ObjectId
 }
 
 interface Message extends WithId<Document> {
 	content: string
-	sentAt: Date,
-	guestName: string,
 	attachments: string[],
-	roomId: ObjectId
+	sentAt: Date,
+	sentBy: ObjectId,
+	room: ObjectId
 }
 
 // Static class to encapsulate all our MongoDB functionality
@@ -80,8 +81,10 @@ export default class MongoDB {
 
 	// Adds a guest to the database
 	public static async AddGuest( name: string ) {
-		const insertResult = await MongoDB.Database.collection( MongoDB.CollectionNames.Guests ).insertOne( {
-			name: name
+		const insertResult = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).insertOne( {
+			_id: new ObjectId(),
+			name: name,
+			inRoom: null
 		} )
 
 		log.debug( `Inserted new guest '${ name }' with ID: ${ insertResult.insertedId }.` )
@@ -98,26 +101,26 @@ export default class MongoDB {
 	}
 
 	// Gets a list of the messages in the database
-	public static async GetMessages( roomId: ObjectId | undefined = undefined ) {
+	public static async GetMessages( filter: Filter<Message> = {} ) {
 		const foundMessages = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages )
-			.find<Message>( roomId === undefined ? {} : { roomId: roomId } )
+			.find<Message>( filter )
 			.sort( { sentAt: -1 } ) // Newest messages first
 			.project<Message>( { _id: 0 } ) // removes _id from the results - https://stackoverflow.com/a/52250461
 			.toArray()
 
-		log.debug( `Found ${ foundMessages.length } messages for room '${ roomId }'.` )
+		log.debug( `Found ${ foundMessages.length } messages using filter '${ JSON.stringify( filter ) }'.` )
 
 		return foundMessages
 	}
 
 	// Creates a new room in the database
-	public static async CreateRoom( name: string, isPrivate: boolean ) {
+	public static async CreateRoom( name: string, isPrivate: boolean, createdBy: ObjectId ) {
 		const insertResult = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).insertOne( {
 			_id: new ObjectId(), // This shuts TypeScript up about the _id not being set
 			name: name,
 			isPrivate: isPrivate,
-			participantCount: 0,
-			joinCode: generateRoomJoinCode()
+			joinCode: generateRoomJoinCode(),
+			createdBy: createdBy
 		} )
 
 		log.debug( `Inserted new room '${ name }' with ID: ${ insertResult.insertedId }.` )
