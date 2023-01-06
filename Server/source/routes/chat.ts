@@ -1,5 +1,8 @@
 // Import required third-party packages
 import { getLogger } from "log4js"
+import { ObjectId } from "mongodb"
+import { Request } from "express"
+import { RawData, WebSocket } from "ws"
 
 // Import required code from other scripts
 import { expressApp, webSocketServer } from "../main"
@@ -8,14 +11,27 @@ import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { ErrorCodes } from "../enumerations/errorCodes"
 import { WebSocketPayloadTypes, WebSocketCloseCodes } from "../enumerations/webSocket"
 import { respondToRequest } from "../helpers/requests"
+import MongoDB from "../mongodb"
 
 // Create the logger for this file
 const log = getLogger( "routes/chat" )
 
-// Structure for upload files response
-interface FilePayload {
+// Structure for upload files API route response
+export interface Attachment {
 	type: string,
 	path: string
+}
+
+// Structure for WebSocket payloads
+interface WebSocketPayload {
+	type: WebSocketPayloadTypes,
+	data: object
+}
+
+// Structure for WebSocket message payloads
+interface WebSocketMessagePayload {
+	content: string,
+	attachments: Attachment[]
 }
 
 // Create a route for upgrading to a WebSocket connection
@@ -39,7 +55,7 @@ expressApp.get( "/api/chat", ( request, response ) => {
 	// Handle the WebSocket upgrade
 	webSocketServer.handleUpgrade( request, request.socket, Buffer.alloc( 0 ), ( webSocketClient ) => {
 		log.debug( "Upgraded connection to WebSocket" )
-		webSocketServer.emit( "connection", webSocketClient, request )
+		webSocketServer.emit( "connection", webSocketClient, request, request.session.guestId, request.session.roomId )
 	} )
 
 } )
@@ -71,7 +87,7 @@ expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => 
 	const uploadedFiles = request.files as Express.Multer.File[]
 
 	// Loop through the uploaded files & add their type and URL to a payload for the response
-	const filesPayload: FilePayload[] = []
+	const filesPayload: Attachment[] = []
 	for ( const file of uploadedFiles ) filesPayload.push( {
 		type: file.mimetype,
 		path: `/attachments/${ file.filename }`
@@ -85,36 +101,98 @@ expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => 
 
 } )
 
+// Map to hold WebSocket clients by room ID
+const webSocketClients = new Map<ObjectId, Map<ObjectId, WebSocket>>()
+
 // When a new WebSocket connection is established...
-webSocketServer.on( "connection", ( webSocketClient ) => {
+function onWebSocketConnection( client: WebSocket, _: Request, guestId: ObjectId, roomId: ObjectId ) {
+	log.info( `New WebSocket connection established for guest '${ guestId }' in room '${ roomId }'.` )
 
-	// Acknowledge the connection
-	log.debug( "New connection" )
-	webSocketClient.send( JSON.stringify( {
-		type: WebSocketPayloadTypes.Acknowledgement,
-		data: {}
-	} ) )
+	// Remember the client WebSocket for this room (room & guest keys are created if they don't exist)
+	webSocketClients.has( roomId ) === true ? webSocketClients.get( roomId )?.set( guestId, client ) : webSocketClients.set( roomId, new Map().set( guestId, client ) )
 
-	// When a message is received from this client...
-	webSocketClient.on( "message", ( message ) => {
-		log.debug( "Client sent", message.toString() )
+	// Register the required event handlers
+	client.on( "message", ( message ) => onWebSocketMessage( client, message, guestId, roomId ) )
+	client.once( "close", ( code, reason ) => onWebSocketClose( client, code, reason.toString(), guestId, roomId ) )
+}
 
-		// Attempt to parse the message as JSON
-		try {
-			const clientPayload = JSON.parse( message.toString() )
-			console.dir( clientPayload )
+// When a WebSocket connection is closed...
+function onWebSocketClose( client: WebSocket, code: number, reason: string, guestId: ObjectId, roomId: ObjectId ) {
+	log.info( `WebSocket connection closed for guest '${ guestId }' in room '${ roomId }' (${ code }, '${ reason }').` )
 
-			// Acknowledge the message
-			webSocketClient.send( JSON.stringify( {
-				type: WebSocketPayloadTypes.Acknowledgement,
-				data: {}
-			} ) )
+	// Fail if the room or guest doesn't exist in the WebSocket clients map
+	if ( webSocketClients.has( roomId ) === false ) {
+		log.error( `Room '${ roomId }' does not exist in WebSocket clients map?` )
+		return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
+	}
+	if ( webSocketClients.get( roomId )?.has( guestId ) === false ) {
+		log.error( `Guest '${ roomId }' does not exist in room '${ roomId }' in WebSocket clients map?` )
+		return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
+	}
+
+	// Forget about the client WebSocket for this room
+	// NOTE: Not null assertion here because TypeScript doesn't understand the checks above...
+	webSocketClients.get( roomId )!.delete( guestId )
+}
+
+// When a WebSocket message is received...
+async function onWebSocketMessage( client: WebSocket, message: RawData, guestId: ObjectId, roomId: ObjectId ) {
+	log.debug( `Guest '${ guestId }' in room '${ roomId }' sent WebSocket message: '${ message.toString() }'.` )
+
+	// Attempt to parse the message as JSON
+	try {
+		const clientPayload: WebSocketPayload = JSON.parse( message.toString() )
 		
-		// Disconnect the client if the message is not JSON
-		} catch ( errorMessage ) {
-			log.error( `Failed to parse WebSocket message '${ message.toString() }' as JSON!` )
-			return webSocketClient.close( WebSocketCloseCodes.CannotAccept, "Invalid JSON" )
+		// Handle the message based on its type
+		if ( clientPayload.type === WebSocketPayloadTypes.Message ) {
+			await onGuestMessage( client, clientPayload.data as WebSocketMessagePayload, guestId, roomId )
+		} else {
+			log.warn( `Unknown WebSocket message type '${ clientPayload.type }'!` )
 		}
-	} )
+	} catch ( errorMessage ) {
+		log.error( `Failed to parse WebSocket message '${ message.toString() }' as JSON!` )
+		return client.close( WebSocketCloseCodes.CannotAccept, ErrorCodes.InvalidContentType.toString() )
+	}
+}
 
-} )
+// When a guest sends a message...
+async function onGuestMessage( client: WebSocket, payload: WebSocketMessagePayload, guestId: ObjectId, roomId: ObjectId ) {
+	log.info( `Guest '${ guestId }' in room '${ roomId }' sent message '${ payload.content }' with attachments '${ payload.attachments }'.`)
+
+	// Attempt to add the message to the database
+	try {
+		const newMessage = await MongoDB.AddMessage( payload.content, payload.attachments, guestId, roomId )
+
+		// Fail if the room or guest doesn't exist in the WebSocket clients map
+		if ( webSocketClients.has( roomId ) === false ) {
+			log.error( `Room '${ roomId }' does not exist in WebSocket clients map?` )
+			return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
+		}
+		if ( webSocketClients.get( roomId )?.has( guestId ) === false ) {
+			log.error( `Guest '${ roomId }' does not exist in room '${ roomId }' in WebSocket clients map?` )
+			return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
+		}
+
+		// Broadcast the message to all other guests in the same room
+		// NOTE: Not null assertion here because TypeScript doesn't understand the checks above...
+		for ( const [ guestId, wsClient ] of webSocketClients.get( roomId )!.entries() ) {
+			wsClient.send( JSON.stringify( {
+				type: WebSocketPayloadTypes.Broadcast,
+				data: {
+					content: newMessage.content,
+					attachments: newMessage.attachments,
+					sentAt: newMessage.sentAt,
+					sentBy: newMessage.sentBy
+				}
+			} ) )
+			log.info( `Forwarded message '${ newMessage.content }' with attachments '${ newMessage.attachments }' from guest '${ guestId }' to guest '${ guestId }' in room '${ roomId }'` )
+		}
+
+	} catch ( errorMessage ) {
+		log.error( `Failed to add message '${ payload.content }' from guest '${ guestId }' to database!` )
+		return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.DatabaseInsertFailure.toString() )
+	}
+}
+
+// Register the WebSocket new connection event handler
+webSocketServer.on( "connection", onWebSocketConnection )

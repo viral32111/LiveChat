@@ -22,7 +22,7 @@ const joinCodeValidationPattern = new RegExp( /^[A-Za-z]{6}$/ )
 function createRoomElement( name, participantCount, latestMessageSentAt, joinCode ) {
 
 	// Construct last active text
-	const lastActiveText = latestMessageSentAt === null ? "never been active" : `last active ${ unixTimestampToHumanReadable( latestMessageSentAt ) }`
+	const lastActiveText = latestMessageSentAt === null ? "never been active" : `last active ${ dateTimeToHumanReadable( latestMessageSentAt ) }`
 
 	// Name & description
 	const descriptionParagraphElement = $( "<p></p>" ).addClass( "m-0" ).text( `${ participantCount } participant(s), ${ lastActiveText }.` )

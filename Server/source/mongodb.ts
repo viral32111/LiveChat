@@ -4,16 +4,19 @@ import { getLogger } from "log4js"
 
 // Import required functions from helper scripts
 import { generateRoomJoinCode } from "./helpers/random"
+import { Attachment } from "./routes/chat"
 
 // Create the logger for this file
 const log = getLogger( "mongodb" )
 
+// Guest documents
 interface Guest extends WithId<Document> {
 	name: string,
 	inRoom: ObjectId | null,
 	joinedAt: Date
 }
 
+// Room documents
 interface Room extends WithId<Document> {
 	name: string
 	isPrivate: boolean,
@@ -22,12 +25,13 @@ interface Room extends WithId<Document> {
 	createdBy: ObjectId
 }
 
+// Message documents
 interface Message extends WithId<Document> {
 	content: string
-	attachments: string[],
+	attachments: Attachment[],
 	sentAt: Date,
 	sentBy: ObjectId,
-	room: ObjectId
+	roomId: ObjectId
 }
 
 // Static class to encapsulate all our MongoDB functionality
@@ -161,11 +165,25 @@ export default class MongoDB {
 
 	/**** Messages ****/
 
-	// Gets a list of the messages in the database
+	// Creates a message in the database
+	public static async AddMessage( content: string, attachments: Attachment[], sentBy: ObjectId, roomId: ObjectId ) {
+		const insertResult = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages ).insertOne( {
+			_id: new ObjectId(),
+			content: content,
+			attachments: attachments,
+			sentAt: new Date(),
+			sentBy: new ObjectId( sentBy ),
+			roomId: new ObjectId( roomId )
+		} )
+		log.debug( `Inserted message '${ content }' (${ insertResult.insertedId }).` )
+		return ( await this.GetMessages( { _id: insertResult.insertedId } ) )[ 0 ]
+	}
+
+	// Gets one or more messages from the database
 	public static async GetMessages( filter: Filter<Message> = {} ) {
 		const findResult = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages )
 			.find<Message>( filter )
-			.sort( { sentAt: -1 } ) // Newest messages first
+			.sort( { sentAt: 1 } ) // Newest messages first
 			.toArray()
 		log.debug( `Found ${ findResult.length } messages using filter '${ JSON.stringify( filter ) }'.` )
 		return findResult

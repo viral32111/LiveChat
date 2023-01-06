@@ -13,7 +13,8 @@ const serverErrorCodeMessages = {
 	9: "Failed to find data in the database",
 	10: "Connection must be upgraded to WebSocket",
 	11: "You have not joined a room yet",
-	12: "No files uploaded"
+	12: "No files uploaded",
+	13: "No data available"
 }
 
 // Shows the feedback modal for a server API error

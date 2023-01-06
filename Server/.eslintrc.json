@@ -33,6 +33,8 @@
 		"semi": [
 			"error",
 			"never"
-		]
+		],
+		"@typescript-eslint/ban-ts-comment": "warn",
+		"@typescript-eslint/no-non-null-assertion": "warn"
 	}
 }

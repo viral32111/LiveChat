@@ -39,7 +39,7 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 
 	// Time
 	// TODO: This will need to update every minute or so
-	const sentAtParagraph = $( "<p></p>" ).addClass( "float-end m-0" ).text( `${ unixTimestampToHumanReadable( sentAt ) }.` )
+	const sentAtParagraph = $( "<p></p>" ).addClass( "float-end m-0" ).text( `${ dateTimeToHumanReadable( sentAt ) }.` )
 
 	// Guest name
 	const guestNameStrong = $( "<strong></strong>" ).text( guestName )
@@ -68,6 +68,9 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 	// Bootstrap row
 	const bootstrapRow = $( "<div></div>" ).addClass( "row" ).append( bootstrapColumn )
 
+	// Hide the no messages notice if this is the first message
+	if ( chatMessages.children().length === 1 ) noMessagesNotice.addClass( "visually-hidden" )
+
 	// Prepend horizontal rule if this isn't the first message
 	if ( chatMessages.children().length >= 2 ) chatMessages.append( $( "<hr>" ) )
 
@@ -92,6 +95,54 @@ function createParticipantElement( name, isRoomCreator ) {
 	// Display participant on page
 	participantsList.append( bootstrapRow )
 
+}
+
+// Creates a new message element whenever one is received from the WebSocket
+function onBroadcastMessage( payload ) {
+	createMessageElement( payload.sentBy, payload.content, payload.attachments, payload.sentAt )
+}
+
+// Fetches all the data for the current room from the server API...
+function fetchRoomData() {
+	$.getJSON( "/api/room", ( roomDataPayload ) => {
+		if ( roomDataPayload.room !== null ) {
+
+			// Populate room information
+			roomName.text( roomDataPayload.room.name )
+			participantCount.text( Math.max( 0, roomDataPayload.room.guests.length - 1 ) )
+			roomVisibility.text( roomDataPayload.room.isPrivate === true ? "private" : "public" )
+
+			// Populate & show join code, if it was sent
+			if ( roomDataPayload.room.joinCode !== null ) {
+				joinCode.text( roomDataPayload.room.joinCode )
+				joinCode.removeClass( "visually-hidden" )
+			}
+
+			// Populate the participants list
+			for ( const guest of roomDataPayload.room.guests ) {
+				createParticipantElement( guest.name, guest.isRoomCreator )
+			}
+
+			// Populate the message history
+			for ( const message of roomDataPayload.room.messages ) {
+				createMessageElement( message.sentBy, message.content, message.attachments, message.sentAt )
+			}
+
+			// TODO: Scroll to the bottom of the chat history
+
+			// Start the WebSocket connection
+			WebSocketClient.Initialise( onBroadcastMessage )
+
+		// We aren't in a room, so redirect back to the room list page
+		} else {
+			showFeedbackModal( "Notice", "You have not joined a room yet. Close this popup to be redirected to the room list page.", () => {
+				window.location.href = "/rooms.html"
+			} )
+		}
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		handleServerErrorCode( request.responseText )
+		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching chat history` )
+	} )
 }
 
 // When the text in the send message input changes...
@@ -178,52 +229,6 @@ leaveRoomButton.on( "click", () => {
 	console.debug( "leave room" )
 	// TODO: API request to leave the room, then redirect back to room list
 } )
-
-// Fetches all the data for the current room from the server API...
-function fetchRoomData() {
-	$.getJSON( "/api/room", ( roomDataPayload ) => {
-		if ( roomDataPayload.room !== null ) {
-
-			// Populate room information
-			roomName.text( roomDataPayload.room.name )
-			participantCount.text( Math.max( 0, roomDataPayload.room.guests.length - 1 ) )
-			roomVisibility.text( roomDataPayload.room.isPrivate === true ? "private" : "public" )
-
-			// Populate & show join code, if it was sent
-			if ( roomDataPayload.room.joinCode !== null ) {
-				joinCode.text( roomDataPayload.room.joinCode )
-				joinCode.removeClass( "visually-hidden" )
-			}
-
-			// Populate the participants list
-			participantsList.clear()
-			for ( const guest of roomDataPayload.room.guests ) {
-				createParticipantElement( guest.name, guest.isRoomCreator )
-			}
-
-			// Populate the message history
-			chatMessages.clear()
-			noMessagesNotice.addClass( "visually-hidden" )
-			for ( const message of roomDataPayload.room.messages ) {
-				createMessageElement( message.sentBy, message.content, message.attachments, message.sentAt )
-			}
-
-			// TODO: Scroll to the bottom of the chat history
-
-			// Start the WebSocket connection
-			WebSocketClient.Initialise()
-
-		// We aren't in a room, so redirect back to the room list page
-		} else {
-			showFeedbackModal( "Notice", "You have not joined a room yet. Close this popup to be redirected to the room list page.", () => {
-				window.location.href = "/rooms.html"
-			} )
-		}
-	} ).fail( ( request, _, httpStatusMessage ) => {
-		handleServerErrorCode( request.responseText )
-		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching chat history` )
-	} )
-}
 
 // When the page loads...
 $( () => {

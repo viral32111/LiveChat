@@ -9,6 +9,7 @@ import { ErrorCodes } from "../enumerations/errorCodes"
 import { respondToRequest } from "../helpers/requests"
 import { validateRoomJoinCode, validateRoomName } from "../helpers/validation"
 import MongoDB from "../mongodb"
+import { Attachment } from "./chat"
 
 // Create the logger for this file
 const log = getLogger( "routes/room" )
@@ -17,7 +18,7 @@ const log = getLogger( "routes/room" )
 interface PublicRoomPayload {
 	name: string,
 	guestCount: number,
-	latestMessageSentAt: number | null, // Unix timestamp
+	latestMessageSentAt: Date | null, 
 	joinCode: string
 }
 
@@ -34,7 +35,7 @@ interface GuestPayload {
 }
 interface MessagePayload {
 	content: string,
-	attachments: string[],
+	attachments: Attachment[],
 	sentAt: Date,
 	sentBy: ObjectId
 }
@@ -80,7 +81,7 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 			publicRoomsList.push( {
 				name: publicRoom.name,
 				guestCount: roomGuests.length,
-				latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ 0 ].sentAt ).getTime() / 1000 : null,
+				latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ 0 ].sentAt ) : null,
 				joinCode: publicRoom.joinCode
 			} )
 		}
