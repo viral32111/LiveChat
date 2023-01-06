@@ -5,8 +5,9 @@ import { ObjectId } from "mongodb"
 // Import required code from other scripts
 import { expressApp, webSocketServer } from "../main"
 import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
-import { respondToRequest } from "../helpers/requests"
 import { ErrorCodes } from "../enumerations/errorCodes"
+import { WebSocketPayloadTypes, WebSocketCloseCodes } from "../enumerations/webSocket"
+import { respondToRequest } from "../helpers/requests"
 import MongoDB from "../mongodb"
 
 // Create the logger for this file
@@ -40,11 +41,27 @@ expressApp.get( "/api/chat", ( request, response ) => {
 
 webSocketServer.on( "connection", ( webSocketClient ) => {
 	log.debug( "New connection" )
-	webSocketClient.send( "Hello World" )
+	webSocketClient.send( JSON.stringify( {
+		type: WebSocketPayloadTypes.Acknowledgement,
+		data: {}
+	} ) )
 
 	webSocketClient.on( "message", ( message ) => {
-		log.debug( "New message:", message, "from client" )
-		webSocketClient.send( message )
+		log.debug( "Client sent", message.toString() )
+
+		try {
+			const clientPayload = JSON.parse( message.toString() )
+			console.dir( clientPayload )
+
+			webSocketClient.send( JSON.stringify( {
+				type: WebSocketPayloadTypes.Acknowledgement,
+				data: {}
+			} ) )
+
+		} catch ( errorMessage ) {
+			log.error( `Failed to parse WebSocket message '${ message.toString() }' as JSON!` )
+			return webSocketClient.close( WebSocketCloseCodes.CannotAccept, "Invalid JSON" )
+		}
 	} )
 } )
 

@@ -1,5 +1,9 @@
 class WebSocketClient {
 	static #webSocket = null
+	static PayloadTypes = {
+		Message: 0,
+		Acknowledgement: 1
+	}
 
 	static Initialise() {
 		if ( WebSocketClient.#webSocket !== null ) throw new Error( "WebSocket client has already been initialised" )
@@ -12,11 +16,14 @@ class WebSocketClient {
 		WebSocketClient.#webSocket.addEventListener( "error", WebSocketClient.#onError.bind( this ) )
 	}
 
-	static SendPayload( payload ) {
+	static SendPayload( type, data = {} ) {
 		if ( WebSocketClient.#webSocket === null ) throw new Error( "WebSocket client has not yet been initialised" )
 		if ( WebSocketClient.#webSocket.readyState !== WebSocket.OPEN ) throw new Error( "WebSocket client is not yet connected" )
 
-		WebSocketClient.#webSocket.send( JSON.stringify( payload ) )
+		WebSocketClient.#webSocket.send( JSON.stringify( {
+			type: type,
+			data: data
+		} ) )
 	}
 
 	static #onOpen() {
@@ -28,7 +35,14 @@ class WebSocketClient {
 	}
 
 	static #onMessage( message ) {
-		console.debug( "Received message over WebSocket:", message.data )
+		console.debug( "Server sent:", message.data.toString() )
+
+		try {
+			const serverPayload = JSON.parse( message.data.toString() )
+			console.dir( serverPayload )
+		} catch {
+			return console.error( `Failed to parse WebSocket message '${ message.data.toString() }' as JSON!` )
+		}
 	}
 
 	static #onError( error ) {
