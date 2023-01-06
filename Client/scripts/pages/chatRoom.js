@@ -181,7 +181,7 @@ function fetchRoomData() {
 			roomName.text( roomDataPayload.room.name )
 			participantCount.text( Math.max( 0, roomDataPayload.room.guests.length - 1 ) )
 			roomVisibility.text( roomDataPayload.room.isPrivate === true ? "private" : "public" )
-			
+
 			// Populate & show join code, if it was sent
 			if ( roomDataPayload.room.joinCode !== null ) {
 				joinCode.text( roomDataPayload.room.joinCode )
@@ -201,7 +201,7 @@ function fetchRoomData() {
 			// TODO: Scroll to the bottom of the chat history
 
 			// Start the WebSocket connection
-			//WebSocketClient.Initialise()
+			WebSocketClient.Initialise()
 
 		// We aren't in a room, so redirect back to the room list page
 		} else {
