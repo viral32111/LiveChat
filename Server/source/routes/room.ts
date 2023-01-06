@@ -1,5 +1,6 @@
 // Import required third-party packages
 import { getLogger } from "log4js"
+import { ObjectId } from "mongodb"
 
 // Import required code from other scripts
 import { expressApp } from "../main"
@@ -24,6 +25,25 @@ interface PublicRoom {
 interface CreateRoomPayload {
 	name: string,
 	isPrivate: boolean
+}
+
+// Interfaces for the payload returned by the get current room route
+interface GuestPayload {
+	name: string,
+	isRoomCreator: boolean
+}
+interface MessagePayload {
+	content: string,
+	attachments: string[],
+	sentAt: Date,
+	sentBy: ObjectId
+}
+interface RoomPayload {
+	name: string,
+	isPrivate: boolean,
+	joinCode: string | null,
+	guests: GuestPayload[],
+	messages: MessagePayload[]
 }
 
 // Route to list all public rooms
@@ -131,14 +151,31 @@ expressApp.get( "/api/room/:code", async ( request, response ) => {
 	if ( request.params.code === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMissingProperty } )
 	if ( validateRoomJoinCode( request.params.code ) !== true ) return respondToRequest( response, HTTPStatusCodes.BadRequest, { error: ErrorCodes.PayloadMalformedValue } )
 
-	// Try to get the room with the provided join code
+	// Attempt to fetch the room with the provided join code from the database
 	try {
-		const room = await MongoDB.GetRooms( {
+		const rooms = await MongoDB.GetRooms( {
 			joinCode: request.params.code
 		} )
 
+		// Fail if the room somehow wasn't found?
+		if ( rooms.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseFindFailure
+		} )
+
+		// Update the guest's room ID in the database
+		await MongoDB.UpdateGuest( request.session.guestId, {
+			inRoom: new ObjectId( rooms[ 0 ]._id )
+		} )
+		log.info( `Guest '${ request.session.guestId }' joined room '${ rooms[ 0 ].name }' (${ rooms[ 0 ]._id })` )
+
 		// Set the room ID in the session
-		request.session.roomId = room[ 0 ]._id
+		request.session.roomId = rooms[ 0 ]._id
+
+		// Respond with the join code for confirmation
+		respondToRequest( response, HTTPStatusCodes.OK, {
+			code: rooms[ 0 ].joinCode
+		} )
+
 	} catch ( errorMessage ) {
 		log.error( `Failed to get room from join code '${ request.params.code }' from the database (${ errorMessage })!` )
 		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
@@ -146,10 +183,65 @@ expressApp.get( "/api/room/:code", async ( request, response ) => {
 		} )
 	}
 
-	// Respond with the join code for confirmation
-	respondToRequest( response, HTTPStatusCodes.OK, {
-		code: request.params.code
+} )
+
+// Route for fetching data for the current room
+expressApp.get( "/api/room", async ( request, response ) => {
+
+	// Fail if the guest has not chosen a name yet
+	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
+		error: ErrorCodes.NameNotChosen
 	} )
+
+	// No room if the guest has not joined a room yet
+	if ( request.session.roomId === undefined ) return respondToRequest( response, HTTPStatusCodes.OK, {
+		room: null
+	} )
+
+	// Attempt to fetch the room from the database
+	try {
+		const rooms = await MongoDB.GetRooms( {
+			_id: new ObjectId( request.session.roomId )
+		} )
+
+		// Fail if the room somehow wasn't found?
+		if ( rooms.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseFindFailure
+		} )
+
+		// Create the initial payload for the room data
+		const roomPayload: RoomPayload = {
+			name: rooms[ 0 ].name,
+			isPrivate: rooms[ 0 ].isPrivate,
+			joinCode: request.session.guestId.toString() === rooms[ 0 ].createdBy.toString() ? rooms[ 0 ].joinCode : null, // Only if this guest is the room creator
+			guests: [],
+			messages: []
+		}
+
+		// Add all the messages in this room
+		const messages = await MongoDB.GetMessages( { roomId: rooms[ 0 ]._id } )
+		for ( const message of messages ) roomPayload.messages.push( {
+			content: message.content,
+			attachments: message.attachments,
+			sentAt: message.sentAt,
+			sentBy: message.sentBy
+		} )
+
+		// Add all the guests in this room
+		const guests = await MongoDB.GetGuests( { inRoom: rooms[ 0 ]._id } )
+		for ( const guest of guests ) roomPayload.guests.push( {
+			name: guest.name,
+			isRoomCreator: guest._id.toString() === rooms[ 0 ].createdBy.toString()
+		} )
+
+		// Send back the completed payload
+		respondToRequest( response, HTTPStatusCodes.OK, { room: roomPayload } )
+	} catch ( errorMessage ) {
+		log.error( `Error while finding room '${ request.session.roomId }' in the database (${ errorMessage })!` )
+		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseFindFailure
+		} )
+	}
 
 } )
 

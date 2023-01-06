@@ -98,10 +98,21 @@ export default class MongoDB {
 	// Removes an existing guest from the database
 	public static async RemoveGuest( guestId: ObjectId ) {
 		const deleteResult = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).deleteOne( {
-			_id: guestId
+			_id: new ObjectId( guestId )
 		} )
 		log.debug( `Deleted guest '${ guestId }'.` )
 		return deleteResult
+	}
+
+	// Updates an existing guest in the database
+	public static async UpdateGuest( guestId: ObjectId, update: Partial<Guest> ) {
+		const updateResult = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).updateOne( {
+			_id: new ObjectId( guestId )
+		}, {
+			$set: update
+		} )
+		log.debug( `Updated guest '${ guestId }' with '${ JSON.stringify( update ) }'.` )
+		return updateResult
 	}
 
 	// Gets one or more guests from the database
@@ -128,7 +139,7 @@ export default class MongoDB {
 			isPrivate: isPrivate,
 			joinCode: generateRoomJoinCode(),
 			createdAt: new Date(),
-			createdBy: createdBy
+			createdBy: new ObjectId( createdBy )
 		} )
 		log.debug( `Inserted room '${ name }' (${ insertResult.insertedId }).` )
 		return insertResult
