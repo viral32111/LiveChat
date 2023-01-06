@@ -157,4 +157,11 @@ export default class MongoDB {
 		return deleteResult
 	}
 
+	// Remove all Express sessiobs from the database
+	public static async PurgeSessions() {
+		const deleteResult = await MongoDB.Database.collection( MongoDB.CollectionNames.Sessions ).deleteMany( {} )
+		log.debug( `Removed ${ deleteResult.deletedCount } sessions.` )
+		return deleteResult
+	}
+
 }

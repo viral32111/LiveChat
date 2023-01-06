@@ -2,7 +2,7 @@
 import * as dotenv from "dotenv"
 import { configure, getLogger } from "log4js"
 
-// Import required data from other scripts
+// Import required code from other scripts
 import initialiseExpress from "./express"
 import MongoDB from "./mongodb"
 
@@ -40,11 +40,11 @@ if ( !process.env.HTTP_SERVER_PORT ) throw new Error( "The HTTP_SERVER_PORT envi
 const HTTP_SERVER_ADDRESS = process.env.HTTP_SERVER_ADDRESS
 const HTTP_SERVER_PORT = parseInt( process.env.HTTP_SERVER_PORT )
 
-// Initialise the Express app
-export const expressApp = initialiseExpress()
-
 // Initialise the MongoDB class
 MongoDB.Initialise()
+
+// Initialise the Express app
+export const expressApp = initialiseExpress()
 
 // Start the Express HTTP server...
 export const httpServer = expressApp.listen( HTTP_SERVER_PORT, HTTP_SERVER_ADDRESS, async () => {

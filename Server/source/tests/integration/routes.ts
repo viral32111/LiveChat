@@ -14,10 +14,22 @@ chai.use( chaiString )
 // Create a testing suite for the API routes
 suite( "Integration - API routes", () => {
 
-	// Purge the database after each test
+	// Purge entire database before the entire suite
+	suiteSetup( async () => {
+		await MongoDB.PurgeGuests()
+		await MongoDB.PurgeRooms()
+		await MongoDB.PurgeSessions()
+	} )
+
+	// Purge any modified database collections after each test
 	teardown( async () => {
 		await MongoDB.PurgeGuests()
 		await MongoDB.PurgeRooms()
+	} )
+
+	// Purge Express sessions after the entire suite
+	suiteTeardown( async () => {
+		await MongoDB.PurgeSessions()
 	} )
 
 	// Test the choose name API route

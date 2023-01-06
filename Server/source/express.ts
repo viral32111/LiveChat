@@ -5,8 +5,8 @@ import MongoStore from "connect-mongo"
 import { getLogger } from "log4js"
 import { ObjectId } from "mongodb"
 
-// Import required data from other scripts
-import { isProduction } from "./main"
+// Import required code from other scripts
+import { isProduction, isTest } from "./main"
 import MongoDB from "./mongodb"
 
 // Create the logger for this file
@@ -43,7 +43,7 @@ export default function() {
 		secret: EXPRESS_SESSION_SECRET,
 		resave: true,
 		saveUninitialized: false,
-		store: isProduction ? MongoStore.create( {
+		store: ( isProduction === true || isTest === true ) ? MongoStore.create( {
 			client: MongoDB.Client,
 			collectionName: MongoDB.CollectionNames.Sessions,
 		} ) : undefined, // Falling back to undefined will use the default in-memory store
