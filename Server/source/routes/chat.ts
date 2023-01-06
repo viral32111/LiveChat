@@ -173,6 +173,13 @@ async function onGuestMessage( client: WebSocket, payload: WebSocketMessagePaylo
 			return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
 		}
 
+		// Get the name of the guest who sent the message
+		const guests = await MongoDB.GetGuests( { _id: newMessage.sentBy } )
+		if ( guests.length <= 0 ) {
+			log.error( `Guest '${ guestId }' does not exist?` )
+			return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
+		}
+
 		// Broadcast the message to all other guests in the same room
 		// NOTE: Not null assertion here because TypeScript doesn't understand the checks above...
 		for ( const [ guestId, wsClient ] of webSocketClients.get( roomId )!.entries() ) {
@@ -182,7 +189,7 @@ async function onGuestMessage( client: WebSocket, payload: WebSocketMessagePaylo
 					content: newMessage.content,
 					attachments: newMessage.attachments,
 					sentAt: newMessage.sentAt,
-					sentBy: newMessage.sentBy
+					sentBy: guests[ 0 ].name
 				}
 			} ) )
 			log.info( `Forwarded message '${ newMessage.content }' with attachments '${ newMessage.attachments }' from guest '${ guestId }' to guest '${ guestId }' in room '${ roomId }'` )

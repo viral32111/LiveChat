@@ -37,7 +37,7 @@ interface MessagePayload {
 	content: string,
 	attachments: Attachment[],
 	sentAt: Date,
-	sentBy: ObjectId
+	sentBy: string
 }
 interface RoomPayload {
 	name: string,
@@ -74,7 +74,7 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 
 			// Fetch all the guests in this room
 			const roomGuests = await MongoDB.GetGuests( {
-				roomId: publicRoom._id
+				inRoom: publicRoom._id
 			} )
 
 			// Add this room to the list, with the time the latest message was sent
@@ -224,13 +224,21 @@ expressApp.get( "/api/room", async ( request, response ) => {
 			messages: []
 		}
 
-		// Add all the messages in this room
+		// Fetch all of the messages in this room
 		const messages = await MongoDB.GetMessages( { roomId: rooms[ 0 ]._id } )
+
+		// Create a mapping of guest IDs to names for all the guests in the messages
+		const guestIDs = Array.from( new Set( messages.map( ( message ) => message.sentBy.toString() ) ) ).map( ( guestID ) => new ObjectId( guestID ) ) // Get all of the unique guest IDs
+		const guestsInMessages = await MongoDB.GetGuests( { _id: { $in: guestIDs } } )
+		const guestIDsToNames = new Map<string, string>()
+		for ( const guest of guestsInMessages ) guestIDsToNames.set( guest._id.toString(), guest.name )
+
+		// Add all of the messages to the payload
 		for ( const message of messages ) roomPayload.messages.push( {
 			content: message.content,
 			attachments: message.attachments,
 			sentAt: message.sentAt,
-			sentBy: message.sentBy
+			sentBy: guestIDsToNames.get( message.sentBy.toString() )!
 		} )
 
 		// Add all the guests in this room
