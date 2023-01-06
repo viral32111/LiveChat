@@ -15,6 +15,9 @@ COPY --chown=${USER_ID}:${USER_ID} ./package-lock.json ${LIVECHAT_DIRECTORY}/pac
 # Add the server-side code
 COPY --chown=${USER_ID}:${USER_ID} ./dist/ ${LIVECHAT_DIRECTORY}/dist/
 
+# Add the default production environment variables file
+COPY --chown=${USER_ID}:${USER_ID} ./production.env ${LIVECHAT_DIRECTORY}/production.env
+
 # Switch to the regular user in the project directory
 USER ${USER_ID}:${USER_ID}
 WORKDIR ${LIVECHAT_DIRECTORY}
