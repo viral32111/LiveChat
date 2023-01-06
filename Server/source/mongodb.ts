@@ -10,13 +10,15 @@ const log = getLogger( "mongodb" )
 
 interface Guest extends WithId<Document> {
 	name: string,
-	inRoom: ObjectId | null
+	inRoom: ObjectId | null,
+	joinedAt: Date
 }
 
 interface Room extends WithId<Document> {
 	name: string
 	isPrivate: boolean,
 	joinCode: string,
+	createdAt: Date,
 	createdBy: ObjectId
 }
 
@@ -79,88 +81,89 @@ export default class MongoDB {
 		log.debug( "Database ping successful." )
 	}
 
-	// Adds a guest to the database
+	/**** Guests ****/
+
+	// Creates a new guest in the database
 	public static async AddGuest( name: string ) {
 		const insertResult = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).insertOne( {
 			_id: new ObjectId(),
 			name: name,
-			inRoom: null
+			inRoom: null,
+			joinedAt: new Date()
 		} )
-
-		log.debug( `Inserted new guest '${ name }' with ID: ${ insertResult.insertedId }.` )
-
+		log.debug( `Inserted guest '${ name }' (${ insertResult.insertedId }).` )
 		return insertResult
 	}
 
-	// Gets a list of the rooms in the database
-	public static async GetRooms( filter: Filter<Room> = {} ) {
-		const foundRooms = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).find<Room>( filter ).toArray()
-		log.debug( `Found ${ foundRooms.length } rooms using filter '${ JSON.stringify( filter ) }'.` )
-
-		return foundRooms
-	}
-
-	// Gets a list of the messages in the database
-	public static async GetMessages( filter: Filter<Message> = {} ) {
-		const foundMessages = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages )
-			.find<Message>( filter )
-			.sort( { sentAt: -1 } ) // Newest messages first
-			.project<Message>( { _id: 0 } ) // removes _id from the results - https://stackoverflow.com/a/52250461
-			.toArray()
-
-		log.debug( `Found ${ foundMessages.length } messages using filter '${ JSON.stringify( filter ) }'.` )
-
-		return foundMessages
-	}
-
-	// Creates a new room in the database
-	public static async CreateRoom( name: string, isPrivate: boolean, createdBy: ObjectId ) {
-		const insertResult = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).insertOne( {
-			_id: new ObjectId(), // This shuts TypeScript up about the _id not being set
-			name: name,
-			isPrivate: isPrivate,
-			joinCode: generateRoomJoinCode(),
-			createdBy: createdBy
-		} )
-
-		log.debug( `Inserted new room '${ name }' with ID: ${ insertResult.insertedId }.` )
-
-		return insertResult
-	}
-
-	// Remove a guest from the database
+	// Removes an existing guest from the database
 	public static async RemoveGuest( guestId: ObjectId ) {
-		const deleteResult = await MongoDB.Database.collection( MongoDB.CollectionNames.Guests ).deleteOne( {
+		const deleteResult = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).deleteOne( {
 			_id: guestId
 		} )
-
 		log.debug( `Deleted guest '${ guestId }'.` )
-
 		return deleteResult
 	}
 
-	// Get a guest from the database
+	// Gets one or more guests from the database
 	public static async GetGuests( filter: Filter<Guest> = {} ) {
-		const foundGuests = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).find( filter ).toArray()
-		log.debug( `Found ${ foundGuests.length } guests using filter '${ JSON.stringify( filter ) }'.` )
-		return foundGuests
+		const findResult = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).find( filter ).toArray()
+		log.debug( `Found ${ findResult.length } guests using filter '${ JSON.stringify( filter ) }'.` )
+		return findResult
 	}
 
-	// Remove all guests from the database
+	// Removes all guests from the database
 	public static async PurgeGuests() {
 		const deleteResult = await MongoDB.Database.collection<Guest>( MongoDB.CollectionNames.Guests ).deleteMany( {} )
 		log.debug( `Removed ${ deleteResult.deletedCount } guests.` )
 		return deleteResult
 	}
 
-	// Remove all rooms from the database
+	/**** Rooms ****/
+
+	// Creates a new room in the database
+	public static async AddRoom( name: string, isPrivate: boolean, createdBy: ObjectId ) {
+		const insertResult = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).insertOne( {
+			_id: new ObjectId(), // This shuts TypeScript up about the _id not being set
+			name: name,
+			isPrivate: isPrivate,
+			joinCode: generateRoomJoinCode(),
+			createdAt: new Date(),
+			createdBy: createdBy
+		} )
+		log.debug( `Inserted room '${ name }' (${ insertResult.insertedId }).` )
+		return insertResult
+	}
+
+	// Gets one or more rooms from the database
+	public static async GetRooms( filter: Filter<Room> = {} ) {
+		const findResult = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).find<Room>( filter ).toArray()
+		log.debug( `Found ${ findResult.length } rooms using filter '${ JSON.stringify( filter ) }'.` )
+		return findResult
+	}
+
+	// Removes all rooms from the database
 	public static async PurgeRooms() {
 		const deleteResult = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).deleteMany( {} )
 		log.debug( `Removed ${ deleteResult.deletedCount } rooms.` )
 		return deleteResult
 	}
 
-	// Remove all Express sessiobs from the database
+	/**** Messages ****/
+
+	// Gets a list of the messages in the database
+	public static async GetMessages( filter: Filter<Message> = {} ) {
+		const findResult = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages )
+			.find<Message>( filter )
+			.sort( { sentAt: -1 } ) // Newest messages first
+			.project<Message>( { _id: 0 } ) // removes _id from the results - https://stackoverflow.com/a/52250461
+			.toArray()
+		log.debug( `Found ${ findResult.length } messages using filter '${ JSON.stringify( filter ) }'.` )
+		return findResult
+	}
+
+	/**** Sessions ****/
+
+	// Removes all Express sessiobs from the database
 	public static async PurgeSessions() {
 		const deleteResult = await MongoDB.Database.collection( MongoDB.CollectionNames.Sessions ).deleteMany( {} )
 		log.debug( `Removed ${ deleteResult.deletedCount } sessions.` )

@@ -98,7 +98,7 @@ expressApp.post( "/api/room", async ( request, response ) => {
 
 	// Try to create a new room in the database
 	try {
-		const roomInsert = await MongoDB.CreateRoom( createRoomPayload.name, createRoomPayload.isPrivate, request.session.guestId )
+		const roomInsert = await MongoDB.AddRoom( createRoomPayload.name, createRoomPayload.isPrivate, request.session.guestId )
 		log.info( `Created new ${ createRoomPayload.isPrivate === true ? "private" : "public" } room '${ createRoomPayload.name }' (${ roomInsert.insertedId }) for guest '${ request.session.guestId }'.` )
 	
 		// Get the new room from the database
