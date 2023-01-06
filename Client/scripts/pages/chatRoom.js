@@ -13,6 +13,7 @@ const sendMessageInput = $( "#sendMessageInput" )
 const sendMessageFiles = $( "#sendMessageFiles" )
 const sendMessageButton = $( "#sendMessageButton" )
 const leaveRoomButton = $( "#leaveRoomButton" )
+const noMessagesNotice = $( "#noMessagesNotice" )
 
 // Regular expressions for finding markdown styling
 const markdownBoldPattern = new RegExp( /\*\*(.*)\*\*/g )
@@ -67,8 +68,11 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 	// Bootstrap row
 	const bootstrapRow = $( "<div></div>" ).addClass( "row" ).append( bootstrapColumn )
 
+	// Hide the notice if this is the first message
+	if ( chatMessages.children().length === 1 ) noMessagesNotice.addClass( "visually-hidden" )
+
 	// Prepend horizontal rule if this isn't the first message
-	if ( chatMessages.children().length >= 1 ) chatMessages.append( $( "<hr>" ) )
+	if ( chatMessages.children().length >= 2 ) chatMessages.append( $( "<hr>" ) )
 
 	// Display message on page
 	chatMessages.append( bootstrapRow )

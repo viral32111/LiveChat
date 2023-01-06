@@ -20,8 +20,8 @@
 		<div class="container mt-5">
 
 			<!-- Box -->
-			<div class="row">
-				<div class="col-12 p-3 text-center border rounded bg-light">
+			<div class="row" style="min-height: 80vh;"> <!-- Bootstrap has no min-vh-80 class, only min-vh-100 -->
+				<div class="col-12 p-3 text-center border rounded bg-light d-flex flex-column">
 
 					<!-- Title & instructions -->
 					<div class="row">
@@ -30,11 +30,20 @@
 					</div>
 
 					<!-- Row for chat messages & participants list -->
-					<div class="row mb-3 gx-3">
+					<div class="row mb-3 gx-3 flex-grow-1">
 
 						<!-- Chat messages -->
 						<div class="col-10">
-							<div id="chatMessages" class="py-3 px-4 text-start border rounded bg-white"></div>
+							<div id="chatMessages" class="py-3 px-4 h-100 text-start border rounded bg-white">
+
+								<!-- Notice for no messages, hidden once a message is added -->
+								<div id="noMessagesNotice" class="col-12">
+									<div class="alert alert-primary text-center">
+										<strong>There are no messages in this room yet, send one below to start the conversation!</strong>
+									</div>
+								</div>
+
+							</div>
 						</div>
 
 						<!-- Participants list -->
