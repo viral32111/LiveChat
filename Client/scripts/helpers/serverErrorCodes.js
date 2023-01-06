@@ -12,7 +12,8 @@ const serverErrorCodeMessages = {
 	8: "Failed to remove data from the database",
 	9: "Failed to find data in the database",
 	10: "Connection must be upgraded to WebSocket",
-	11: "You have not joined a room yet"
+	11: "You have not joined a room yet",
+	12: "No files uploaded"
 }
 
 // Shows the feedback modal for a server-side API error

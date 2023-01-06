@@ -109,59 +109,65 @@ sendMessageForm.on( "submit", ( event ) => {
 	event.preventDefault()
 	event.stopPropagation()
 
-	// Show any Bootstrap input validation messages
-	sendMessageForm.addClass( "was-validated" )
-
-	// Do not continue if form validation fails
-	if ( sendMessageForm[ 0 ].checkValidity() !== true ) return
-
 	// Get the message & files from the inputs
-	const messageContent = sendMessageInput.val()
-	const messageAttachments = sendMessageFiles.prop( "files" )
+	const content = sendMessageInput.val()
+	const filesToUpload = sendMessageFiles.prop( "files" )
 
 	// Fail if the manual input validation fails
-	if ( chatMessageValidationPattern.test( messageContent ) !== true ) return showFeedbackModal( "Notice", "The chat message you have entered is invalid." )
-
-	// Hide any Bootstrap input validation messages
-	sendMessageForm.removeClass( "was-validated" )
+	if ( chatMessageValidationPattern.test( content ) !== true ) return showFeedbackModal( "Notice", "The chat message you have entered is invalid." )
 
 	// Change UI to indicate loading
+	sendMessageButton.text( "" )
 	setFormLoading( sendMessageForm, true )
 
-	if ( messageAttachments.length > 0 ) {
+	if ( filesToUpload.length > 0 ) {
 		const formData = new FormData()
-		for ( const file of messageAttachments ) {
-			console.debug( file )
-			formData.append( "myExampleFile", file )
+
+		let counter = 1
+		for ( const file of filesToUpload ) {
+			console.debug( counter, file.name, file.lastModified, file.size, file.type )
+			formData.append( counter.toString(), file, file.name )
+			counter++
 		}
 		console.debug( formData )
 
-		// https://stackoverflow.com/a/34327151
-		/*$.put( {
+		// https://stackoverflow.com/a/5976031
+		$.ajax( {
+			method: "PUT",
 			url: "/api/upload",
-			contentType: "multipart/form-data",
+			//contentType: "multipart/form-data", // required for file uploads?
+			contentType: false,
+			cache: false,
 			data: formData,
-		}, ( uploadFileResponse ) => {
-			console.debug( uploadFileResponse )
-			WebSocketClient.SendPayload( {
-				type: 0,
-				data: {
-					content: messageContent,
-					attachments: uploadFileResponse.files
-				}
+			dataType: "json", // expected data type from server
+			processData: false // don't let jQuery convert the data
+		}, ( uploadFilesResponse ) => {
+			console.debug( uploadFilesResponse )
+
+			WebSocketClient.SendPayload( WebSocketClient.PayloadTypes.Message, {
+				content: content,
+				attachments: uploadFilesResponse.files
 			} )
 		} ).fail( ( request, _, httpStatusMessage ) => {
-			console.warn( httpStatusMessage )
-		} )*/
+			handleServerErrorCode( request.responseText )
+			throw new Error( `Received HTTP status message '${ httpStatusMessage }' when uploading message attachments` )
+		} )
 	} else {
-		WebSocketClient.SendPayload( {
-			type: 0,
-			data: {
-				content: messageContent,
-				attachments: []
-			}
+		WebSocketClient.SendPayload( WebSocketClient.PayloadTypes.Message, {
+			content: content,
+			attachments: []
 		} )
 	}
+
+	// Change UI back to normal
+	sendMessageButton.text( "Send" )
+	setFormLoading( sendMessageForm, false )
+
+	// Clear all the inputs
+	sendMessageForm[ 0 ].reset()
+
+	// Refocus the send message input
+	sendMessageInput.focus()
 
 } )
 

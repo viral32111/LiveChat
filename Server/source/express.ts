@@ -1,12 +1,17 @@
+// Import required native packages
+import { parse } from "path"
+
 // Import required third-party packages
 import express from "express"
 import expressSession from "express-session"
 import MongoStore from "connect-mongo"
 import { getLogger } from "log4js"
 import { ObjectId } from "mongodb"
+import multer from "multer"
 
 // Import required code from other scripts
 import { isProduction, isTest } from "./main"
+import { generateUUID } from "./helpers/random"
 import MongoDB from "./mongodb"
 
 // Create the logger for this file
@@ -34,9 +39,6 @@ export default function() {
 	log.info( "Initialised the Express app." )
 
 	// Add support for various middlewares for the Express application
-	/*expressApp.use( express.urlencoded( {
-		extended: true
-	} ) )*/
 	expressApp.use( express.json() )
 	expressApp.use( expressSession( {
 		name: "sessionIdentifier",
@@ -72,3 +74,52 @@ export default function() {
 	return expressApp
 
 }
+
+// https://github.com/expressjs/multer#api
+export const multerMiddleware = multer( {
+	limits: {
+		files: 5, // Amount of files
+		parts: 5, // Same as above
+		fieldNameSize: 100, // Length of each field name
+		fileSize: 1024 * 1024 * 10, // Size of each file (10 MiB)
+		fieldSize: 1024 * 1024 * 10, // Same as above
+	},
+	storage: multer.diskStorage( {
+		destination: ( _, file, callback ) => {
+			log.debug( "setting destination for:", file.fieldname, file.originalname, file.encoding, file.mimetype, file.size, file.path, file.buffer, file.buffer?.byteLength )
+			callback( null, "../Client/attachments/" ) // TODO: Ensure this directory exists
+		},
+		filename: ( _, file, callback ) => {
+			log.debug( "making file name for:", file.fieldname, file.originalname, file.encoding, file.mimetype, file.size, file.path, file.buffer, file.buffer?.byteLength )
+
+			/*log.debug( "reading file:", file.path )
+			readFile( file.path, ( error, data ) => {
+				log.debug( "read file:", file.path, ", size is:", data.byteLength )
+
+				if ( error ) throw error
+
+				const hash = createHash( "sha256" )
+				log.debug( "created sha256 hasher" )
+
+				hash.update( data )
+				log.debug( "put file buffer into hasher" )
+
+				const fileName = hash.digest( "hex" ).concat( parse( file.originalname ).ext )
+				log.debug( "file name is now:", fileName )
+
+				callback( null, fileName )
+			} )*/
+
+			const fileName = generateUUID().concat( parse( file.originalname ).ext )
+			log.debug( "file name is now:", fileName )
+
+			callback( null, fileName )
+		}
+	} ),
+	fileFilter: ( request, file, callback ) => {
+		log.debug( "filtering file:", file.fieldname, file.originalname, file.encoding, file.mimetype, file.size, file.path, file.buffer, file.buffer?.byteLength )
+
+		// allow everything for now
+		callback( null, true )
+	}
+} )

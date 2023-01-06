@@ -11,5 +11,6 @@ export enum ErrorCodes {
 	DatabaseDeleteFailure = 8,
 	DatabaseFindFailure = 9,
 	MustUpgradeToWebSocket = 10,
-	RoomNotJoined = 11
+	RoomNotJoined = 11,
+	NoFilesUploaded = 12
 }
