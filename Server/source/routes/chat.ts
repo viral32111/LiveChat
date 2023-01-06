@@ -16,6 +16,8 @@ import MongoDB from "../mongodb"
 // Create the logger for this file
 const log = getLogger( "routes/chat" )
 
+// TODO: Move all interfaces into their own files in a dedicated directory
+
 // Structure for upload files API route response
 export interface Attachment {
 	type: string,
@@ -97,7 +99,7 @@ expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => 
 	respondToRequest( response, HTTPStatusCodes.OK, {
 		files: filesPayload
 	} )
-	log.info( `Guest '${ request.session.guestId }' uploaded ${ uploadedFiles.length } files.` )
+	log.info( `Guest '${ request.session.guestId }' uploaded ${ uploadedFiles } files.` )
 
 } )
 
