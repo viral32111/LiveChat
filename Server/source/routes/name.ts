@@ -79,13 +79,13 @@ expressApp.get( "/api/name", async ( request, response ) => {
 			_id: new ObjectId( request.session.guestId ) // Apparently .guestId is not already an ObjectId, despite that being the type of the property in the interface...
 		} )
 
-		// Fail if no guest was found?
+		// Fail if the guest somehow wasn't found?
 		if ( foundGuests.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
 			error: ErrorCodes.DatabaseFindFailure
 		} )
 
-		// Send the name back
-		log.info( `Found name '${ foundGuests[ 0 ].name }' for guest '${ foundGuests[ 0 ].id }.'` )
+		// Send their name back
+		log.info( `Found name '${ foundGuests[ 0 ].name }' for guest '${ foundGuests[ 0 ]._id }.'` )
 		respondToRequest( response, HTTPStatusCodes.OK, {
 			name: foundGuests[ 0 ].name
 		} )
