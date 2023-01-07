@@ -229,6 +229,7 @@ expressApp.get( "/api/room", async ( request, response ) => {
 		const messages = await MongoDB.GetMessages( { roomId: rooms[ 0 ]._id } )
 
 		// Create a mapping of guest IDs to names for all the guests in the messages
+		// TODO: Guests that have ended their session won't be found, so just return their name as "Deleted Guest" or something
 		const guestIDs = Array.from( new Set( messages.map( ( message ) => message.sentBy.toString() ) ) ).map( ( guestID ) => new ObjectId( guestID ) ) // Get all of the unique guest IDs
 		const guestsInMessages = await MongoDB.GetGuests( { _id: { $in: guestIDs } } )
 		const guestIDsToNames = new Map<string, string>()
@@ -337,6 +338,8 @@ expressApp.delete( "/api/room", async ( request, response ) => {
 		if ( guestsInRoom.length <= 0 ) {
 			await MongoDB.RemoveRoom( rooms[ 0 ]._id )
 			log.info( `Removed now empty room '${ rooms[ 0 ]._id }'.` )
+
+			// TODO: Remove all messages for the room that was just deleted
 		}
 
 		// Send back success with no data

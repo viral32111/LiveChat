@@ -4,6 +4,7 @@ class WebSocketClient {
 	// The WebSocket instance & custom payload types (same as the ones on the server API)
 	static #webSocket = null
 	static #broadcastMessageCallback = null
+	static #shouldAutoReconnect = true
 	static PayloadTypes = {
 		Message: 0,
 		Broadcast: 1
@@ -34,15 +35,31 @@ class WebSocketClient {
 		} ) )
 	}
 
+	// Closes the WebSocket connection for good
+	static Close() {
+		if ( WebSocketClient.#webSocket === null ) throw new Error( "WebSocket client has not yet been initialised" )
+		if ( WebSocketClient.#webSocket.readyState !== WebSocket.OPEN ) throw new Error( "WebSocket client is not yet connected" )
+
+		WebSocketClient.#shouldAutoReconnect = false
+		WebSocketClient.#webSocket.close( 1000, "Goodbye. We'll meet again, don't know where, don't know when." )
+		WebSocketClient.#webSocket = null
+	}
+
 	// Runs when the WebSocket connection is opened...
 	static #onOpen() {
 		console.debug( "Connected to WebSocket!" )
 	}
 
 	// Runs when the WebSocket connection closes...
-	// TODO: Always reconnect on close, in case of any connection issues
 	static #onClose( event ) {
 		console.debug( "Disconnected from WebSocket!", event.code, event.reason, event.wasClean )
+
+		if ( WebSocketClient.#shouldAutoReconnect ) {
+			console.debug( "Attempting to reconnect..." )
+
+			WebSocketClient.#webSocket = null
+			WebSocketClient.Initialise( WebSocketClient.#broadcastMessageCallback )
+		}
 	}
 
 	// Runs when the WebSocket client receives a message from the server...
@@ -51,8 +68,7 @@ class WebSocketClient {
 		// Attempt to parse the message as JSON
 		try {
 			const serverPayload = JSON.parse( message.data.toString() )
-			//console.dir( serverPayload )
-			
+
 			// TODO: Broadcast for whenever guest joins/leaves the chat so the participants list & room information can be updated
 			if ( serverPayload.type === WebSocketClient.PayloadTypes.Broadcast ) {
 				WebSocketClient.#broadcastMessageCallback( serverPayload.data )
@@ -68,6 +84,7 @@ class WebSocketClient {
 	// Runs when the WebSocket client encounters an error...
 	static #onError( error ) {
 		console.warn( "WebSocket error:", error )
+		WebSocketClient.#shouldAutoReconnect = false
 		WebSocketClient.#webSocket.close()
 	}
 

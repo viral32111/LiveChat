@@ -227,9 +227,8 @@ leaveRoomButton.on( "click", () => {
 
 	// Request the server API to make us leave our current room
 	httpRequest( "DELETE", "/api/room" ).done( () => {
-		// TODO: Disconnect the WebSocket connection
-
-		showFeedbackModal( "Success", "You have left this room. Close this popup to be redirected to the room list page.", () => {
+		WebSocketClient.Close() // Close the WebSocket connection
+		showFeedbackModal( "Success", "You have left this room. If you were the last to leave, then the room has also been deleted. Close this popup to be redirected to the room list page.", () => {
 			window.location.href = "/rooms.html"
 		} )
 	} ).fail( ( request, _, httpStatusMessage ) => {
