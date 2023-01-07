@@ -337,9 +337,8 @@ expressApp.delete( "/api/room", async ( request, response ) => {
 		const guestsInRoom = await MongoDB.GetGuests( { inRoom: rooms[ 0 ]._id } )
 		if ( guestsInRoom.length <= 0 ) {
 			await MongoDB.RemoveRoom( rooms[ 0 ]._id )
+			await MongoDB.RemoveMessages( { roomId: rooms[ 0 ]._id } )
 			log.info( `Removed now empty room '${ rooms[ 0 ]._id }'.` )
-
-			// TODO: Remove all messages for the room that was just deleted
 		}
 
 		// Send back success with no data

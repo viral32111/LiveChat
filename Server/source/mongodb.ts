@@ -190,6 +190,13 @@ export default class MongoDB {
 		return ( await this.GetMessages( { _id: insertResult.insertedId } ) )[ 0 ]
 	}
 
+	// Removes one or more existing messages from the database
+	public static async RemoveMessages( filter: Filter<Message> ) {
+		const deleteResult = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages ).deleteMany( filter )
+		log.debug( `Deleted ${ deleteResult.deletedCount } messages using filter '${ JSON.stringify( filter ) }'.` )
+		return deleteResult
+	}
+
 	// Gets one or more messages from the database
 	public static async GetMessages( filter: Filter<Message> = {} ) {
 		const findResult = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages )
