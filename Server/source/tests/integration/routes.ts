@@ -406,4 +406,48 @@ suite( "Integration - API routes", () => {
 
 	} )
 
+	// Test the leave room API route
+	test( "Leave Room", async () => {
+
+		// Should fail as no name has been chosen
+		const leaveRoomResponse1 = await chai.request( expressApp ).delete( "/api/room" )
+		chai.assert.equal( leaveRoomResponse1.status, 401, "Expected HTTP response status code to be 401 Unauthorized" )
+		chai.assert.containIgnoreCase( leaveRoomResponse1.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+		chai.assert.deepEqual( leaveRoomResponse1.body, { error: 6 }, "Expected HTTP response payload to contain name not chosen error code" )
+
+		// Create an agent to persist cookies/session state, then choose a name
+		const userAgent = chai.request.agent( expressApp )
+		const chooseNameResponse = await userAgent.post( "/api/name" ).send( { desiredName: "JohnSmith" } )
+		chai.assert.equal( chooseNameResponse.status, 200, "Expected HTTP response status code to be 200 OK" )
+		chai.assert.containIgnoreCase( chooseNameResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+		chai.assert.deepEqual( chooseNameResponse.body, { chosenName: "JohnSmith" }, "Expected HTTP response payload to contain the guest name" )
+		expect( chooseNameResponse, "Expected HTTP response to set a session identifier cookie" ).to.have.cookie( "sessionIdentifier" )
+
+		// Should be null as no room has been chosen
+		const leaveRoomResponse2 = await userAgent.delete( "/api/room" )
+		chai.assert.equal( leaveRoomResponse2.status, 200, "Expected HTTP response status code to be 200 OK" )
+		chai.assert.containIgnoreCase( leaveRoomResponse2.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+		chai.assert.deepEqual( leaveRoomResponse2.body, { room: null }, "Expected HTTP response payload to contain null room" )
+
+		// Create a room
+		const createRoomResponse = await userAgent.post( "/api/room" ).send( { name: "John's Room", isPrivate: false } )
+		chai.assert.equal( createRoomResponse.status, 200, "Expected HTTP response status code to be 200 OK" )
+		chai.assert.containIgnoreCase( createRoomResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+		chai.assert.hasAllDeepKeys( createRoomResponse.body, [ "name", "isPrivate", "joinCode" ], "Expected HTTP response payload to contain all required keys" )
+		chai.assert.equal( createRoomResponse.body.name, "John's Room", "Expected HTTP response payload name property to be the room name" )
+		chai.assert.equal( createRoomResponse.body.isPrivate, false, "Expected HTTP response payload isPrivate property to be false" )
+		chai.assert.lengthOf( createRoomResponse.body.joinCode, 6, "Expected HTTP response payload joinCode property to be 6 characters" )
+
+		const joinRoomResponse = await userAgent.get( `/api/room/${ createRoomResponse.body.joinCode }` )
+		chai.assert.equal( joinRoomResponse.status, 200, "Expected HTTP response status code to be 200 OK" )
+		chai.assert.containIgnoreCase( joinRoomResponse.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+		chai.assert.deepEqual( joinRoomResponse.body, { code: createRoomResponse.body.joinCode }, "Expected HTTP response payload to contain the room join code" )
+
+		// Should succeed
+		const leaveRoomResponse3 = await userAgent.delete( "/api/room" )
+		chai.assert.equal( leaveRoomResponse3.status, 200, "Expected HTTP response status code to be 200 OK" )
+		chai.assert.containIgnoreCase( leaveRoomResponse3.header[ "content-type" ], "application/json", "Expected HTTP response content type to be JSON" )
+
+	} )
+
 } )
