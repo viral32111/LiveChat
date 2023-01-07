@@ -233,7 +233,7 @@ leaveRoomButton.on( "click", () => {
 		} )
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
-		throw new Error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to leave the room` )
+		console.error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to leave the room` )
 	} ).always( () => setButtonLoading( leaveRoomButton, false ) ) // Return the button to normal
 
 } )

@@ -21,6 +21,9 @@ const serverErrorCodeMessages = {
 // Shows the feedback modal for a server API error
 function handleServerErrorCode( responseText ) {
 
+	// In the unlikely situation that we somehow get a response with no text
+	if ( !responseText ) return showErrorModal( "Something wen't wrong, but the server didn't tell us what happened" )
+
 	// Attempt to parse the response as JSON
 	try {
 		const errorPayload = JSON.parse( responseText )

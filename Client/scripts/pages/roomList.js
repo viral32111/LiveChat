@@ -31,9 +31,7 @@ function createRoomElement( name, participantCount, latestMessageSentAt, joinCod
 	const informationColumn = $( "<div></div>" ).addClass( "col-10" ).append( nameHeading, descriptionParagraphElement )
 
 	// Join button
-	const joinButtonTextSpan = $( "<span></span>" ).text( "Join" )
-	const joinButtonSpinnerSpan = $( "<span></span>" ).addClass( "spinner-border spinner-border-sm visually-hidden" ).attr( "role", "status" ).attr( "aria-hidden", true )
-	const joinButton = $( "<button></button>" ).addClass( "btn btn-primary w-100 h-100" ).attr( "type", "submit" ).append( joinButtonSpinnerSpan, joinButtonTextSpan )
+	const joinButton = $( "<button></button>" ).addClass( "btn btn-primary w-100 h-100" ).attr( "type", "submit" ).text( "Join" )
 	const joinButtonColumnn = $( "<div></div>" ).addClass( "col-2" ).append( joinButton )
 
 	// When the join button is clicked...
@@ -51,11 +49,11 @@ function createRoomElement( name, participantCount, latestMessageSentAt, joinCod
 				window.location.href = "/chat.html"
 			} else {
 				showErrorModal( "Server sent back mismatching room name" )
-				throw new Error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
+				console.error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
 			}
 		} ).fail( ( request, _, httpStatusMessage ) => {
 			handleServerErrorCode( request.responseText )
-			throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+			console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
 		} ).always( () => setButtonLoading( joinButton, false ) )
 
 	} )
@@ -83,7 +81,7 @@ function addRoomElementToPage( roomElement ) {
 
 // Populates the page with the public room's fetched the server API
 function populateRoomsOnPage() {
-	$.getJSON( "/api/rooms", ( publicRoomsPayload ) => {
+	httpRequest( "GET", "/api/rooms" ).done( ( publicRoomsPayload ) => {
 		publicRoomsColumn1.empty()
 		publicRoomsColumn2.empty()
 		noPublicRoomsNotice.removeClass( "visually-hidden" )
@@ -93,7 +91,7 @@ function populateRoomsOnPage() {
 		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
-		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
+		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when fetching the list of public rooms` )
 	} )
 }
 
@@ -182,11 +180,11 @@ createRoomForm.submit( ( event ) => {
 			joinRoom( roomCreatedPayload.joinCode ) // Join the room we just created
 		} else {
 			showErrorModal( "Server sent back mismatching room name" )
-			throw new Error( `Server API sent back a room name '${ roomCreatedPayload.name }' that does not match the expected name '${ roomName }'?` )
+			console.error( `Server API sent back a room name '${ roomCreatedPayload.name }' that does not match the expected name '${ roomName }'?` )
 		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
-		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
 	} ).always( () => setFormLoading( createRoomForm, false ) ) // Always change UI back after the request so the user can try again
 
 } )
@@ -217,16 +215,31 @@ endSessionButton.click( () => {
 		} )
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
-		throw new Error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to end our session` )
+		console.error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to end our session` )
 	} ).always( () => setButtonLoading( endSessionButton, false ) ) // Return the button to normal
 
 } )
 
 // Try to fetch our name from the server API when the page loads...
-$( () => $.getJSON( "/api/name", ( responsePayload ) => {
-	if ( responsePayload.name !== null ) {
-		guestName.text( responsePayload.name )
-		populateRoomsOnPage()
+$( () => httpRequest( "GET", "/api/name" ).done( ( nameResponsePayload ) => {
+	if ( nameResponsePayload.name !== null ) {
+		guestName.text( nameResponsePayload.name )
+
+		// Check if we're meant to be in a room
+		httpRequest( "GET", "/api/room" ).done( ( roomDataPayload ) => {
+			if ( roomDataPayload.room !== null ) {
+				showFeedbackModal( "Notice", "You did not properly leave your previous room. Close this popup to be redirected to the chat room page.", () => {
+					window.location.href = "/"
+				} )
+			} else {
+				populateRoomsOnPage()
+			}
+		} ).fail( ( request, _, httpStatusMessage ) => {
+			handleServerErrorCode( request.responseText, () => {
+				window.location.href = "/" // Redirect back to the chat room page to be safe, as we can't check if we're meant to be in one
+			} )
+			console.error( `Received HTTP status message '${ httpStatusMessage }' when fetching our room` )
+		} )
 	} else {
 		showFeedbackModal( "Notice", "You have not yet chosen a name yet. Close this popup to be redirected to the choose name page.", () => {
 			window.location.href = "/"
@@ -236,5 +249,5 @@ $( () => $.getJSON( "/api/name", ( responsePayload ) => {
 	handleServerErrorCode( request.responseText, () => {
 		window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
 	} )
-	throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
+	console.error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 } ) )

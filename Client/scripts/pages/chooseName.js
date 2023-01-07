@@ -44,11 +44,11 @@ nameForm.submit( ( event ) => {
 			window.location.href = "/rooms.html" // Redirect to the room list page, if the request was successful
 		} else {
 			showErrorModal( "Server sent back mismatching chosen name" )
-			throw new Error( `Server API sent back a name '${ responsePayload.chosenName }' that does not match the desired name '${ desiredName }'?` )
+			console.error( `Server API sent back a name '${ responsePayload.chosenName }' that does not match the desired name '${ desiredName }'?` )
 		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
-		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
 	} ).always( () => setFormLoading( nameForm, false ) ) // Always change UI back after the request so the user can try again
 
 } )
@@ -62,5 +62,5 @@ $( () => $.getJSON( "/api/name", ( responsePayload ) => {
 	}
 } ).fail( ( request, _, httpStatusMessage ) => {
 	handleServerErrorCode( request.responseText )
-	throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
+	console.error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 } ) )

@@ -282,6 +282,17 @@ expressApp.delete( "/api/session", ( request, response ) => {
 			try {
 				await MongoDB.RemoveGuest( guestId )
 
+				// Remove any rooms made by this guest, so long as they are empty
+				const roomsByGuest = await MongoDB.GetRooms( { createdBy: new ObjectId( guestId ) } )
+				for ( const room of roomsByGuest ) {
+					const guestsInRoom = await MongoDB.GetGuests( { inRoom: room._id } )
+					if ( guestsInRoom.length <= 0 ) {
+						await MongoDB.RemoveRoom( room._id )
+						await MongoDB.RemoveMessages( { roomId: room._id } )
+						log.info( `Removed empty room '${ room._id }' created by guest '${ guestId }'.` )
+					}
+				}
+
 				// Send back a success response with no data
 				respondToRequest( response, HTTPStatusCodes.OK, {} )
 				log.info( `Ended session for guest '${ guestId }'.` )
