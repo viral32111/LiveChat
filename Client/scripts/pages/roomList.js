@@ -122,23 +122,27 @@ joinPrivateRoomForm.submit( ( event ) => {
 	// Change UI to indicate loading
 	setFormLoading( joinPrivateRoomForm, true )
 
-	// Get the request information from the form attributes
+	// Request the server API to put us into this room
+	joinRoom( joinCode ).always( () => setFormLoading( joinPrivateRoomForm, false ) ) // Always change UI back after the request so the user can try again
+
+} )
+
+// Requests the server API to put us into the given room
+function joinRoom( joinCode ) {
 	const requestMethod = joinPrivateRoomForm.attr( "method" ), targetRoute = joinPrivateRoomForm.attr( "action" )
 
-	// Request the server API to put us into this room
-	httpRequest( requestMethod, `${targetRoute}/${joinCode}` ).done( ( roomJoinedPayload, _, request ) => {
+	return httpRequest( requestMethod, `${ targetRoute }/${ joinCode }` ).done( ( roomJoinedPayload ) => {
 		if ( roomJoinedPayload.code === joinCode ) {
 			window.location.href = "/chat.html"
 		} else {
-			showErrorModal( "Server sent back mismatching room name" )
+			showErrorModal( "Server sent back mismatching room join code" )
 			throw new Error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
 		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
 		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
-	} ).always( () => setFormLoading( joinPrivateRoomForm, false ) ) // Always change UI back after the request so the user can try again
-
-} )
+	} )
+}
 
 // When the create room form is submitted...
 createRoomForm.submit( ( event ) => {
@@ -172,10 +176,10 @@ createRoomForm.submit( ( event ) => {
 	httpRequest( requestMethod, targetRoute, {
 		name: roomName,
 		isPrivate: isRoomPrivate
-	} ).done( ( roomCreatedPayload, _, request ) => {
+	} ).done( ( roomCreatedPayload ) => {
 		if ( roomCreatedPayload.name === roomName ) {
-			populateRoomsOnPage()
-			// TODO: Redirect to new chat room
+			populateRoomsOnPage() // Just in case the below request fails
+			joinRoom( roomCreatedPayload.joinCode ) // Join the room we just created
 		} else {
 			showErrorModal( "Server sent back mismatching room name" )
 			throw new Error( `Server API sent back a room name '${ roomCreatedPayload.name }' that does not match the expected name '${ roomName }'?` )
