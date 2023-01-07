@@ -43,8 +43,14 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 	const sentAtParagraph = $( "<p></p>" ).addClass( "float-end m-0" ).text( `${ dateTimeToHumanReadable( sentAt ) }.` )
 
 	// Guest name
-	const guestNameStrong = $( "<strong></strong>" ).text( guestName )
-	const guestNameHeading = $( "<h5></h5>" ).addClass( "m-0" ).append( guestNameStrong )
+	let guestNameHeading
+	if ( guestName !== null ) {
+		const guestNameStrong = $( "<strong></strong>" ).text( guestName )
+		guestNameHeading = $( "<h5></h5>" ).addClass( "m-0" ).append( guestNameStrong )
+	} else {
+		const guestNameItalic = $( "<em></em>" ).text( "Unknown Guest" )
+		guestNameHeading = $( "<h5></h5>" ).addClass( "m-0 text-secondary" ).append( guestNameItalic )
+	}
 
 	// Content
 	const contentParagraph = $( "<p></p>" ).addClass( "m-0" ).html( convertMarkdownStylingToHTML( content ) )
@@ -77,6 +83,9 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 
 	// Display message on page
 	chatMessages.append( bootstrapRow )
+
+	// Scroll to the bottom of the chat history - https://stackoverflow.com/a/2664878
+	chatMessages.scrollTop( chatMessages[ 0 ].scrollHeight )
 
 }
 
@@ -128,8 +137,6 @@ function fetchRoomData() {
 			for ( const message of roomDataPayload.room.messages ) {
 				createMessageElement( message.sentBy, message.content, message.attachments, message.sentAt )
 			}
-
-			// TODO: Scroll to the bottom of the chat history
 
 			// Start the WebSocket connection
 			WebSocketClient.Initialise( onBroadcastMessage )

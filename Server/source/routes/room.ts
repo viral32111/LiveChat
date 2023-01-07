@@ -196,11 +196,15 @@ expressApp.get( "/api/room", async ( request, response ) => {
 		const messages = await MongoDB.GetMessages( { roomId: rooms[ 0 ]._id } )
 
 		// Create a mapping of guest IDs to names for all the guests in the messages
-		// TODO: Guests that have ended their session won't be found, so just return their name as "Deleted Guest" or something
-		const guestIDs = Array.from( new Set( messages.map( ( message ) => message.sentBy.toString() ) ) ).map( ( guestID ) => new ObjectId( guestID ) ) // Get all of the unique guest IDs
-		const guestsInMessages = await MongoDB.GetGuests( { _id: { $in: guestIDs } } )
-		const guestIDsToNames = new Map<string, string>()
-		for ( const guest of guestsInMessages ) guestIDsToNames.set( guest._id.toString(), guest.name )
+		const guestIDsToNames = new Map<string, string | null>()
+		for ( const message of messages ) {
+			const guestId = message.sentBy.toString()
+			if ( guestIDsToNames.has( guestId ) === false ) guestIDsToNames.set( guestId, null ) // Default to null
+		}
+		const guestsInMessages = await MongoDB.GetGuests( { _id: { $in: Array.from( guestIDsToNames.keys() ).map( guestId => new ObjectId( guestId ) ) } } )
+		for ( const guest of guestsInMessages ) {
+			guestIDsToNames.set( guest._id.toString(), guest.name )
+		}
 
 		// Add all of the messages to the payload
 		for ( const message of messages ) roomPayload.messages.push( {

@@ -20,8 +20,8 @@
 		<div class="container mt-5">
 
 			<!-- Box -->
-			<div class="row" style="min-height: 80vh;"> <!-- Bootstrap has no min-vh-80 class, only min-vh-100 -->
-				<div class="col-12 p-3 text-center border rounded bg-light d-flex flex-column">
+			<div class="row">
+				<div class="col-12 d-flex flex-column p-3 text-center border rounded bg-light">
 
 					<!-- Title & instructions -->
 					<div class="row">
@@ -34,7 +34,7 @@
 
 						<!-- Chat messages -->
 						<div class="col-10">
-							<div id="chatMessages" class="py-3 px-4 h-100 text-start border rounded bg-white">
+							<div id="chatMessages" class="py-3 px-4 text-start border rounded bg-white overflow-hidden overflow-y-scroll" style="height: 65vh"> <!-- Bootstrap has no vh-60 class -->
 
 								<!-- Notice for no messages, hidden once a message is added -->
 								<div id="noMessagesNotice" class="col-12">

@@ -21,7 +21,7 @@ export interface MessagePayload {
 	content: string,
 	attachments: Attachment[],
 	sentAt: Date,
-	sentBy: string
+	sentBy: string | null
 }
 export interface RoomPayload {
 	name: string,
