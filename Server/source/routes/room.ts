@@ -208,7 +208,6 @@ expressApp.get( "/api/room", async ( request, response ) => {
 	} )
 
 	// No room if the guest has not joined a room yet
-	// TODO: Sometimes this is undefined right after joining a room, but only for the second time...?
 	if ( request.session.roomId === undefined ) return respondToRequest( response, HTTPStatusCodes.OK, {
 		room: null
 	} )

@@ -35,7 +35,7 @@ export function forgetClientWebSocket( guestId: ObjectId, roomId: ObjectId ) {
 	// Fail if the room or guest doesn't exist in the WebSocket clients map
 	const roomClients = webSocketClients.get( roomId.toString() )
 	if ( roomClients === undefined ) throw new Error( `Room '${ roomId }' does not exist in WebSocket clients map?` )
-	if ( roomClients.has( guestId.toString() ) === false ) throw new Error( `Guest '${ roomId }' does not exist in room '${ roomId }' in WebSocket clients map?` )
+	if ( roomClients.has( guestId.toString() ) === false ) throw new Error( `Guest '${ guestId }' does not exist in room '${ roomId }' in WebSocket clients map?` )
 
 	roomClients.delete( guestId.toString() )
 
