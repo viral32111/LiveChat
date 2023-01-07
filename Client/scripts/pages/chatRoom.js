@@ -146,11 +146,6 @@ function fetchRoomData() {
 	} )
 }
 
-// When the text in the send message input changes...
-sendMessageInput.on( "input", () => {
-	// TODO: Save in localStorage so we can restore it if the user refreshes the page? Might not be needed tho as browsers usually do this for you
-} )
-
 // When the send message form is submitted...
 sendMessageForm.on( "submit", ( event ) => {
 
