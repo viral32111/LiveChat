@@ -195,7 +195,7 @@ jobs:
           keep-at-least: 1
           untagged-only: true
           account-type: personal
-          token: ${{ secrets.GITHUB_PERSONAL_ACCESS_TOKEN_PACKAGES }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN_PACKAGES }}
 
   deploy-google:
     name: Deploy to Google Cloud
