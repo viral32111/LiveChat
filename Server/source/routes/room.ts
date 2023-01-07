@@ -8,12 +8,45 @@ import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { ErrorCodes } from "../enumerations/errorCodes"
 import { respondToRequest } from "../helpers/requests"
 import { validateRoomJoinCode, validateRoomName } from "../helpers/validation"
-import { PublicRoomPayload, RoomPayload } from "../interfaces/routes/responses"
+import { webSocketBroadcastPayload, webSocketClients } from "../helpers/webSocketBroadcast"
+import { GuestPayload, PublicRoomPayload, RoomPayload } from "../interfaces/routes/responses"
 import { CreateRoomPayload } from "../interfaces/routes/requests"
+import { WebSocketGuestUpdatePayload } from "../interfaces/webSocket"
+import { WebSocketPayloadTypes } from "../enumerations/webSocket"
 import MongoDB from "../classes/mongodb"
 
 // Create the logger for this file
 const log = getLogger( "routes/room" )
+
+// Broadcasts the list of guests in a room so they can update their participants list
+async function broadcastGuestsUpdate( guestId: ObjectId, roomId: ObjectId ) {
+
+	// Get this room
+	const rooms = await MongoDB.GetRooms( {
+		_id: new ObjectId( roomId )
+	} )
+
+	// Fail if the room does not exist
+	if ( rooms.length === 0 ) throw new Error( `Room '${ roomId }' somehow does not exist in the database?` )
+
+	// Fetch all the guests in this room
+	const guestsInRoom = await MongoDB.GetGuests( {
+		inRoom: rooms[ 0 ]._id
+	} )
+
+	// Create the payload to send to all guests in this room
+	const guestsPayload: GuestPayload[] = []
+	for ( const guest of guestsInRoom ) guestsPayload.push( {
+		name: guest.name,
+		isRoomCreator: guest._id.toString() === rooms[ 0 ].createdBy.toString()
+	} )
+
+	// Broadcast the payload to all guests in this room
+	await webSocketBroadcastPayload( WebSocketPayloadTypes.GuestsUpdate, {
+		guests: guestsPayload
+	} as WebSocketGuestUpdatePayload, guestId, roomId )
+
+}
 
 // Route to list all public rooms
 expressApp.get( "/api/rooms", async ( request, response ) => {
@@ -144,6 +177,14 @@ expressApp.get( "/api/room/:code", async ( request, response ) => {
 		} )
 		request.session.roomId = rooms[ 0 ]._id
 
+		// Create the room in the map if it doesn't exist
+		const roomClients = webSocketClients.get( request.session.roomId.toString() )
+		if ( roomClients === undefined ) webSocketClients.set( request.session.roomId.toString(), new Map() )
+
+		// Send the guests in the room a new participants list
+		await broadcastGuestsUpdate( request.session.guestId, rooms[ 0 ]._id )
+		log.info( `Broadcasted guest update in room '${ request.session.roomId }' due to guest '${ request.session.guestId }' joining.` )
+
 		// Respond with the join code for confirmation, once the session has been saved
 		request.session.save( () => respondToRequest( response, HTTPStatusCodes.OK, {
 			code: rooms[ 0 ].joinCode
@@ -211,7 +252,7 @@ expressApp.get( "/api/room", async ( request, response ) => {
 			content: message.content,
 			attachments: message.attachments,
 			sentAt: message.sentAt,
-			sentBy: guestIDsToNames.get( message.sentBy.toString() )!
+			sentBy: guestIDsToNames.get( message.sentBy.toString() ) ?? null
 		} )
 
 		// Add all the guests in this room
@@ -271,6 +312,11 @@ expressApp.delete( "/api/room", async ( request, response ) => {
 			await MongoDB.RemoveRoom( rooms[ 0 ]._id )
 			await MongoDB.RemoveMessages( { roomId: rooms[ 0 ]._id } )
 			log.info( `Removed now empty room '${ rooms[ 0 ]._id }'.` )
+
+		// Otherwise if guests are still in it, send them a new participants list
+		} else {
+			await broadcastGuestsUpdate( request.session.guestId, rooms[ 0 ]._id )
+			log.info( `Broadcasted guest update in room '${ rooms[ 0 ]._id }' due to guest '${ request.session.guestId }' leaving.` )
 		}
 
 		// Send back success with no data, once the session is saved

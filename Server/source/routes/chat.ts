@@ -9,6 +9,7 @@ import { expressApp, webSocketServer, multerMiddleware } from "../main"
 import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { ErrorCodes } from "../enumerations/errorCodes"
 import { WebSocketPayloadTypes, WebSocketCloseCodes } from "../enumerations/webSocket"
+import { forgetClientWebSocket, rememberClientWebSocket, webSocketBroadcastPayload } from "../helpers/webSocketBroadcast"
 import { respondToRequest } from "../helpers/requests"
 import { WebSocketMessagePayload, WebSocketPayload } from "../interfaces/webSocket"
 import { Attachment } from "../interfaces/routes/responses"
@@ -84,46 +85,33 @@ expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => 
 
 } )
 
-// Map to hold WebSocket clients by room ID
-const webSocketClients = new Map<ObjectId, Map<ObjectId, WebSocket>>()
-
 // When a new WebSocket connection is established...
 function onWebSocketConnection( client: WebSocket, _: Request, guestId: ObjectId, roomId: ObjectId ) {
 	log.info( `New WebSocket connection established for guest '${ guestId }' in room '${ roomId }'.` )
 
-	// Remember the client WebSocket for this room (room & guest keys are created if they don't exist)
-	webSocketClients.has( roomId ) === true ? webSocketClients.get( roomId )?.set( guestId, client ) : webSocketClients.set( roomId, new Map().set( guestId, client ) )
+	// Attempt to remember the guest's WebSocket for this room
+	try {
+		rememberClientWebSocket( guestId, roomId, client )
+	} catch ( errorMessage ) {
+		log.error( `Failed to delete client WebSocket for guest '${ guestId }' in room '${ roomId }'!` )
+	}
 
 	// Register the required event handlers
 	client.on( "message", ( message ) => onWebSocketMessage( client, message, guestId, roomId ) )
 	client.once( "close", ( code, reason ) => onWebSocketClose( client, code, reason.toString(), guestId, roomId ) )
 
-	/*
-	client.on( "ping", () => log.debug( "Received WebSocket PING" ) )
-	client.on( "pong", () => log.debug( "Received WebSocket PONG" ) )
-	setInterval( () => {
-		client.ping( () => log.debug( `Sent WebSocket ping to guest '${ guestId } in room '${ roomId }''.` ) )
-	}, 5000 ) // 5 seconds
-	*/
 }
 
 // When a WebSocket connection is closed...
-function onWebSocketClose( client: WebSocket, code: number, reason: string, guestId: ObjectId, roomId: ObjectId ) {
+function onWebSocketClose( _: WebSocket, code: number, reason: string, guestId: ObjectId, roomId: ObjectId ) {
 	log.info( `WebSocket connection closed for guest '${ guestId }' in room '${ roomId }' (${ code }, '${ reason }').` )
 
-	// Fail if the room or guest doesn't exist in the WebSocket clients map
-	if ( webSocketClients.has( roomId ) === false ) {
-		log.error( `Room '${ roomId }' does not exist in WebSocket clients map?` )
-		return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
+	// Attempt to forget about this guest's WebSocket
+	try {
+		forgetClientWebSocket( guestId, roomId )
+	} catch ( errorMessage ) {
+		log.error( `Failed to delete client WebSocket for guest '${ guestId }' in room '${ roomId }'!` )
 	}
-	if ( webSocketClients.get( roomId )?.has( guestId ) === false ) {
-		log.error( `Guest '${ roomId }' does not exist in room '${ roomId }' in WebSocket clients map?` )
-		return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
-	}
-
-	// Forget about the client WebSocket for this room
-	// NOTE: Not null assertion here because TypeScript doesn't understand the checks above...
-	webSocketClients.get( roomId )!.delete( guestId )
 }
 
 // When a WebSocket message is received...
@@ -154,16 +142,6 @@ async function onGuestMessage( client: WebSocket, payload: WebSocketMessagePaylo
 	try {
 		const newMessage = await MongoDB.AddMessage( payload.content, payload.attachments, guestId, roomId )
 
-		// Fail if the room or guest doesn't exist in the WebSocket clients map
-		if ( webSocketClients.has( roomId ) === false ) {
-			log.error( `Room '${ roomId }' does not exist in WebSocket clients map?` )
-			return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
-		}
-		if ( webSocketClients.get( roomId )?.has( guestId ) === false ) {
-			log.error( `Guest '${ roomId }' does not exist in room '${ roomId }' in WebSocket clients map?` )
-			return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.NoData.toString() )
-		}
-
 		// Get the name of the guest who sent the message
 		const guests = await MongoDB.GetGuests( { _id: newMessage.sentBy } )
 		if ( guests.length <= 0 ) {
@@ -172,18 +150,18 @@ async function onGuestMessage( client: WebSocket, payload: WebSocketMessagePaylo
 		}
 
 		// Broadcast the message to all other guests in the same room
-		// NOTE: Not null assertion here because TypeScript doesn't understand the checks above...
-		for ( const [ guestId, wsClient ] of webSocketClients.get( roomId )!.entries() ) {
-			wsClient.send( JSON.stringify( {
-				type: WebSocketPayloadTypes.Broadcast,
-				data: {
-					content: newMessage.content,
-					attachments: newMessage.attachments,
-					sentAt: newMessage.sentAt,
-					sentBy: guests[ 0 ].name
-				}
-			} ) )
-			log.info( `Forwarded message '${ newMessage.content }' with attachments '${ newMessage.attachments }' from guest '${ guestId }' to guest '${ guestId }' in room '${ roomId }'` )
+		try {
+			await webSocketBroadcastPayload( WebSocketPayloadTypes.Broadcast, {
+				content: newMessage.content,
+				attachments: newMessage.attachments,
+				sentAt: newMessage.sentAt,
+				sentBy: guests[ 0 ].name
+			} as WebSocketMessagePayload, guestId, roomId )
+
+			log.info( `Broadcasted message '${ newMessage.content }' with attachments '${ newMessage.attachments }' from guest '${ guestId }' to guests in room '${ roomId }'` )
+		} catch ( errorMessage ) {
+			log.error( `Failed to broadcast message '${ newMessage.content }' with attachments '${ newMessage.attachments }' from guest '${ guestId }' to guests in room '${ roomId }'!` )
+			client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.BroadcastFailure.toString() )
 		}
 	} catch ( errorMessage ) {
 		log.error( `Failed to add message '${ payload.content }' from guest '${ guestId }' to database!` )

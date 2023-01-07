@@ -7,5 +7,6 @@ export enum WebSocketCloseCodes {
 // Custom codes for WebSocket payloads
 export enum WebSocketPayloadTypes {
 	Message = 0,
-	Broadcast = 1
+	Broadcast = 1,
+	GuestsUpdate = 2
 }

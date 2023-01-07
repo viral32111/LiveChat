@@ -4,14 +4,16 @@ class WebSocketClient {
 	// The WebSocket instance & custom payload types (same as the ones on the server API)
 	static #webSocket = null
 	static #broadcastMessageCallback = null
+	static #guestsUpdateCallback = null
 	static #shouldAutoReconnect = true
 	static PayloadTypes = {
 		Message: 0,
-		Broadcast: 1
+		Broadcast: 1,
+		GuestsUpdate: 2
 	}
 
 	// Initialises the WebSocket client & registers event listeners
-	static Initialise( broadcastMessageCallback ) {
+	static Initialise( broadcastMessageCallback, guestsUpdateCallback ) {
 		if ( WebSocketClient.#webSocket !== null ) throw new Error( "WebSocket client has already been initialised" )
 
 		WebSocketClient.#webSocket = new WebSocket( `${ window.location.protocol === "https:" ? "wss" : "ws" }://${ window.location.host }/api/chat` )
@@ -22,6 +24,7 @@ class WebSocketClient {
 		WebSocketClient.#webSocket.addEventListener( "error", WebSocketClient.#onError.bind( this ) )
 
 		WebSocketClient.#broadcastMessageCallback = broadcastMessageCallback
+		WebSocketClient.#guestsUpdateCallback = guestsUpdateCallback
 	}
 
 	// Sends a payload to the server
@@ -58,7 +61,7 @@ class WebSocketClient {
 			console.debug( "Attempting to reconnect..." )
 
 			WebSocketClient.#webSocket = null
-			WebSocketClient.Initialise( WebSocketClient.#broadcastMessageCallback )
+			WebSocketClient.Initialise( WebSocketClient.#broadcastMessageCallback, WebSocketClient.#guestsUpdateCallback )
 		}
 	}
 
@@ -69,9 +72,11 @@ class WebSocketClient {
 		try {
 			const serverPayload = JSON.parse( message.data.toString() )
 
-			// TODO: Broadcast for whenever guest joins/leaves the chat so the participants list & room information can be updated
+			// Handle the payload based on its type
 			if ( serverPayload.type === WebSocketClient.PayloadTypes.Broadcast ) {
 				WebSocketClient.#broadcastMessageCallback( serverPayload.data )
+			} else if ( serverPayload.type === WebSocketClient.PayloadTypes.GuestsUpdate ) {
+				WebSocketClient.#guestsUpdateCallback( serverPayload.data )
 			} else {
 				console.warn( `Received unknown WebSocket payload type '${ serverPayload.type }'!` )
 			}

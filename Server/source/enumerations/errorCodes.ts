@@ -14,5 +14,6 @@ export enum ErrorCodes {
 	RoomNotJoined = 11,
 	NoFilesUploaded = 12,
 	NoData = 13,
-	DatabaseOperationFailure = 14
+	DatabaseOperationFailure = 14,
+	BroadcastFailure = 15
 }

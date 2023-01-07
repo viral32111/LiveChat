@@ -25,7 +25,8 @@ configure( {
 		"express": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"routes/room": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"routes/chat": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
-		"routes/session": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" }
+		"routes/session": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"helpers/webSocketBroadcast": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" }
 	}
 } )
 

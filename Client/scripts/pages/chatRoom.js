@@ -114,13 +114,16 @@ function onBroadcastMessage( payload ) {
 	createMessageElement( payload.sentBy, payload.content, payload.attachments, payload.sentAt )
 
 	// Send a notification if the user isn't focused on the tab & they have granted the permission
-	if ( document.hasFocus() === false && hasNotificationPermission === true ) {
-		const notification = new Notification( payload.sentBy, {
-			body: payload.content,
-		} )
-		//notification.onclick = () => window.focus()
-	}
+	if ( document.hasFocus() === false && hasNotificationPermission === true ) new Notification( payload.sentBy, {
+		body: payload.content,
+	} )
 
+}
+
+// Repopulates the participants list whenever a new participant list is received from the WebSocket
+function onGuestsUpdate( payload ) {
+	participantsList.empty()
+	for ( const guest of payload.guests ) createParticipantElement( guest.name, guest.isRoomCreator )
 }
 
 // Fetches all the data for the current room from the server API...
@@ -150,7 +153,7 @@ function fetchRoomData() {
 			}
 
 			// Start the WebSocket connection
-			WebSocketClient.Initialise( onBroadcastMessage )
+			WebSocketClient.Initialise( onBroadcastMessage, onGuestsUpdate )
 
 		// We aren't in a room, so redirect back to the room list page
 		} else {

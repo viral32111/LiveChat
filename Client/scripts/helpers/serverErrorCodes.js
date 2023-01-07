@@ -16,6 +16,7 @@ const serverErrorCodeMessages = {
 	12: "No files uploaded",
 	13: "No data available",
 	14: "Failed to perform operation(s) on the database",
+	15: "WebSocket failed to broadcast payload"
 }
 
 // Shows the feedback modal for a server API error
