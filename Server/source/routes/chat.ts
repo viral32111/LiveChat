@@ -158,9 +158,9 @@ async function onGuestMessage( client: WebSocket, payload: WebSocketMessagePaylo
 				sentBy: guests[ 0 ].name
 			} as WebSocketMessagePayload, guestId, roomId )
 
-			log.info( `Broadcasted message '${ newMessage.content }' with attachments '${ newMessage.attachments }' from guest '${ guestId }' to guests in room '${ roomId }'` )
+			log.info( `Broadcasted message '${ newMessage.content }' with attachments '${ JSON.stringify( newMessage.attachments ) }' from guest '${ guestId }' to guests in room '${ roomId }'` )
 		} catch ( errorMessage ) {
-			log.error( `Failed to broadcast message '${ newMessage.content }' with attachments '${ newMessage.attachments }' from guest '${ guestId }' to guests in room '${ roomId }'!` )
+			log.error( `Failed to broadcast message '${ newMessage.content }' with attachments '${ JSON.stringify( newMessage.attachments ) }' from guest '${ guestId }' to guests in room '${ roomId }'!` )
 			client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.BroadcastFailure.toString() )
 		}
 	} catch ( errorMessage ) {
