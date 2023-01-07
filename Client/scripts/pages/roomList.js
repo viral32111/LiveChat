@@ -229,7 +229,7 @@ $( () => httpRequest( "GET", "/api/name" ).done( ( nameResponsePayload ) => {
 		httpRequest( "GET", "/api/room" ).done( ( roomDataPayload ) => {
 			if ( roomDataPayload.room !== null ) {
 				showFeedbackModal( "Notice", "You did not properly leave your previous room. Close this popup to be redirected to the chat room page.", () => {
-					window.location.href = "/"
+					window.location.href = "/chat.html"
 				} )
 			} else {
 				populateRoomsOnPage()
