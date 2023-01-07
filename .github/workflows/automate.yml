@@ -1,12 +1,14 @@
-# This action builds the server-side code.
+# This workflow builds, tests & deploys the project.
 
-name: Server
+name: Automate
 
 on:
   push:
     paths:
       - 'Server/**'
-      - '.github/workflows/server.yml'
+      - 'Client/**'
+      - 'Dockerfile'
+      - '.github/workflows/automate.yml'
     branches:
       - '**'
     tags:
@@ -17,20 +19,45 @@ on:
   workflow_dispatch:
 
 env:
-  ARTIFACT_NAME: LiveChat-Server
-  PUBLISHER_WEBSITE: https://viral32111.com
-  DOCKER_REGISTRY_NAME: ghcr.io
+  ARTIFACT_SERVER_NAME: LiveChat-Server
+  ARTIFACT_CLIENT_NAME: LiveChat-Client
+  DOCKER_REGISTRY_DOMAIN: ghcr.io
   DOCKER_IMAGE_NAME: livechat
 
 jobs:
-  build:
-    name: Build & Test
+  client:
+    name: Client
     runs-on: ubuntu-22.04
+    env:
+      DIRECTORY_CLIENT: ./Client/
     permissions:
       contents: read
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Validate HTML
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: ${{ env.DIRECTORY_CLIENT }}
+          css: true
+
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_CLIENT_NAME }}
+          path: ${{ env.DIRECTORY_CLIENT }}
+
+  server:
+    name: Server
+    runs-on: ubuntu-22.04
+    env:
+      DIRECTORY_SERVER: ./Server/
     defaults:
       run:
         working-directory: ./Server/
+    permissions:
+      contents: read
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -44,7 +71,7 @@ jobs:
         run: npm install
 
       - name: Lint
-        run: npx eslint ./source/
+        run: npx eslint ${{ env.DIRECTORY_SERVER }}/source/
 
       - name: Compile TypeScript
         run: npx tsc
@@ -56,55 +83,53 @@ jobs:
           echo "EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET}" >> $GITHUB_OUTPUT
 
       - name: Create environment variables file
-        run: cp --verbose --archive ./production.env ./test.env
+        run: cp --verbose --archive ${{ env.DIRECTORY_SERVER }}/production.env ${{ env.DIRECTORY_SERVER }}/test.env
 
       - name: Run unit & integration tests
         env:
+          HTTP_SERVER_ADDRESS: 127.0.0.1
           MONGO_HOST: ${{ secrets.MONGO_HOST }}
           MONGO_DATABASE: LiveChat-Test
           MONGO_USER_NAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_USER_PASS: ${{ secrets.MONGO_PASSWORD }}
           EXPRESS_SESSION_SECRET: ${{ steps.express.outputs.EXPRESS_SESSION_SECRET }}
+          EXPRESS_CLIENT_DIRECTORY: ../Client
+          EXPRESS_COOKIE_DOMAIN: 127.0.0.1
         run: npm test
-
-      - name: Upload build
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: |
-            ./Server/dist/
-            ./Server/package.json
-            ./Server/package-lock.json
-            ./Server/production.env
 
       - name: Upload log
         uses: actions/upload-artifact@v3
         with:
-          name: Server Log
-          path: ./Server/logs/server.log
+          name: Server-Log
+          path: ${{ env.DIRECTORY_SERVER }}/logs/server.log
+
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_SERVER_NAME }}
+          path: |
+            ${{ env.DIRECTORY_SERVER }}/dist/
+            ${{ env.DIRECTORY_SERVER }}/package.json
+            ${{ env.DIRECTORY_SERVER }}/package-lock.json
+            ${{ env.DIRECTORY_SERVER }}/production.env
 
   docker:
-    name: Docker Image
+    name: Docker
     runs-on: ubuntu-22.04
-    needs: build
-    defaults:
-      run:
-        working-directory: ./Server/
+    needs:
+      - client
+      - server
+    concurrency:
+      group: docker
+      cancel-in-progress: true
+    env:
+      DIRECTORY_BUILDS: ./builds/
     permissions:
       contents: read
       packages: write
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
-
-      - name: Download build
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: ./Server/Build/
-
-      - name: Remove unit & integration test scripts
-        run: rm --verbose --recursive ./Build/dist/tests/
 
       - name: Setup Docker
         uses: docker/setup-buildx-action@v2
@@ -115,15 +140,30 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.DOCKER_REGISTRY_NAME }}
+          registry: ${{ env.DOCKER_REGISTRY_DOMAIN }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download server build
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_SERVER_NAME }}
+          path: ${{ env.DIRECTORY_BUILDS }}/server/
+
+      - name: Download client build
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_CLIENT_NAME }}
+          path: ${{ env.DIRECTORY_BUILDS }}/client/
+
+      - name: Remove server unit & integration tests
+        run: rm --verbose --recursive ${{ env.DIRECTORY_BUILDS }}/server/dist/tests/
 
       - name: Create metadata for Docker image
         id: metadata
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.DOCKER_REGISTRY_NAME }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
+          images: ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: latest=true
           tags: |
             type=ref,event=pr
@@ -134,14 +174,14 @@ jobs:
           labels: |
             org.opencontainers.image.title=Live Chat
             org.opencontainers.image.vendor=${{ github.repository_owner }}
-            com.docker.extension.publisher-url=${{ env.PUBLISHER_WEBSITE }}
+            com.docker.extension.publisher-url=https://viral32111.com
 
       - name: Build & push Docker image
         uses: docker/build-push-action@v3
         with:
           push: ${{ github.event_name != 'pull_request' }}
-          file: ./Server/Dockerfile
-          context: ./Server/Build/
+          file: ./Dockerfile
+          context: ${{ env.DIRECTORY_BUILDS }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           no-cache: true
@@ -155,14 +195,14 @@ jobs:
           keep-at-least: 1
           untagged-only: true
           account-type: personal
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN_PACKAGES }}
+          token: ${{ secrets.GITHUB_PERSONAL_ACCESS_TOKEN_PACKAGES }}
 
-  deploy:
+  deploy-google:
     name: Deploy to Google Cloud
     runs-on: ubuntu-22.04
     needs: docker
     concurrency:
-      group: deploy-to-google-cloud
+      group: deploy-google
       cancel-in-progress: true
     env:
       GOOGLE_CLOUD_INSTANCE: livechat-server
@@ -181,3 +221,46 @@ jobs:
 
       - name: Deploy to Compute Engine
         run: gcloud compute instances update-container ${{ env.GOOGLE_CLOUD_INSTANCE }} --zone ${{ env.GOOGLE_CLOUD_INSTANCE_ZONE }} --container-image ${{ env.DOCKER_REGISTRY_NAME }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+
+  deploy-github:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-22.04
+    needs: client
+    concurrency:
+      group: deploy-github
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      DIRECTORY_BUILD: ./build/
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Download client build
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_CLIENT_NAME }}
+          path: ${{ env.DIRECTORY_BUILD }}
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v2
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ${{ env.DIRECTORY_BUILD }}
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+
+      - name: Run Page Speed Insights
+        uses: jakepartusch/psi-action@v1.3
+        with:
+          url: ${{ steps.deployment.outputs.page_url }}
+          threshold: 70
+          strategy: desktop
+          key: ${{ secrets.GOOGLE_PAGE_SPEED_INSIGHTS_API_KEY }}

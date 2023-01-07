@@ -8,15 +8,16 @@ ARG LIVECHAT_DIRECTORY=/usr/local/livechat
 RUN mkdir --verbose --parents ${LIVECHAT_DIRECTORY} && \
 	chown --changes --recursive ${USER_ID}:${USER_ID} ${LIVECHAT_DIRECTORY}
 
-# Add the server-side project files
-COPY --chown=${USER_ID}:${USER_ID} ./package.json ${LIVECHAT_DIRECTORY}/package.json
-COPY --chown=${USER_ID}:${USER_ID} ./package-lock.json ${LIVECHAT_DIRECTORY}/package-lock.json
+# Add the server project files
+COPY --chown=${USER_ID}:${USER_ID} ./server/package.json ${LIVECHAT_DIRECTORY}/package.json
+COPY --chown=${USER_ID}:${USER_ID} ./server/package-lock.json ${LIVECHAT_DIRECTORY}/package-lock.json
 
-# Add the server-side code
-COPY --chown=${USER_ID}:${USER_ID} ./dist/ ${LIVECHAT_DIRECTORY}/dist/
+# Add the server & client code
+COPY --chown=${USER_ID}:${USER_ID} ./server/dist/ ${LIVECHAT_DIRECTORY}/dist/
+COPY --chown=${USER_ID}:${USER_ID} ./client/ ${LIVECHAT_DIRECTORY}/client/
 
 # Add the default production environment variables file
-COPY --chown=${USER_ID}:${USER_ID} ./production.env ${LIVECHAT_DIRECTORY}/production.env
+COPY --chown=${USER_ID}:${USER_ID} ./server/production.env ${LIVECHAT_DIRECTORY}/production.env
 
 # Switch to the regular user in the project directory
 USER ${USER_ID}:${USER_ID}
