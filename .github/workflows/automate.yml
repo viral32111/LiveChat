@@ -71,7 +71,7 @@ jobs:
         run: npm install
 
       - name: Lint
-        run: npx eslint ${{ env.DIRECTORY_SERVER }}/source/
+        run: npx eslint ./source/
 
       - name: Compile TypeScript
         run: npx tsc
@@ -83,7 +83,7 @@ jobs:
           echo "EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET}" >> $GITHUB_OUTPUT
 
       - name: Create environment variables file
-        run: cp --verbose --archive ${{ env.DIRECTORY_SERVER }}/production.env ${{ env.DIRECTORY_SERVER }}/test.env
+        run: cp --verbose --archive ./production.env ./test.env
 
       - name: Run unit & integration tests
         env:
