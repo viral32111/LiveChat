@@ -205,6 +205,13 @@ export default class MongoDB {
 		return findResult
 	}
 
+	// Removes all messages from the database
+	public static async PurgeMessages() {
+		const deleteResult = await MongoDB.Database.collection<Message>( MongoDB.CollectionNames.Messages ).deleteMany( {} )
+		log.debug( `Removed ${ deleteResult.deletedCount } messages.` )
+		return deleteResult
+	}
+
 	/**** Sessions ****/
 
 	// Removes all Express sessiobs from the database

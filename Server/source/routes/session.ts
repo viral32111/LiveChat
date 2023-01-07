@@ -25,7 +25,7 @@ expressApp.delete( "/api/session", ( request, response ) => {
 
 	// Try to end the current Express session...
 	request.session.destroy( async ( errorMessage ) => {
-		if ( errorMessage === undefined ) {
+		if ( !errorMessage ) {
 
 			// Attempt to delete the guest from the databasae
 			try {
