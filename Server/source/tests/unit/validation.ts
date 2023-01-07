@@ -1,7 +1,7 @@
-// Import required third-party packages
+// Import third-party packages
 import chai from "chai"
 
-// Import required functions from the helper script
+// Import functions from the helper script
 import { validateGuestName, validateRoomJoinCode, validateRoomName } from "../../helpers/validation"
 
 // Create a testing suite for testing input validation

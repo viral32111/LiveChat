@@ -1,7 +1,7 @@
-// Import required third-party packages
+// Import third-party packages
 import chai from "chai"
 
-// Import required functions from the helper script
+// Import functions from the helper script
 import { generateRandomString, generateRoomJoinCode, generateUUID } from "../../helpers/random"
 
 // Create a testing suite for testing the random functions

@@ -5,7 +5,7 @@ import { Server } from "ws"
 
 // Import required code from other scripts
 import initialiseExpress from "./express"
-import MongoDB from "./mongodb"
+import MongoDB from "./classes/mongodb"
 
 // Which environment mode are we running in?
 export const isProduction = process.env.NODE_ENV === "production"
@@ -24,7 +24,8 @@ configure( {
 		"mongodb": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"express": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
 		"routes/room": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
-		"routes/chat": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" }
+		"routes/chat": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" },
+		"routes/session": { appenders: [ isTest ? "file" : "console" ], level: isProduction ? "info" : "trace" }
 	}
 } )
 
@@ -52,6 +53,7 @@ import( "./routes/name" )
 import( "./routes/favicon" )
 import( "./routes/room" )
 import( "./routes/chat" )
+import( "./routes/session" )
 log.info( "Loaded all API routes." )
 
 // Create a WebSocket server without a HTTP server, as we will handle the upgrade ourselves

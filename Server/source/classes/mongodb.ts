@@ -1,12 +1,10 @@
-// Import required third-party packages
+// Import third-party packages
 import { MongoClient, Db, ObjectId, WithId, Document, Filter } from "mongodb"
 import { getLogger } from "log4js"
 
-// Import required functions from helper scripts
-import { generateRoomJoinCode } from "./helpers/random"
-import { Attachment } from "./routes/chat"
-
-// TODO: Move this file into a classes directory
+// Import functions from helper scripts
+import { generateRoomJoinCode } from "../helpers/random"
+import { Attachment } from "../interfaces/routes/responses"
 
 // Create the logger for this file
 const log = getLogger( "mongodb" )

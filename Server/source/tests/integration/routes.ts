@@ -1,11 +1,11 @@
-// Import required third-party packages
+// Import third-party packages
 import chai from "chai"
 import chaiHTTP from "chai-http"
 import chaiString from "chai-string"
 
-// Import required code from other scripts
+// Import code from other scripts
 import { expressApp } from "../../main"
-import MongoDB from "../../mongodb"
+import MongoDB from "../../classes/mongodb"
 
 // Enable support for HTTP requests & strings in Chai
 chai.use( chaiHTTP )

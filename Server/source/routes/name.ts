@@ -1,22 +1,18 @@
-// Import required code from third-party packages
+// Import code from third-party packages
 import { getLogger } from "log4js"
 import { ObjectId } from "mongodb"
 
-// Import required code from other scripts
+// Import code from other scripts
 import { expressApp } from "../main"
 import { ErrorCodes } from "../enumerations/errorCodes"
 import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { respondToRequest } from "../helpers/requests"
 import { validateGuestName } from "../helpers/validation"
-import MongoDB from "../mongodb"
+import { ChooseNamePayload } from "../interfaces/routes/requests"
+import MongoDB from "../classes/mongodb"
 
 // Create the logger for this file
 const log = getLogger( "routes/name" )
-
-// Structure of the choose name API route request payload
-interface ChooseNamePayload {
-	desiredName: string
-}
 
 // Create a route for the user choosing their name
 expressApp.post( "/api/name", async ( request, response ) => {

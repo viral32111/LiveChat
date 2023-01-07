@@ -13,7 +13,7 @@ import multer from "multer"
 // Import required code from other scripts
 import { isProduction, isTest } from "./main"
 import { generateUUID } from "./helpers/random"
-import MongoDB from "./mongodb"
+import MongoDB from "./classes/mongodb"
 
 // Create the logger for this file
 const log = getLogger( "express" )

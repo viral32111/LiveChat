@@ -1,39 +1,21 @@
-// Import required third-party packages
+// Import third-party packages
 import { getLogger } from "log4js"
 import { ObjectId } from "mongodb"
 import { Request } from "express"
 import { RawData, WebSocket } from "ws"
 
-// Import required code from other scripts
+// Import code from other scripts
 import { expressApp, webSocketServer, multerMiddleware } from "../main"
 import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { ErrorCodes } from "../enumerations/errorCodes"
 import { WebSocketPayloadTypes, WebSocketCloseCodes } from "../enumerations/webSocket"
 import { respondToRequest } from "../helpers/requests"
-import MongoDB from "../mongodb"
+import { WebSocketMessagePayload, WebSocketPayload } from "../interfaces/webSocket"
+import { Attachment } from "../interfaces/routes/responses"
+import MongoDB from "../classes/mongodb"
 
 // Create the logger for this file
 const log = getLogger( "routes/chat" )
-
-// TODO: Move all interfaces into their own files in a dedicated directory
-
-// Structure for upload files API route response
-export interface Attachment {
-	type: string,
-	path: string
-}
-
-// Structure for WebSocket payloads
-interface WebSocketPayload {
-	type: WebSocketPayloadTypes,
-	data: object
-}
-
-// Structure for WebSocket message payloads
-interface WebSocketMessagePayload {
-	content: string,
-	attachments: Attachment[]
-}
 
 // Create a route for upgrading to a WebSocket connection
 expressApp.get( "/api/chat", ( request, response ) => {
