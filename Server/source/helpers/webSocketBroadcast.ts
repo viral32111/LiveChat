@@ -51,6 +51,13 @@ export async function webSocketBroadcastPayload( type: WebSocketPayloadTypes, da
 
 	// Send the payload to all other guests in this room
 	for ( const [ guestId, wsClient ] of roomClients.entries() ) {
+
+		// Skip if the WebSocket is not open
+		if ( wsClient.readyState !== WebSocket.OPEN ) {
+			log.warn( `Skipped forwarding WebSocket payload type ${ type } with data '${ JSON.stringify( data ) }' to guest '${ guestId }' in room '${ roomId } as WebSocket readyState is not open!'` )
+			continue
+		}
+
 		wsClient.send( JSON.stringify( {
 			type: type,
 			data: data

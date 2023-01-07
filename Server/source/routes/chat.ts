@@ -93,12 +93,13 @@ function onWebSocketConnection( client: WebSocket, _: Request, guestId: ObjectId
 	try {
 		rememberClientWebSocket( guestId, roomId, client )
 	} catch ( errorMessage ) {
-		log.error( `Failed to delete client WebSocket for guest '${ guestId }' in room '${ roomId }'!` )
+		log.error( `Failed to remember client WebSocket for guest '${ guestId }' in room '${ roomId }' (${ errorMessage })!` )
 	}
 
 	// Register the required event handlers
 	client.on( "message", ( message ) => onWebSocketMessage( client, message, guestId, roomId ) )
 	client.once( "close", ( code, reason ) => onWebSocketClose( client, code, reason.toString(), guestId, roomId ) )
+	client.on( "error", ( error ) => log.error( `WebSocket client for guest '${ guestId }' in room '${ roomId }' encountered an error (${ error.message })!` ) )
 
 }
 
@@ -110,7 +111,7 @@ function onWebSocketClose( _: WebSocket, code: number, reason: string, guestId: 
 	try {
 		forgetClientWebSocket( guestId, roomId )
 	} catch ( errorMessage ) {
-		log.error( `Failed to delete client WebSocket for guest '${ guestId }' in room '${ roomId }'!` )
+		log.error( `Failed to delete client WebSocket for guest '${ guestId }' in room '${ roomId }' (${ errorMessage })!` )
 	}
 }
 
@@ -171,3 +172,4 @@ async function onGuestMessage( client: WebSocket, payload: WebSocketMessagePaylo
 
 // Register the WebSocket new connection event handler
 webSocketServer.on( "connection", onWebSocketConnection )
+webSocketServer.on( "error", ( error ) => log.error( `WebSocket server error: ${ error.message }` ) )

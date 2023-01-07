@@ -101,8 +101,17 @@ class WebSocketClient {
 	// Runs when the WebSocket client encounters an error...
 	static #onError( error ) {
 		console.warn( "WebSocket error:", error )
-		WebSocketClient.#shouldAutoReconnect = false
-		WebSocketClient.#webSocket.close()
+		//WebSocketClient.#shouldAutoReconnect = false
+		//WebSocketClient.#webSocket.close()
+
+		// Reconnect anyway...
+		WebSocketClient.#webSocket = null
+		WebSocketClient.Initialise(
+			WebSocketClient.#broadcastMessageCallback,
+			WebSocketClient.#guestsUpdateCallback,
+			WebSocketClient.#openCallback,
+			WebSocketClient.#closeCallback
+		)
 	}
 
 }
