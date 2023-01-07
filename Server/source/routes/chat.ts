@@ -32,7 +32,10 @@ expressApp.get( "/api/chat", ( request, response ) => {
 	} )
 
 	// Fail if this is not a WebSocket upgrade attempt
-	if ( request.headers[ "upgrade" ] === undefined || request.headers[ "upgrade" ].toLowerCase() !== "websocket" ) return respondToRequest( response, HTTPStatusCodes.UpgradeRequired, {
+	if (
+		request.headers[ "connection" ]?.toLowerCase() !== "upgrade" ||
+		request.headers[ "upgrade" ]?.toLowerCase() !== "websocket"
+	) return respondToRequest( response, HTTPStatusCodes.UpgradeRequired, {
 		error: ErrorCodes.MustUpgradeToWebSocket
 	} )
 
