@@ -71,6 +71,13 @@ export default function() {
 		log.info( "Enabled trust reverse proxies on Express." )
 	}
 
+	// Disable caching for API route responses - https://stackoverflow.com/a/53240717
+	expressApp.set( "etag", false )
+	expressApp.use( ( _, response, next ) => {
+		response.set( "Cache-Control", "no-store" )
+		next()
+	} )
+
 	// Log all incoming requests & their responses
 	expressApp.use( ( request, response, next ) => {
 		response.on( "finish", () => {
@@ -80,8 +87,11 @@ export default function() {
 		next()
 	} )
 
-	// Serve the client-side files
-	expressApp.use( express.static( EXPRESS_CLIENT_DIRECTORY ) )
+	// Serve the client-side files, without caching - https://stackoverflow.com/a/32154882
+	expressApp.use( express.static( EXPRESS_CLIENT_DIRECTORY, {
+		etag: false,
+		maxAge: 600000 // 10 minutes
+	} ) )
 	log.info( "Setup serving the client-side files." )
 	
 	// Setup the multer middleware for file uploading - https://github.com/expressjs/multer#api
