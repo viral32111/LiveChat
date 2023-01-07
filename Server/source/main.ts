@@ -45,7 +45,7 @@ const HTTP_SERVER_PORT = parseInt( process.env.HTTP_SERVER_PORT )
 MongoDB.Initialise()
 
 // Initialise the Express app
-export const expressApp = initialiseExpress()
+export const [ expressApp, multerMiddleware ] = initialiseExpress()
 
 // Import Express routes from other scripts
 import( "./routes/name" )

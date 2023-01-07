@@ -1,8 +1,9 @@
-// Import required native packages
-import { parse } from "path"
+// Import required functions from native packages
+import { join, parse } from "path"
+import { existsSync, mkdirSync } from "fs"
 
 // Import required third-party packages
-import express from "express"
+import express, { Express } from "express"
 import expressSession from "express-session"
 import MongoStore from "connect-mongo"
 import { getLogger } from "log4js"
@@ -73,57 +74,77 @@ export default function() {
 	// Serve the client-side files
 	expressApp.use( express.static( EXPRESS_CLIENT_DIRECTORY ) )
 	log.info( "Setup serving the client-side files." )
+	
+	// Setup the multer middleware for file uploading - https://github.com/expressjs/multer#api
+	const attachmentsDirectory = join( EXPRESS_CLIENT_DIRECTORY, "attachments" )
+	const multerMiddleware = multer( {
 
-	// Return the Express app for use in other scripts
-	return expressApp
+		// Enforce limits to prevent abuse
+		limits: {
+			files: 5, // Amount of files
+			parts: 5, // Same as above
+
+			fieldNameSize: 100, // Length of each field name
+
+			fileSize: 1024 * 1024 * 10, // Size of each file (10 MiB)
+			fieldSize: 1024 * 1024 * 10, // Same as above
+		},
+
+		storage: multer.diskStorage( {
+
+			// Place files in the attachments directory
+			destination: ( _, file, callback ) => {
+				if ( existsSync( attachmentsDirectory ) !== true ) mkdirSync( attachmentsDirectory ) // Create the directory if it doesn't exist
+				callback( null, attachmentsDirectory )
+			},
+
+			// Generate a unique file name for each file
+			filename: ( _, file, callback ) => {
+				const fileName = generateUUID().concat( parse( file.originalname ).ext )
+				log.debug( `Generated name '${ fileName }' for uploading file '${ file.originalname }'.` )
+				callback( null, fileName )
+			}
+
+		} ),
+
+		// Filter potentially dangerous files to be uploaded - https://www.sitepoint.com/mime-types-complete-list/
+		fileFilter: ( _, file, callback ) => {
+			log.debug( `Filtering uploading file '${ file.originalname }' (${ file.mimetype })...` )
+
+			// Disallow raw binary, application library & executable files
+			if (
+				file.mimetype.includes( "application/octet-stream" ) === true ||
+				file.originalname.endsWith( ".dll" ) === true ||
+				file.originalname.endsWith( ".exe" ) === true
+			) return callback( null, false )
+
+			// Disallow older windows executable files
+			if (
+				file.mimetype.includes( "application/x-msdownload" ) === true ||
+				file.mimetype.includes( "application/x-msdos-program" )
+			) return callback( null, false )
+
+			// Disallow executable scripts
+			if (
+				file.mimetype.includes( "application/x-bsh" ) === true ||
+				file.mimetype.includes( "application/x-sh" ) === true ||
+				file.mimetype.includes( "text/x-script.zsh" ) === true ||
+				file.mimetype.includes( "text/x-script.sh" ) === true ||
+				file.originalname.endsWith( ".sh" ) === true ||
+				file.originalname.endsWith( ".ash" ) === true ||
+				file.originalname.endsWith( ".zsh" ) === true ||
+				file.originalname.endsWith( ".bash" ) === true ||
+				file.originalname.endsWith( ".bat" ) === true ||
+				file.originalname.endsWith( ".cmd" ) === true
+			) return callback( null, false )
+
+			// Everything else is fine
+			callback( null, true )
+
+		}
+	} )
+
+	// Return the Express app & multer middleware for use in other scripts
+	return [ expressApp, multerMiddleware ] as [ Express, multer.Multer ]
 
 }
-
-// https://github.com/expressjs/multer#api
-export const multerMiddleware = multer( {
-	limits: {
-		files: 5, // Amount of files
-		parts: 5, // Same as above
-		fieldNameSize: 100, // Length of each field name
-		fileSize: 1024 * 1024 * 10, // Size of each file (10 MiB)
-		fieldSize: 1024 * 1024 * 10, // Same as above
-	},
-	storage: multer.diskStorage( {
-		destination: ( _, file, callback ) => {
-			log.debug( "setting destination for:", file.fieldname, file.originalname, file.encoding, file.mimetype, file.size, file.path, file.buffer, file.buffer?.byteLength )
-			callback( null, "../Client/attachments/" ) // TODO: Ensure this directory exists
-		},
-		filename: ( _, file, callback ) => {
-			log.debug( "making file name for:", file.fieldname, file.originalname, file.encoding, file.mimetype, file.size, file.path, file.buffer, file.buffer?.byteLength )
-
-			/*log.debug( "reading file:", file.path )
-			readFile( file.path, ( error, data ) => {
-				log.debug( "read file:", file.path, ", size is:", data.byteLength )
-
-				if ( error ) throw error
-
-				const hash = createHash( "sha256" )
-				log.debug( "created sha256 hasher" )
-
-				hash.update( data )
-				log.debug( "put file buffer into hasher" )
-
-				const fileName = hash.digest( "hex" ).concat( parse( file.originalname ).ext )
-				log.debug( "file name is now:", fileName )
-
-				callback( null, fileName )
-			} )*/
-
-			const fileName = generateUUID().concat( parse( file.originalname ).ext )
-			log.debug( "file name is now:", fileName )
-
-			callback( null, fileName )
-		}
-	} ),
-	fileFilter: ( request, file, callback ) => {
-		log.debug( "filtering file:", file.fieldname, file.originalname, file.encoding, file.mimetype, file.size, file.path, file.buffer, file.buffer?.byteLength )
-
-		// allow everything for now
-		callback( null, true )
-	}
-} )

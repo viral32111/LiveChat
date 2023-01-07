@@ -142,7 +142,7 @@ function fetchRoomData() {
 		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
-		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching chat history` )
+		console.error( `Received HTTP status message '${ httpStatusMessage }' when fetching chat history` )
 	} )
 }
 
@@ -192,7 +192,7 @@ sendMessageForm.on( "submit", ( event ) => {
 			} ),
 			error: ( request, _, httpStatusMessage ) => {
 				handleServerErrorCode( request.responseText )
-				throw new Error( `Received HTTP status message '${ httpStatusMessage }' when uploading message attachments` )
+				console.error( `Received HTTP status message '${ httpStatusMessage }' when uploading message attachments` )
 			}
 		} )
 
@@ -245,7 +245,7 @@ $( () => {
 		handleServerErrorCode( request.responseText, () => {
 			window.location.href = "/" // Redirect back to the choose name page to be safe, as we can't check if we have a name
 		} )
-		throw new Error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
+		console.error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 	} )
 
 } )

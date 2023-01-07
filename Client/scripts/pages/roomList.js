@@ -136,11 +136,11 @@ function joinRoom( joinCode ) {
 			window.location.href = "/chat.html"
 		} else {
 			showErrorModal( "Server sent back mismatching room join code" )
-			throw new Error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
+			console.error( `Server API sent back a room code '${ roomJoinedPayload.code }' that does not match the expected code '${ joinCode }'?` )
 		}
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
-		throw new Error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to create room` )
+		console.error( `Received '${ httpStatusMessage }' '${ request.responseText }' when attempting to join room` )
 	} )
 }
 

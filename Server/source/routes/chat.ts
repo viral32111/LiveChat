@@ -5,8 +5,7 @@ import { Request } from "express"
 import { RawData, WebSocket } from "ws"
 
 // Import required code from other scripts
-import { expressApp, webSocketServer } from "../main"
-import { multerMiddleware } from "../express"
+import { expressApp, webSocketServer, multerMiddleware } from "../main"
 import { HTTPStatusCodes } from "../enumerations/httpStatusCodes"
 import { ErrorCodes } from "../enumerations/errorCodes"
 import { WebSocketPayloadTypes, WebSocketCloseCodes } from "../enumerations/webSocket"
