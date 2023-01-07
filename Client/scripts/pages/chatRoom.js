@@ -156,6 +156,7 @@ function fetchRoomData() {
 			// Start the WebSocket connection
 			WebSocketClient.Initialise( onBroadcastMessage, onGuestsUpdate, () => {
 				sendMessageForm.find( "input, button" ).prop( "disabled", false )
+				sendMessageInput.focus()
 			}, () => {
 				sendMessageForm.find( "input, button" ).prop( "disabled", true )
 			} )
@@ -273,8 +274,8 @@ leaveRoomButton.on( "click", () => {
 // When the page loads...
 $( () => {
 
-	// Focus on the send message input so the user can start typing straight away
-	sendMessageInput.focus()
+	// Disables the send message form until the WebSocket connection is established
+	sendMessageForm.find( "input, button" ).prop( "disabled", false )
 
 	// Try to fetch our name from the Server API, then populate the room information
 	httpRequest( "GET", "/api/name" ).done( ( responsePayload ) => {
