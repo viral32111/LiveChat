@@ -66,7 +66,7 @@ expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => 
 	} )
 
 	// Fail if no files were uploaded
-	if ( request.files === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+	if ( request.body === "" || request.file === undefined || request.files === undefined || request.files.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 		error: ErrorCodes.NoFilesUploaded
 	} )
 
