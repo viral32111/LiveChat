@@ -222,6 +222,9 @@ jobs:
       - name: Deploy to Compute Engine
         run: gcloud compute instances update-container ${{ env.GOOGLE_CLOUD_INSTANCE }} --zone ${{ env.GOOGLE_CLOUD_INSTANCE_ZONE }} --container-image ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
 
+      - name: Wait for deployment
+        run: sleep 60s
+
       - name: Run Page Speed Insights
         uses: jakepartusch/psi-action@v1.3
         with:
