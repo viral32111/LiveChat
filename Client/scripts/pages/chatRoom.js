@@ -105,7 +105,7 @@ function onBroadcastMessage( payload ) {
 
 // Fetches all the data for the current room from the server API...
 function fetchRoomData() {
-	$.getJSON( "/api/room", ( roomDataPayload ) => {
+	httpRequest( "GET", "/api/room" ).done( ( roomDataPayload ) => {
 		if ( roomDataPayload.room !== null ) {
 
 			// Populate room information
@@ -175,6 +175,7 @@ sendMessageForm.on( "submit", ( event ) => {
 			formData.append( fieldName.toString(), filesToUpload[ fieldName - 1 ] )
 		}
 
+		// Using $.ajax instead of httpRequest() helper here because we need to use FormData
 		$.ajax( {
 			method: "PUT",
 			url: "/api/upload",
@@ -245,7 +246,7 @@ $( () => {
 	sendMessageInput.focus()
 
 	// Try to fetch our name from the Server API, then populate the room information
-	$.getJSON( "/api/name", ( responsePayload ) => {
+	httpRequest( "GET", "/api/name" ).done( ( responsePayload ) => {
 		if ( responsePayload.name !== null ) {
 			guestName.text( responsePayload.name )
 			fetchRoomData()

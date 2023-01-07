@@ -44,7 +44,7 @@ function createRoomElement( name, participantCount, latestMessageSentAt, joinCod
 		const requestMethod = joinPrivateRoomForm.attr( "method" ), targetRoute = joinPrivateRoomForm.attr( "action" )
 
 		// Request the server API to put us in this room
-		httpRequest( requestMethod, `${ targetRoute }/${ joinCode }` ).done( ( roomJoinedPayload, _, request ) => {
+		httpRequest( requestMethod, `${ targetRoute }/${ joinCode }` ).done( ( roomJoinedPayload ) => {
 			if ( roomJoinedPayload.code === joinCode ) {
 				window.location.href = "/chat.html"
 			} else {

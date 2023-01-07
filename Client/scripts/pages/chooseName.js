@@ -39,7 +39,7 @@ nameForm.submit( ( event ) => {
 	// Ask the server API to give us this name...
 	httpRequest( requestMethod, targetRoute, {
 		desiredName: desiredName
-	} ).done( ( responsePayload, _, request ) => {
+	} ).done( ( responsePayload ) => {
 		if ( responsePayload.chosenName === desiredName ) {
 			window.location.href = "/rooms.html" // Redirect to the room list page, if the request was successful
 		} else {
@@ -54,7 +54,7 @@ nameForm.submit( ( event ) => {
 } )
 
 // Redirect to the room list page if we have already chosen a name
-$( () => $.getJSON( "/api/name", ( responsePayload ) => {
+$( () => httpRequest( "GET", "/api/name" ).done( ( responsePayload ) => {
 	if ( responsePayload.name !== null ) {
 		showFeedbackModal( "Notice", "You have already chosen a name. Close this popup to be redirected to the room list page.", () => {
 			window.location.href = "/rooms.html"
