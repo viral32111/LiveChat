@@ -5,6 +5,8 @@ class WebSocketClient {
 	static #webSocket = null
 	static #broadcastMessageCallback = null
 	static #guestsUpdateCallback = null
+	static #openCallback = null
+	static #closeCallback = null
 	static #shouldAutoReconnect = true
 	static PayloadTypes = {
 		Message: 0,
@@ -13,7 +15,7 @@ class WebSocketClient {
 	}
 
 	// Initialises the WebSocket client & registers event listeners
-	static Initialise( broadcastMessageCallback, guestsUpdateCallback ) {
+	static Initialise( broadcastMessageCallback, guestsUpdateCallback, openCallback, closeCallback ) {
 		if ( WebSocketClient.#webSocket !== null ) throw new Error( "WebSocket client has already been initialised" )
 
 		WebSocketClient.#webSocket = new WebSocket( `${ window.location.protocol === "https:" ? "wss" : "ws" }://${ window.location.host }/api/chat` )
@@ -25,6 +27,9 @@ class WebSocketClient {
 
 		WebSocketClient.#broadcastMessageCallback = broadcastMessageCallback
 		WebSocketClient.#guestsUpdateCallback = guestsUpdateCallback
+		WebSocketClient.#openCallback = openCallback
+		WebSocketClient.#closeCallback = closeCallback
+
 	}
 
 	// Sends a payload to the server
@@ -51,11 +56,13 @@ class WebSocketClient {
 	// Runs when the WebSocket connection is opened...
 	static #onOpen() {
 		console.debug( "Connected to WebSocket!" )
+		WebSocketClient.#openCallback()
 	}
 
 	// Runs when the WebSocket connection closes...
 	static #onClose( event ) {
 		console.debug( "Disconnected from WebSocket!", event.code, event.reason, event.wasClean )
+		WebSocketClient.#closeCallback( event.code, event.reason )
 
 		if ( WebSocketClient.#shouldAutoReconnect ) {
 			console.debug( "Attempting to reconnect..." )

@@ -154,7 +154,11 @@ function fetchRoomData() {
 			}
 
 			// Start the WebSocket connection
-			WebSocketClient.Initialise( onBroadcastMessage, onGuestsUpdate )
+			WebSocketClient.Initialise( onBroadcastMessage, onGuestsUpdate, () => {
+				sendMessageForm.find( "input, button" ).prop( "disabled", false )
+			}, () => {
+				sendMessageForm.find( "input, button" ).prop( "disabled", true )
+			} )
 
 		// We aren't in a room, so redirect back to the room list page
 		} else {
