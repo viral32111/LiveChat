@@ -246,12 +246,6 @@ sendMessageForm.on( "submit", ( event ) => {
 
 } )
 
-// Submit the form if the enter key is pressed in the send message input
-// TODO: This shows the form's input validation error AFTER submitting the form
-sendMessageInput.on( "keydown", ( event ) => {
-	if ( event.key === "Enter" ) sendMessageForm.submit()
-} )
-
 // When the leave room button is pressed...
 leaveRoomButton.on( "click", () => {
 
