@@ -84,6 +84,7 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 				latestMessageSentAt: roomMessages.length > 0 ? new Date( roomMessages[ roomMessages.length - 1 ].sentAt ) : null,
 				joinCode: publicRoom.joinCode
 			} )
+
 		}
 
 		// Sort rooms by the number of participants from highest to lowest
@@ -96,7 +97,7 @@ expressApp.get( "/api/rooms", async ( request, response ) => {
 		log.info( `Listing ${ publicRoomsList.length } public rooms for guest '${ request.session.guestId }'.` )
 	} catch ( errorMessage ) {
 		log.error( `Failed to find public rooms in the database (${ errorMessage })!` )
-		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+		respondToRequest( response, HTTPStatusCodes.InternalServerError, {
 			error: ErrorCodes.DatabaseInsertFailure
 		} )
 	}
@@ -138,9 +139,9 @@ expressApp.post( "/api/room", async ( request, response ) => {
 		} )
 		log.info( `Created new ${ createRoomPayload.isPrivate === true ? "private" : "public" } room '${ createRoomPayload.name }' (${ roomInsert.insertedId }) for guest '${ request.session.guestId }'.` )
 	} catch ( errorMessage ) {
-		log.error( `Failed to insert new room '${ createRoomPayload.name }' into the database (${ errorMessage })!` )
-		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
-			error: ErrorCodes.DatabaseInsertFailure
+		log.error( `Failed to create new room '${ createRoomPayload.name }' for guest '${ request.session.guestId}' (${ errorMessage })!` )
+		respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseOperationFailure
 		} )
 	}
 
@@ -183,9 +184,9 @@ expressApp.get( "/api/room/:code", async ( request, response ) => {
 		} )
 		log.info( `Guest '${ request.session.guestId }' joined room '${ rooms[ 0 ].name }' (${ rooms[ 0 ]._id })` )
 	} catch ( errorMessage ) {
-		log.error( `Failed to get room from join code '${ request.params.code }' from the database (${ errorMessage })!` )
-		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
-			error: ErrorCodes.DatabaseFindFailure
+		log.error( `Failed to join guest '${ request.session.guestId }' to room with join code '${ request.params.code }' (${ errorMessage })!` )
+		respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseOperationFailure
 		} )
 	}
 
@@ -254,9 +255,9 @@ expressApp.get( "/api/room", async ( request, response ) => {
 		} )
 		log.info( `Gave data for room '${ rooms[ 0 ]._id }' to guest '${ request.session.guestId }'.` )
 	} catch ( errorMessage ) {
-		log.error( `Error while finding room '${ request.session.roomId }' in the database (${ errorMessage })!` )
-		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
-			error: ErrorCodes.DatabaseFindFailure
+		log.error( `Error while fetching data for room '${ request.session.roomId }' for guest '${ request.session.guestId }' (${ errorMessage })!` )
+		respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseOperationFailure
 		} )
 	}
 
@@ -275,34 +276,77 @@ expressApp.delete( "/api/session", ( request, response ) => {
 
 	// Try to end the current Express session...
 	request.session.destroy( async ( errorMessage ) => {
-
-		// If all was good...
 		if ( errorMessage === undefined ) {
 
 			// Attempt to delete the guest from the databasae
 			try {
 				await MongoDB.RemoveGuest( guestId )
+
+				// Send back a success response with no data
+				respondToRequest( response, HTTPStatusCodes.OK, {} )
+				log.info( `Ended session for guest '${ guestId }'.` )
 			} catch ( mongoErrorMessage ) {
-				log.error( `Failed to delete guest '${ guestId }' from the database (${ mongoErrorMessage })!` )
-				return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+				log.error( `Failed to end session for guest '${ guestId }' (${ mongoErrorMessage })!` )
+				respondToRequest( response, HTTPStatusCodes.InternalServerError, {
 					error: ErrorCodes.DatabaseDeleteFailure
 				} )
 			}
 
-			// TODO: Remove messages sent by this guest?
-
-			// Send back a success response
-			respondToRequest( response, HTTPStatusCodes.OK, {} )
-			log.info( `Ended session for guest '${ guestId }'.` )
-
-		// Otherwise, send back an failure response
 		} else {
 			log.error( `Error while destroying Express session: '${ errorMessage }!` )
 			respondToRequest( response, HTTPStatusCodes.InternalServerError, {
 				error: ErrorCodes.ExpressSessionDestroyFailure
 			} )
 		}
-
 	} )
+
+} )
+
+// Route to leave the current room
+expressApp.delete( "/api/room", async ( request, response ) => {
+
+	// Fail if the guest has not chosen a name yet
+	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
+		error: ErrorCodes.NameNotChosen
+	} )
+
+	// No room if the guest has not joined a room yet
+	if ( request.session.roomId === undefined ) return respondToRequest( response, HTTPStatusCodes.OK, {
+		room: null
+	} )
+
+	// Attempt to fetch their current room from the database
+	try {
+		const rooms = await MongoDB.GetRooms( {
+			_id: new ObjectId( request.session.roomId )
+		} )
+
+		// Fail if the room somehow wasn't found?
+		if ( rooms.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseFindFailure
+		} )
+
+		// Remove the guest from their room
+		await MongoDB.UpdateGuest( request.session.guestId, {
+			inRoom: null
+		} )
+		request.session.roomId = undefined
+
+		// Remove the room if there are no guests in it anymore
+		const guestsInRoom = await MongoDB.GetGuests( { inRoom: rooms[ 0 ]._id } )
+		if ( guestsInRoom.length <= 0 ) {
+			await MongoDB.RemoveRoom( rooms[ 0 ]._id )
+			log.info( `Removed now empty room '${ rooms[ 0 ]._id }'.` )
+		}
+
+		// Send back success with no data
+		respondToRequest( response, HTTPStatusCodes.OK )
+		log.info( `Guest '${ request.session.guestId }' left room '${ rooms[ 0 ]._id }'.` )
+	} catch ( errorMessage ) {
+		log.error( `Error while guest '${ request.session.guestId }' leaving room '${ request.session.roomId }' (${ errorMessage })!` )
+		respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseOperationFailure
+		} )
+	}
 
 } )

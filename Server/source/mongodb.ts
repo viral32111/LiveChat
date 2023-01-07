@@ -6,6 +6,8 @@ import { getLogger } from "log4js"
 import { generateRoomJoinCode } from "./helpers/random"
 import { Attachment } from "./routes/chat"
 
+// TODO: Move this file into a classes directory
+
 // Create the logger for this file
 const log = getLogger( "mongodb" )
 
@@ -147,6 +149,15 @@ export default class MongoDB {
 		} )
 		log.debug( `Inserted room '${ name }' (${ insertResult.insertedId }).` )
 		return insertResult
+	}
+
+	// Removes an existing room from the database
+	public static async RemoveRoom( roomId: ObjectId ) {
+		const deleteResult = await MongoDB.Database.collection<Room>( MongoDB.CollectionNames.Rooms ).deleteOne( {
+			_id: new ObjectId( roomId )
+		} )
+		log.debug( `Deleted room '${ roomId }'.` )
+		return deleteResult
 	}
 
 	// Gets one or more rooms from the database

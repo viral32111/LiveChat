@@ -13,5 +13,6 @@ export enum ErrorCodes {
 	MustUpgradeToWebSocket = 10,
 	RoomNotJoined = 11,
 	NoFilesUploaded = 12,
-	NoData = 13
+	NoData = 13,
+	DatabaseOperationFailure = 14
 }

@@ -53,8 +53,8 @@ expressApp.post( "/api/name", async ( request, response ) => {
 			log.info( `Created session '${ request.sessionID }' for guest '${ requestPayload.desiredName }' (${ newGuest.insertedId }).` )
 		} )
 	} catch ( errorMessage ) {
-		log.error( `Failed to add new guest '${ requestPayload.desiredName }' to the database (${ errorMessage })!` )
-		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+		log.error( `Failed to choose name '${ requestPayload.desiredName }' for new guest (${ errorMessage })!` )
+		respondToRequest( response, HTTPStatusCodes.InternalServerError, {
 			error: ErrorCodes.DatabaseInsertFailure
 		} )
 	}
@@ -86,9 +86,9 @@ expressApp.get( "/api/name", async ( request, response ) => {
 		} )
 		log.info( `Found name '${ foundGuests[ 0 ].name }' for guest '${ foundGuests[ 0 ]._id }.'` )
 	} catch ( errorMessage ) {
-		log.error( `Failed to get guest '${ request.session.guestId }' from database (${ errorMessage })!` )
-		return respondToRequest( response, HTTPStatusCodes.InternalServerError, {
-			error: ErrorCodes.DatabaseFindFailure
+		log.error( `Failed to get name for guest '${ request.session.guestId }' (${ errorMessage })!` )
+		respondToRequest( response, HTTPStatusCodes.InternalServerError, {
+			error: ErrorCodes.DatabaseOperationFailure
 		} )
 	}
 

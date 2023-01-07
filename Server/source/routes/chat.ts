@@ -160,7 +160,7 @@ async function onWebSocketMessage( client: WebSocket, message: RawData, guestId:
 		}
 	} catch ( errorMessage ) {
 		log.error( `Failed to parse WebSocket message '${ message.toString() }' as JSON!` )
-		return client.close( WebSocketCloseCodes.CannotAccept, ErrorCodes.InvalidContentType.toString() )
+		client.close( WebSocketCloseCodes.CannotAccept, ErrorCodes.InvalidContentType.toString() )
 	}
 }
 
@@ -203,10 +203,9 @@ async function onGuestMessage( client: WebSocket, payload: WebSocketMessagePaylo
 			} ) )
 			log.info( `Forwarded message '${ newMessage.content }' with attachments '${ newMessage.attachments }' from guest '${ guestId }' to guest '${ guestId }' in room '${ roomId }'` )
 		}
-
 	} catch ( errorMessage ) {
 		log.error( `Failed to add message '${ payload.content }' from guest '${ guestId }' to database!` )
-		return client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.DatabaseInsertFailure.toString() )
+		client.close( WebSocketCloseCodes.GoingAway, ErrorCodes.DatabaseInsertFailure.toString() )
 	}
 }
 

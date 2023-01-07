@@ -212,8 +212,9 @@ endSessionButton.click( () => {
 
 	// Request the server API to end our session
 	httpRequest( "DELETE", "/api/session" ).done( () => {
-		showFeedbackModal( "Success", "Your chat session has been ended & all data has been erased. You will now be returned to the choose name page." )
-		window.location.href = "/"
+		showFeedbackModal( "Success", "Your chat session has been ended & all data has been erased. Close this popup to be redirected to the choose name page.", () => {
+			window.location.href = "/"
+		} )
 	} ).fail( ( request, _, httpStatusMessage ) => {
 		handleServerErrorCode( request.responseText )
 		throw new Error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to end our session` )

@@ -221,8 +221,22 @@ sendMessageInput.on( "keydown", ( event ) => {
 
 // When the leave room button is pressed...
 leaveRoomButton.on( "click", () => {
-	console.debug( "leave room" )
-	// TODO: API request to leave the room, then redirect back to room list
+
+	// Make the button appear to be loading
+	setButtonLoading( leaveRoomButton, true )
+
+	// Request the server API to make us leave our current room
+	httpRequest( "DELETE", "/api/room" ).done( () => {
+		// TODO: Disconnect the WebSocket connection
+
+		showFeedbackModal( "Success", "You have left this room. Close this popup to be redirected to the room list page.", () => {
+			window.location.href = "/rooms.html"
+		} )
+	} ).fail( ( request, _, httpStatusMessage ) => {
+		handleServerErrorCode( request.responseText )
+		throw new Error( `Received HTTP status message '${ httpStatusMessage }' '${ request.responseText }' when trying to leave the room` )
+	} ).always( () => setButtonLoading( leaveRoomButton, false ) ) // Return the button to normal
+
 } )
 
 // When the page loads...

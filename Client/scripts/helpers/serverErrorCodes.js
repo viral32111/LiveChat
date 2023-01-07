@@ -14,7 +14,8 @@ const serverErrorCodeMessages = {
 	10: "Connection must be upgraded to WebSocket",
 	11: "You have not joined a room yet",
 	12: "No files uploaded",
-	13: "No data available"
+	13: "No data available",
+	14: "Failed to perform operation(s) on the database",
 }
 
 // Shows the feedback modal for a server API error
