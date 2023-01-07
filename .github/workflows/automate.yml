@@ -220,7 +220,7 @@ jobs:
           credentials_json: ${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }}
 
       - name: Deploy to Compute Engine
-        run: gcloud compute instances update-container ${{ env.GOOGLE_CLOUD_INSTANCE }} --zone ${{ env.GOOGLE_CLOUD_INSTANCE_ZONE }} --container-image ${{ env.DOCKER_REGISTRY_NAME }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+        run: gcloud compute instances update-container ${{ env.GOOGLE_CLOUD_INSTANCE }} --zone ${{ env.GOOGLE_CLOUD_INSTANCE_ZONE }} --container-image ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
 
   deploy-github:
     name: Deploy to GitHub Pages
