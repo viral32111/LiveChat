@@ -39,8 +39,7 @@ const convertMarkdownStylingToHTML = ( markdownText ) =>
 function createMessageElement( guestName, content, attachments, sentAt ) {
 
 	// Time
-	// TODO: This will need to update every minute or so
-	const sentAtParagraph = $( "<p></p>" ).addClass( "float-end m-0" ).text( `${ dateTimeToHumanReadable( sentAt ) }.` )
+	const sentAtParagraph = $( "<p></p>" ).addClass( "float-end m-0" ).attr( "data-sent-at", sentAt ).text( `${ dateTimeToHumanReadable( sentAt ) }.` )
 
 	// Guest name
 	let guestNameHeading
@@ -153,6 +152,22 @@ function fetchRoomData() {
 	} )
 }
 
+// Updates the text of all the message sent at elements
+function updateMessagesSentAt() {
+
+	// Get all paragraph tags with the data-sent-at attribute
+	const messageSentAtParagraphs = $( "p[ data-sent-at ]" )
+
+	// Update the text of each paragraph tag
+	messageSentAtParagraphs.each( ( _, sentAtParagraph ) => {
+		const messageSentAtParagraph = $( sentAtParagraph )
+		const messageSentAt = messageSentAtParagraph.attr( "data-sent-at" )
+
+		messageSentAtParagraph.text( dateTimeToHumanReadable( messageSentAt ).concat( "." ) )
+	} )
+
+}
+
 // When the send message form is submitted...
 sendMessageForm.on( "submit", ( event ) => {
 
@@ -252,6 +267,7 @@ $( () => {
 		if ( responsePayload.name !== null ) {
 			guestName.text( responsePayload.name )
 			fetchRoomData()
+			setInterval( updateMessagesSentAt, 1000 ) // Update the sent at text of messages every second
 		} else {
 			showFeedbackModal( "Notice", "You have not yet chosen a name yet. Close this popup to be redirected to the choose name page.", () => {
 				window.location.href = "/"
