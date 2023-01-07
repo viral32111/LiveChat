@@ -122,6 +122,7 @@ function onBroadcastMessage( payload ) {
 
 // Repopulates the participants list whenever a new participant list is received from the WebSocket
 function onGuestsUpdate( payload ) {
+	participantCount.text( payload.guests.length - 1 )
 	participantsList.empty()
 	for ( const guest of payload.guests ) createParticipantElement( guest.name, guest.isRoomCreator )
 }
