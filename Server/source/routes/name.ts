@@ -39,7 +39,6 @@ expressApp.post( "/api/name", async ( request, response ) => {
 
 	// Attempt to add the new guest to the database
 	try {
-		// TODO: Check for guest with the same name already in the database
 		const newGuest = await MongoDB.AddGuest( requestPayload.desiredName )
 
 		// Set the guest ID in the session data (a new session is created in case one already exists)
