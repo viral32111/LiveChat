@@ -65,7 +65,7 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 		const attachmentFileName = getAttachmentFileName( attachment.path )
 
 		if ( attachment.type.startsWith( "image/" ) ) {
-			const attachmentImage = $( "<img></img>" ).addClass( "img-thumbnail mt-2" ).attr( "src", attachment.path ).attr( "alt", "Image attachment" ).attr( "width", "256" ).attr( "height", "256" )
+			const attachmentImage = $( "<img></img>" ).addClass( "img-thumbnail d-block mt-2" ).attr( "src", attachment.path ).attr( "alt", "Image attachment" ).attr( "width", "256" ).attr( "height", "256" )
 			const attachmentLink = $( "<a></a>" ).attr( "href", attachment.path ).append( attachmentImage )
 			bootstrapColumn.append( attachmentLink )
 		} else {
