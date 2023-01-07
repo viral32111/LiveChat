@@ -28,6 +28,9 @@ const chatMessageValidationPattern = new RegExp( /^.{1,200}$/ )
 // Helper function to get the file name from the end of a path
 const getAttachmentFileName = ( path ) => path.split( "/" ).pop()
 
+// Global variable to check if we have been granted permission to send notifications
+let hasNotificationPermission = Notification.permission === "granted"
+
 // Converts markdown styling in text to HTML tags
 const convertMarkdownStylingToHTML = ( markdownText ) =>
 	markdownText.replaceAll( markdownBoldPattern, "<strong>$1</strong>" )
@@ -109,6 +112,15 @@ function createParticipantElement( name, isRoomCreator ) {
 // Creates a new message element whenever one is received from the WebSocket
 function onBroadcastMessage( payload ) {
 	createMessageElement( payload.sentBy, payload.content, payload.attachments, payload.sentAt )
+
+	// Send a notification if the user isn't focused on the tab & they have granted the permission
+	if ( document.hasFocus() === false && hasNotificationPermission === true ) {
+		const notification = new Notification( payload.sentBy, {
+			body: payload.content,
+		} )
+		//notification.onclick = () => window.focus()
+	}
+
 }
 
 // Fetches all the data for the current room from the server API...
@@ -279,5 +291,17 @@ $( () => {
 		} )
 		console.error( `Received HTTP status message '${ httpStatusMessage }' when fetching our name` )
 	} )
+
+	// Ask for permission to send notifications, if we haven't got it aleady
+	if ( hasNotificationPermission === false ) showFeedbackModal(
+		"Permissions Request",
+		"This website needs permission to send you notifications. Close this popup to be prompted to either accept or deny this permission request.",
+		() => Notification.requestPermission().then( ( permissionStatus ) => {
+			if ( permissionStatus === "granted" ) {
+				hasNotificationPermission = true
+			} else {
+				showFeedbackModal( "Notice", "You have denied permission for this website to send notifications, so you will not see notifications for chat messages. You can change this in your browser settings." )
+			}
+		} ) )
 
 } )
