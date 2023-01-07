@@ -170,18 +170,16 @@ expressApp.get( "/api/room/:code", async ( request, response ) => {
 			error: ErrorCodes.DatabaseFindFailure
 		} )
 
-		// Update the guest's room ID in the database
+		// Update the guest's room ID in the database & session
 		await MongoDB.UpdateGuest( request.session.guestId, {
 			inRoom: new ObjectId( rooms[ 0 ]._id )
 		} )
-
-		// Set the room ID in the session
 		request.session.roomId = rooms[ 0 ]._id
 
-		// Respond with the join code for confirmation
-		respondToRequest( response, HTTPStatusCodes.OK, {
+		// Respond with the join code for confirmation, once the session has been saved
+		request.session.save( () => respondToRequest( response, HTTPStatusCodes.OK, {
 			code: rooms[ 0 ].joinCode
-		} )
+		} ) )
 		log.info( `Guest '${ request.session.guestId }' joined room '${ rooms[ 0 ].name }' (${ rooms[ 0 ]._id })` )
 	} catch ( errorMessage ) {
 		log.error( `Failed to join guest '${ request.session.guestId }' to room with join code '${ request.params.code }' (${ errorMessage })!` )
@@ -201,6 +199,7 @@ expressApp.get( "/api/room", async ( request, response ) => {
 	} )
 
 	// No room if the guest has not joined a room yet
+	// TODO: Sometimes this is undefined right after joining a room, but only for the second time...?
 	if ( request.session.roomId === undefined ) return respondToRequest( response, HTTPStatusCodes.OK, {
 		room: null
 	} )
@@ -327,7 +326,7 @@ expressApp.delete( "/api/room", async ( request, response ) => {
 			error: ErrorCodes.DatabaseFindFailure
 		} )
 
-		// Remove the guest from their room
+		// Remove the guest from their room in the database & session
 		await MongoDB.UpdateGuest( request.session.guestId, {
 			inRoom: null
 		} )
@@ -341,8 +340,8 @@ expressApp.delete( "/api/room", async ( request, response ) => {
 			log.info( `Removed now empty room '${ rooms[ 0 ]._id }'.` )
 		}
 
-		// Send back success with no data
-		respondToRequest( response, HTTPStatusCodes.OK )
+		// Send back success with no data, once the session is saved
+		request.session.save( () => respondToRequest( response, HTTPStatusCodes.OK ) )
 		log.info( `Guest '${ request.session.guestId }' left room '${ rooms[ 0 ]._id }'.` )
 	} catch ( errorMessage ) {
 		log.error( `Error while guest '${ request.session.guestId }' leaving room '${ request.session.roomId }' (${ errorMessage })!` )

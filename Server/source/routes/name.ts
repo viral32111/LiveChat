@@ -46,10 +46,10 @@ expressApp.post( "/api/name", async ( request, response ) => {
 		request.session.regenerate( () => {
 			request.session.guestId = newGuest.insertedId
 
-			// Send the name back as confirmation
-			respondToRequest( response, HTTPStatusCodes.OK, {
+			// Send the name back as confirmation, once the session is saved
+			request.session.save( () => respondToRequest( response, HTTPStatusCodes.OK, {
 				chosenName: requestPayload.desiredName
-			} )
+			} ) )
 			log.info( `Created session '${ request.sessionID }' for guest '${ requestPayload.desiredName }' (${ newGuest.insertedId }).` )
 		} )
 	} catch ( errorMessage ) {
