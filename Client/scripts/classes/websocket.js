@@ -68,7 +68,12 @@ class WebSocketClient {
 			console.debug( "Attempting to reconnect..." )
 
 			WebSocketClient.#webSocket = null
-			WebSocketClient.Initialise( WebSocketClient.#broadcastMessageCallback, WebSocketClient.#guestsUpdateCallback )
+			WebSocketClient.Initialise(
+				WebSocketClient.#broadcastMessageCallback,
+				WebSocketClient.#guestsUpdateCallback,
+				WebSocketClient.#openCallback,
+				WebSocketClient.#closeCallback
+			)
 		}
 	}
 
