@@ -33,9 +33,12 @@ export default function() {
 	if ( !process.env.EXPRESS_SESSION_SECRET ) throw new Error( "The EXPRESS_SESSION_SECRET environment variable is not set" )
 	if ( !process.env.EXPRESS_CLIENT_DIRECTORY ) throw new Error( "The EXPRESS_CLIENT_DIRECTORY environment variable is not set" )
 	if ( !process.env.EXPRESS_COOKIE_DOMAIN ) throw new Error( "The EXPRESS_COOKIE_DOMAIN environment variable is not set" )
+	if ( !process.env.EXPRESS_COOKIE_SECURE ) throw new Error( "The EXPRESS_COOKIE_SECURE environment variable is not set" )
 	const EXPRESS_SESSION_SECRET = process.env.EXPRESS_SESSION_SECRET
 	const EXPRESS_CLIENT_DIRECTORY = process.env.EXPRESS_CLIENT_DIRECTORY
 	const EXPRESS_COOKIE_DOMAIN = process.env.EXPRESS_COOKIE_DOMAIN
+	const EXPRESS_COOKIE_SECURE = process.env.EXPRESS_COOKIE_SECURE === "true"
+	const EXPRESS_TRUSTED_REVERSE_PROXY_ADDRESS = process.env.EXPRESS_TRUSTED_REVERSE_PROXY_ADDRESS // Optional, so no check
 
 	// Create a new Express application
 	const expressApp = express()
@@ -56,11 +59,17 @@ export default function() {
 			domain: EXPRESS_COOKIE_DOMAIN,
 			path: "/",
 			httpOnly: true,
-			secure: isProduction,
+			secure: EXPRESS_COOKIE_SECURE,
 			sameSite: "strict"
 		}
 	} ) )
 	log.info( "Setup Express middlewares." )
+
+	// Enable trusting reverse proxies if the environment variable is set
+	if ( EXPRESS_TRUSTED_REVERSE_PROXY_ADDRESS !== undefined ) {
+		expressApp.set( "trust proxy", EXPRESS_TRUSTED_REVERSE_PROXY_ADDRESS )
+		log.info( "Enabled trust reverse proxies on Express." )
+	}
 
 	// Log all incoming requests & their responses
 	expressApp.use( ( request, response, next ) => {
