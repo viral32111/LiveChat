@@ -64,13 +64,18 @@ function createMessageElement( guestName, content, attachments, sentAt ) {
 	for ( const attachment of attachments ) {
 		const attachmentFileName = getAttachmentFileName( attachment.path )
 
+		// Preview images
 		if ( attachment.type.startsWith( "image/" ) ) {
-			const attachmentImage = $( "<img></img>" ).addClass( "img-thumbnail d-block mt-2" ).attr( "src", attachment.path ).attr( "alt", "Image attachment" ).attr( "width", "256" ).attr( "height", "256" )
+			const attachmentImage = $( "<img></img>" ).addClass( "img-thumbnail" ).attr( "src", attachment.path ).attr( "alt", "Image attachment" ).attr( "width", "256" ).attr( "height", "256" )
 			const attachmentLink = $( "<a></a>" ).attr( "href", attachment.path ).append( attachmentImage )
-			bootstrapColumn.append( attachmentLink )
+			const attachmentBlock = $( "<div></div>" ).addClass( "d-block mt-2" ).append( attachmentLink )
+			bootstrapColumn.append( attachmentBlock )
+		
+		// Anything else as a download link
 		} else {
-			const fileAttachmentLink = $( "<a></a>" ).addClass( "ms-2" ).attr( "href", attachment.path ).attr( "download", attachmentFileName ).text( `Download ${ attachmentFileName }` )
-			bootstrapColumn.append( fileAttachmentLink )
+			const fileAttachmentLink = $( "<a></a>" ).attr( "href", attachment.path ).attr( "download", attachmentFileName ).text( `Download ${ attachmentFileName }` )
+			const attachmentBlock = $( "<div></div>" ).addClass( "d-block ms-2" ).append( fileAttachmentLink )
+			bootstrapColumn.append( attachmentBlock )
 		}
 	}
 
