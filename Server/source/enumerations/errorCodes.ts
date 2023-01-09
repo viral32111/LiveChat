@@ -15,5 +15,8 @@ export enum ErrorCodes {
 	NoFilesUploaded = 12,
 	NoData = 13,
 	DatabaseOperationFailure = 14,
-	BroadcastFailure = 15
+	BroadcastFailure = 15,
+	UploadTooManyFiles = 16,
+	UploadFileTooLarge = 17,
+	UploadFailed = 18
 }

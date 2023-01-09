@@ -3,6 +3,7 @@ import { getLogger } from "log4js"
 import { ObjectId } from "mongodb"
 import { Request } from "express"
 import { RawData, WebSocket } from "ws"
+import { MulterError } from "multer"
 
 // Import code from other scripts
 import { expressApp, webSocketServer, multerMiddleware } from "../main"
@@ -45,7 +46,8 @@ expressApp.get( "/api/chat", ( request, response ) => {
 } )
 
 // Route for uploading files to use as message attachments
-expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => {
+const multerRequestHandler = multerMiddleware.any()
+expressApp.put( "/api/upload", ( request, response ) => {
 
 	// Fail if the guest has not chosen a name yet
 	if ( request.session.guestId === undefined ) return respondToRequest( response, HTTPStatusCodes.Unauthorized, {
@@ -62,26 +64,60 @@ expressApp.put( "/api/upload", multerMiddleware.any(), ( request, response ) => 
 		error: ErrorCodes.InvalidContentType
 	} )
 
-	// Fail if no files were uploaded
-	if ( request.files === undefined ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
-		error: ErrorCodes.NoFilesUploaded
-	} )
+	// Attempt to receive any uploaded files
+	multerRequestHandler( request, response, ( error ) => {
 
-	// Cast because TypeScript doesn't know how to do this automatically
-	const uploadedFiles = request.files as Express.Multer.File[]
+		// If there was an Multer-specific error...
+		if ( error instanceof MulterError ) {
+			log.error( `Failed to handle uploaded files for guest '${ request.session.guestId }' in room '${ request.session.roomId } (${ error.message })!'` )
 
-	// Loop through the uploaded files & add their type and URL to a payload for the response
-	const filesPayload: Attachment[] = []
-	for ( const file of uploadedFiles ) filesPayload.push( {
-		type: file.mimetype,
-		path: `/attachments/${ file.filename }`
-	} )
+			// Respond based on the type of error - https://github.com/expressjs/multer/blob/master/lib/multer-error.js
+			if ( error.code === "LIMIT_PART_COUNT" || error.code === "LIMIT_FILE_COUNT" || error.code === "LIMIT_FIELD_COUNT" ) {
+				return respondToRequest( response, HTTPStatusCodes.PayloadTooLarge, {
+					error: ErrorCodes.UploadTooManyFiles
+				} )
+			} else if ( error.code === "LIMIT_FILE_SIZE" || error.code === "LIMIT_FIELD_VALUE" ) {
+				return respondToRequest( response, HTTPStatusCodes.PayloadTooLarge, {
+					error: ErrorCodes.UploadFileTooLarge
+				} )
+			} else {
+				return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+					error: ErrorCodes.UploadFailed
+				} )
+			}
+			
+		// If there was a generic error...
+		} else if ( error ) {
+			log.error( `Failed to process uploaded files for guest '${ request.session.guestId }' in room '${ request.session.roomId } (${ error })!'` )
+			return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+				error: ErrorCodes.UploadFailed
+			} )
+		}
 
-	// Send back the list of uploaded files
-	respondToRequest( response, HTTPStatusCodes.OK, {
-		files: filesPayload
+		// If we got to this point, then no errors occured
+
+		// Fail if no files were uploaded
+		if ( request.files === undefined || request.files.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+			error: ErrorCodes.NoFilesUploaded
+		} )
+
+		// Cast because TypeScript doesn't know how to do this automatically
+		const uploadedFiles = request.files as Express.Multer.File[]
+
+		// Loop through the uploaded files & add their type and URL to a payload for the response
+		const filesPayload: Attachment[] = []
+		for ( const file of uploadedFiles ) filesPayload.push( {
+			type: file.mimetype,
+			path: `/attachments/${ file.filename }`
+		} )
+
+		// Send back the list of uploaded files
+		respondToRequest( response, HTTPStatusCodes.OK, {
+			files: filesPayload
+		} )
+		log.info( `Guest '${ request.session.guestId }' uploaded ${ uploadedFiles } files.` )
+
 	} )
-	log.info( `Guest '${ request.session.guestId }' uploaded ${ uploadedFiles } files.` )
 
 } )
 

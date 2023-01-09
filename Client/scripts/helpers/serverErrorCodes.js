@@ -16,7 +16,10 @@ const serverErrorCodeMessages = {
 	12: "No files uploaded",
 	13: "No data available",
 	14: "Failed to perform operation(s) on the database",
-	15: "WebSocket failed to broadcast payload"
+	15: "WebSocket failed to broadcast payload",
+	16: "You have uploaded too many files",
+	17: "One or more of the files you uploaded is too large",
+	18: "Failed to upload file(s)"
 }
 
 // Shows the feedback modal for a server API error
