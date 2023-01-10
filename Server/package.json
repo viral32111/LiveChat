@@ -1,6 +1,6 @@
 {
 	"name": "live-chat",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "Real-time, ephemeral, room-based chat system.",
 	"main": "./dist/main.js",
 	"scripts": {
