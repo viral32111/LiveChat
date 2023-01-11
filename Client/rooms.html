@@ -43,7 +43,7 @@
 									<!-- Input (with icon) for code -->
 									<div class="input-group has-validation mb-2">
 										<span id="joinPrivateRoomIcon" class="input-group-text"><i class="bi bi-incognito"></i></span>
-										<input id="joinPrivateRoomCode" class="form-control shadow-none" type="text" placeholder="AbCdEf..." required minlength="6" maxlength="6" aria-label="AbCdEf..." aria-describedby="joinPrivateRoomIcon">
+										<input id="joinPrivateRoomCode" class="form-control shadow-none" type="text" placeholder="AbCdEf..." required minlength="6" maxlength="6" pattern="^[A-Za-z]{6}$" aria-label="AbCdEf..." aria-describedby="joinPrivateRoomIcon">
 										<div class="invalid-feedback">Please enter a valid room code.</div> <!-- Message if Bootstrap validation fails -->
 									</div>
 
@@ -69,7 +69,7 @@
 										<div class="col-9 pe-1">
 											<div class="input-group has-validation">
 												<span id="createRoomIcon" class="input-group-text"><i class="bi bi-house-fill"></i></span>
-												<input id="createRoomName" class="form-control shadow-none pe-3" type="text" placeholder="Example Room..." required minlength="2" maxlength="30" aria-label="Example Room..." aria-describedby="createRoomIcon">
+												<input id="createRoomName" class="form-control shadow-none pe-3" type="text" placeholder="Example Room..." required minlength="2" maxlength="30" pattern="^[\w\d .,'()[\]<>+=\-!:;$£%&*#@?|]{1,50}$" aria-label="Example Room..." aria-describedby="createRoomIcon">
 												<div class="invalid-feedback">Please enter a name for the room.</div> <!-- Message if Bootstrap validation fails -->
 											</div>
 										</div>
