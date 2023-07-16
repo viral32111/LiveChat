@@ -188,7 +188,7 @@ jobs:
           pull: true
 
       - name: Delete untagged Docker images
-        uses: snok/container-retention-policy@v1
+        uses: snok/container-retention-policy@v2
         with:
           image-names: ${{ env.DOCKER_IMAGE_NAME }}
           cut-off: 0 seconds ago UTC
