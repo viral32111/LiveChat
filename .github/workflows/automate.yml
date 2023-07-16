@@ -121,7 +121,7 @@ jobs:
       - server
     concurrency:
       group: docker
-      cancel-in-progress: true
+      cancel-in-progress: false
     env:
       DIRECTORY_BUILDS: ./builds/
     permissions:
@@ -203,7 +203,7 @@ jobs:
     needs: docker
     concurrency:
       group: deploy-google
-      cancel-in-progress: true
+      cancel-in-progress: false
     env:
       GOOGLE_CLOUD_INSTANCE: livechat-server
       GOOGLE_CLOUD_INSTANCE_ZONE: europe-west2-c
@@ -240,7 +240,7 @@ jobs:
     needs: client
     concurrency:
       group: deploy-github
-      cancel-in-progress: true
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
