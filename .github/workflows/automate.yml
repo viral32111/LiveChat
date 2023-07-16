@@ -197,41 +197,41 @@ jobs:
           account-type: personal
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN_PACKAGES }}
 
-  deploy-google:
-    name: Deploy to Google Cloud
-    runs-on: ubuntu-22.04
-    needs: docker
-    concurrency:
-      group: deploy-google
-      cancel-in-progress: false
-    env:
-      GOOGLE_CLOUD_INSTANCE: livechat-server
-      GOOGLE_CLOUD_INSTANCE_ZONE: europe-west2-c
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Setup Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+  #deploy-google:
+  #  name: Deploy to Google Cloud
+  #  runs-on: ubuntu-22.04
+  #  needs: docker
+  #  concurrency:
+  #    group: deploy-google
+  #    cancel-in-progress: false
+  #  env:
+  #    GOOGLE_CLOUD_INSTANCE: livechat-server
+  #    GOOGLE_CLOUD_INSTANCE_ZONE: europe-west2-c
+  #  permissions:
+  #    contents: read
+  #    id-token: write
+  #  steps:
+  #    - name: Setup Google Cloud SDK
+  #      uses: google-github-actions/setup-gcloud@v1
 
-      - name: Authenticate using JSON service account key
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }}
+  #    - name: Authenticate using JSON service account key
+  #      uses: google-github-actions/auth@v1
+  #      with:
+  #        credentials_json: ${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }}
 
-      - name: Deploy to Compute Engine
-        run: gcloud compute instances update-container ${{ env.GOOGLE_CLOUD_INSTANCE }} --zone ${{ env.GOOGLE_CLOUD_INSTANCE_ZONE }} --container-image ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+  #    - name: Deploy to Compute Engine
+  #      run: gcloud compute instances update-container ${{ env.GOOGLE_CLOUD_INSTANCE }} --zone ${{ env.GOOGLE_CLOUD_INSTANCE_ZONE }} --container-image ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
 
-      - name: Wait for deployment
-        run: sleep 60s
+  #    - name: Wait for deployment
+  #      run: sleep 60s
 
-      - name: Run Page Speed Insights
-        uses: jakepartusch/psi-action@v1.3
-        with:
-          url: https://livechat.viral32111.cf
-          threshold: 70
-          strategy: desktop
-          key: ${{ secrets.GOOGLE_PAGE_SPEED_INSIGHTS_API_KEY }}
+  #    - name: Run Page Speed Insights
+  #      uses: jakepartusch/psi-action@v1.3
+  #      with:
+  #        url: https://livechat.viral32111.cf
+  #        threshold: 70
+  #        strategy: desktop
+  #        key: ${{ secrets.GOOGLE_PAGE_SPEED_INSIGHTS_API_KEY }}
 
   deploy-github:
     name: Deploy to GitHub Pages
