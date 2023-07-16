@@ -233,7 +233,6 @@ jobs:
           strategy: desktop
           key: ${{ secrets.GOOGLE_PAGE_SPEED_INSIGHTS_API_KEY }}
 
-
   deploy-github:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-22.04
