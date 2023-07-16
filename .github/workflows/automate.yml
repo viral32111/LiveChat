@@ -267,7 +267,7 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v2
 
       - name: Run Page Speed Insights
         uses: jakepartusch/psi-action@v1.3
