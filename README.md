@@ -5,6 +5,8 @@
 
 This is a real-time, ephemeral, room-based chat system, housed in a dynamic & modern web application.  
 
+**15/06/2023: The official deployment (https://livechat.viral32111.cf) is no longer running as I've ran out of free credit on Google Cloud Platform! You'll need to deploy this yourself or run it locally to use it.**
+
 ## Usage
 
 There is a publicly deployed instance of this project running on [Google Cloud's Compute Engine](https://cloud.google.com/compute) virtual machines (although the database is hosted on [MongoDB Atlas](https://www.mongodb.com/atlas/database)). It is available at https://livechat.viral32111.cf.
