@@ -9,7 +9,9 @@
 
 This is a real-time, ephemeral, room-based chat system, housed in a dynamic & modern web application.  
 
-**15/06/2023: The official deployment (https://livechat.viral32111.cf) is no longer running as I've ran out of free credit on Google Cloud Platform! You'll need to deploy this yourself or run it locally to use it.**
+**~~As of June 15th 2023, the official deployment (https://livechat.viral32111.cf) is no longer running as I've ran out of free credit on Google Cloud Platform! You'll need to deploy this yourself or run it locally to use it.~~ As of July 25th 2023, the official deployment is now back online.**
+
+![Screenshot](/Screenshot.png)
 
 ## 📥 Usage
 
