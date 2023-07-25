@@ -131,10 +131,13 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v3
 
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+
       - name: Setup Docker
         uses: docker/setup-buildx-action@v2
         with:
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
 
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
@@ -184,6 +187,8 @@ jobs:
           context: ${{ env.DIRECTORY_BUILDS }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          provenance: false
           no-cache: true
           pull: true
 
