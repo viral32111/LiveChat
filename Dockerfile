@@ -25,4 +25,5 @@ WORKDIR ${LIVECHAT_DIRECTORY}
 RUN npm clean-install --omit=dev
 
 # Start project in current directory
+ENTRYPOINT [ "node" ]
 CMD [ "/usr/local/livechat" ]
