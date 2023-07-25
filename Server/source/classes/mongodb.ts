@@ -53,17 +53,19 @@ export default class MongoDB {
 	public static Initialise() {
 
 		// Fail if the required environment variables are not set & assign them to constants for easier access
+		if ( !process.env.MONGO_SCHEME ) throw new Error( "The MONGO_SCHEME environment variable is not set" )
 		if ( !process.env.MONGO_HOST ) throw new Error( "The MONGO_HOST environment variable is not set" )
 		if ( !process.env.MONGO_DATABASE ) throw new Error( "The MONGO_DATABASE environment variable is not set" )
 		if ( !process.env.MONGO_USER_NAME ) throw new Error( "The MONGO_USER_NAME environment variable is not set" )
 		if ( !process.env.MONGO_USER_PASS ) throw new Error( "The MONGO_USER_PASS environment variable is not set" )
+		const MONGO_SCHEME = process.env.MONGO_SCHEME
 		const MONGO_HOST = process.env.MONGO_HOST
 		const MONGO_DATABASE = process.env.MONGO_DATABASE
 		const MONGO_USER_NAME = process.env.MONGO_USER_NAME
 		const MONGO_USER_PASS = process.env.MONGO_USER_PASS
 
 		// Initialise the client & fetch the database
-		MongoDB.Client = new MongoClient( `mongodb+srv://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }/${ MONGO_DATABASE }?retryWrites=true&w=majority` )
+		MongoDB.Client = new MongoClient( `${ MONGO_SCHEME }://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }/${ MONGO_DATABASE }?retryWrites=true&w=majority` )
 		MongoDB.Database = MongoDB.Client.db( MONGO_DATABASE )
 		log.info( "Initialised MongoDB." )
 
