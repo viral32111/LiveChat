@@ -15,7 +15,7 @@ This is a real-time, ephemeral, room-based chat system, housed in a dynamic & mo
 
 ## 📥 Usage
 
-There is a publicly deployed instance of this project running on [Google Cloud's Compute Engine](https://cloud.google.com/compute) virtual machines (although the database is hosted on [MongoDB Atlas](https://www.mongodb.com/atlas/database)). It is available at https://livechat.viral32111.cf.
+There is a publicly deployed instance of this project running on [Google Cloud's Compute Engine](https://cloud.google.com/compute) virtual machines (although the database is hosted on [MongoDB Atlas](https://www.mongodb.com/atlas/database)). ~~It is available at https://livechat.viral32111.cf.~~ **Freenom suspended my `viral32111.cf` domain on September 11th 2023.**
 
 Alternatively you can run it locally by using the official [Docker image](https://github.com/users/viral32111/packages/container/package/livechat). You will need to set all the required environment variables (see [production.env](Server/production.env)).
 
