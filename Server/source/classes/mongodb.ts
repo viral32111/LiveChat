@@ -64,8 +64,24 @@ export default class MongoDB {
 		const MONGO_USER_NAME = process.env.MONGO_USER_NAME
 		const MONGO_USER_PASS = process.env.MONGO_USER_PASS
 
+		const MONGO_DIRECT_CONNECTION = true
+		const MONGO_AUTH_DATABASE = "admin"
+		const MONGO_USE_TLS = false
+
 		// Initialise the client & fetch the database
-		MongoDB.Client = new MongoClient( `${ MONGO_SCHEME }://${ MONGO_USER_NAME }:${ MONGO_USER_PASS }@${ MONGO_HOST }/${ MONGO_DATABASE }?retryWrites=true&w=majority` )
+		MongoDB.Client = new MongoClient( `${ MONGO_SCHEME }://${ MONGO_HOST }/${ MONGO_DATABASE }`, {
+			appName: "live-chat",
+			directConnection: MONGO_DIRECT_CONNECTION,
+			authSource: MONGO_AUTH_DATABASE,
+			auth: {
+				username: MONGO_USER_NAME,
+				password: MONGO_USER_PASS
+			},
+			retryWrites: true,
+			retryReads: true,
+			tls: MONGO_USE_TLS,
+			w: "majority"
+		} )
 		MongoDB.Database = MongoDB.Client.db( MONGO_DATABASE )
 		log.info( "Initialised MongoDB." )
 
