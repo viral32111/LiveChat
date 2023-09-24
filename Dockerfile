@@ -1,29 +1,27 @@
+# syntax=docker/dockerfile:1
+
 # Start from Node.js
-FROM node:18
+FROM node:20
 
-# Configure the project directory
-ARG LIVECHAT_DIRECTORY=/usr/local/livechat
-
-# Create the project directory
-RUN mkdir --verbose --parents ${LIVECHAT_DIRECTORY}
-
-# Add the server project files
-COPY ./server/package.json ${LIVECHAT_DIRECTORY}/package.json
-COPY ./server/package-lock.json ${LIVECHAT_DIRECTORY}/package-lock.json
-
-# Add the server & client code
-COPY ./server/dist/ ${LIVECHAT_DIRECTORY}/dist/
-COPY ./client/ ${LIVECHAT_DIRECTORY}/client/
-
-# Add the default production environment variables file
-COPY ./server/production.env ${LIVECHAT_DIRECTORY}/production.env
+# Copy the project files
+COPY --chown=0:0 . /app
 
 # Switch to the project directory
-WORKDIR ${LIVECHAT_DIRECTORY}
+WORKDIR /app
 
 # Install production dependencies
-RUN npm clean-install --omit=dev
+RUN cd server && \
+	npm clean-install --omit=dev
 
-# Start project in current directory
+# Configure the defaults
+ENV NODE_ENV=production \
+	HTTP_SERVER_ADDRESS=0.0.0.0 \
+	HTTP_SERVER_PORT=5000 \
+	EXPRESS_CLIENT_DIRECTORY=/app/client
+
+# Publish the server port
+EXPOSE 5000/tcp
+
+# Launch the server
 ENTRYPOINT [ "node" ]
-CMD [ "/usr/local/livechat" ]
+CMD [ "/app/server" ]

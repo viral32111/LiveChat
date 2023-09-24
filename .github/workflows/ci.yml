@@ -1,35 +1,27 @@
-# This workflow builds, tests & deploys the project.
-
-name: Automate
+name: CI
 
 on:
   push:
     paths:
-      - 'Server/**'
-      - 'Client/**'
+      - 'Server/**/*'
+      - 'Client/**/*'
       - 'Dockerfile'
-      - '.github/workflows/automate.yml'
+      - '.github/workflows/*.yml'
     branches:
       - '**'
     tags:
       - '*.*.*'
-  pull_request:
-    branches:
-      - '**'
   workflow_dispatch:
 
 env:
-  ARTIFACT_SERVER_NAME: LiveChat-Server
-  ARTIFACT_CLIENT_NAME: LiveChat-Client
-  DOCKER_REGISTRY_DOMAIN: ghcr.io
+  ARTIFACT_NAME: live-chat
   DOCKER_IMAGE_NAME: livechat
+  DOCKER_REGISTRY_DOMAIN: ghcr.io
 
 jobs:
   client:
     name: Client
     runs-on: ubuntu-22.04
-    env:
-      DIRECTORY_CLIENT: ./Client/
     permissions:
       contents: read
     steps:
@@ -39,25 +31,29 @@ jobs:
       - name: Validate HTML
         uses: Cyb3r-Jak3/html5validator-action@v7.2.0
         with:
-          root: ${{ env.DIRECTORY_CLIENT }}
+          root: Client
           css: true
 
-      - name: Upload build
+      - name: Upload build artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_CLIENT_NAME }}
-          path: ${{ env.DIRECTORY_CLIENT }}
+          name: ${{ env.ARTIFACT_NAME }}-client
+          path: Client
 
   server:
     name: Server
     runs-on: ubuntu-22.04
-    env:
-      DIRECTORY_SERVER: ./Server/
-    defaults:
-      run:
-        working-directory: ./Server/
     permissions:
       contents: read
+    services:
+      mongodb:
+        image: mongo:6-jammy
+        env:
+          MONGO_INITDB_ROOT_USERNAME: mongodb
+          MONGO_INITDB_ROOT_PASSWORD: P4ssw0rd
+          MONGO_INITDB_DATABASE: github-actions-workflow
+        ports:
+          - 27017:27017
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -65,53 +61,58 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install dependencies
+        working-directory: Server
         run: npm install
 
-      - name: Lint
-        run: npx eslint ./source/
-
-      - name: Compile TypeScript
-        run: npx tsc
+      - name: Build project
+        working-directory: Server
+        run: npm run build
 
       - name: Generate Express session secret
         id: express
-        run: |
-          EXPRESS_SESSION_SECRET=$(openssl rand -hex 16)
-          echo "EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET}" >> $GITHUB_OUTPUT
+        run: echo "EXPRESS_SESSION_SECRET=$(openssl rand -hex 16)" >> $GITHUB_OUTPUT
 
       - name: Create environment variables file
-        run: cp --verbose --archive ./production.env ./test.env
+        working-directory: Server
+        run: cp --verbose --archive production.env test.env
 
-      - name: Run unit & integration tests
+      - name: Run tests
+        working-directory: Server
         env:
+          NODE_ENV: test
           HTTP_SERVER_ADDRESS: 127.0.0.1
-          MONGO_HOST: ${{ secrets.MONGO_HOST }}
-          MONGO_DATABASE: LiveChat-Test
-          MONGO_USER_NAME: ${{ secrets.MONGO_USERNAME }}
-          MONGO_USER_PASS: ${{ secrets.MONGO_PASSWORD }}
+          MONGO_SCHEME: mongodb
+          MONGO_HOST: 127.0.0.1
+          MONGO_DATABASE: github-actions-workflow
+          MONGO_USER_NAME: mongodb
+          MONGO_USER_PASS: P4ssw0rd
           EXPRESS_SESSION_SECRET: ${{ steps.express.outputs.EXPRESS_SESSION_SECRET }}
           EXPRESS_CLIENT_DIRECTORY: ../Client
           EXPRESS_COOKIE_DOMAIN: 127.0.0.1
         run: npm test
 
-      - name: Upload log
-        uses: actions/upload-artifact@v3
-        with:
-          name: Server-Log
-          path: ${{ env.DIRECTORY_SERVER }}/logs/server.log
+      - name: Remove tests
+        working-directory: Server
+        run: rm --verbose --recursive dist/tests
 
-      - name: Upload build
+      - name: Upload log artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_SERVER_NAME }}
+          name: ${{ env.ARTIFACT_NAME }}-server-log
+          path: Server/logs/server.log
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}-server
           path: |
-            ${{ env.DIRECTORY_SERVER }}/dist/
-            ${{ env.DIRECTORY_SERVER }}/package.json
-            ${{ env.DIRECTORY_SERVER }}/package-lock.json
-            ${{ env.DIRECTORY_SERVER }}/production.env
+            Server/dist/
+            Server/package.json
+            Server/package-lock.json
+            Server/production.env
 
   docker:
     name: Docker
@@ -120,10 +121,8 @@ jobs:
       - client
       - server
     concurrency:
-      group: docker
+      group: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
       cancel-in-progress: false
-    env:
-      DIRECTORY_BUILDS: ./builds/
     permissions:
       contents: read
       packages: write
@@ -140,27 +139,24 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
       - name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
+        if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
         uses: docker/login-action@v2
         with:
           registry: ${{ env.DOCKER_REGISTRY_DOMAIN }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download server build
+      - name: Download server build artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_SERVER_NAME }}
-          path: ${{ env.DIRECTORY_BUILDS }}/server/
+          name: ${{ env.ARTIFACT_NAME }}-server
+          path: artifacts/server/
 
-      - name: Download client build
+      - name: Download client build artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_CLIENT_NAME }}
-          path: ${{ env.DIRECTORY_BUILDS }}/client/
-
-      - name: Remove server unit & integration tests
-        run: rm --verbose --recursive ${{ env.DIRECTORY_BUILDS }}/server/dist/tests/
+          name: ${{ env.ARTIFACT_NAME }}-client
+          path: artifacts/client/
 
       - name: Create metadata for Docker image
         id: metadata
@@ -182,9 +178,9 @@ jobs:
       - name: Build & push Docker image
         uses: docker/build-push-action@v4
         with:
-          push: ${{ github.event_name != 'pull_request' }}
-          file: ./Dockerfile
-          context: ${{ env.DIRECTORY_BUILDS }}
+          push: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
+          file: Dockerfile
+          context: artifacts
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           platforms: linux/amd64,linux/arm64
@@ -196,78 +192,42 @@ jobs:
         uses: snok/container-retention-policy@v2
         with:
           image-names: ${{ env.DOCKER_IMAGE_NAME }}
-          cut-off: 0 seconds ago UTC
+          cut-off: 24 hours ago UTC
           keep-at-least: 1
           untagged-only: true
+          skip-tags: latest
           account-type: personal
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN_PACKAGES }}
-
-  #deploy-google:
-  #  name: Deploy to Google Cloud
-  #  runs-on: ubuntu-22.04
-  #  needs: docker
-  #  concurrency:
-  #    group: deploy-google
-  #    cancel-in-progress: false
-  #  env:
-  #    GOOGLE_CLOUD_INSTANCE: livechat-server
-  #    GOOGLE_CLOUD_INSTANCE_ZONE: europe-west2-c
-  #  permissions:
-  #    contents: read
-  #    id-token: write
-  #  steps:
-  #    - name: Setup Google Cloud SDK
-  #      uses: google-github-actions/setup-gcloud@v1
-
-  #    - name: Authenticate using JSON service account key
-  #      uses: google-github-actions/auth@v1
-  #      with:
-  #        credentials_json: ${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }}
-
-  #    - name: Deploy to Compute Engine
-  #      run: gcloud compute instances update-container ${{ env.GOOGLE_CLOUD_INSTANCE }} --zone ${{ env.GOOGLE_CLOUD_INSTANCE_ZONE }} --container-image ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
-
-  #    - name: Wait for deployment
-  #      run: sleep 60s
-
-  #    - name: Run Page Speed Insights
-  #      uses: jakepartusch/psi-action@v1.3
-  #      with:
-  #        url: https://livechat.viral32111.cf
-  #        threshold: 70
-  #        strategy: desktop
-  #        key: ${{ secrets.GOOGLE_PAGE_SPEED_INSIGHTS_API_KEY }}
+          token: ${{ secrets.PACKAGES_PERSONAL_ACCESS_TOKEN }}
 
   deploy-github:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-22.04
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
     needs: client
-    concurrency:
-      group: deploy-github
-      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    env:
-      DIRECTORY_BUILD: ./build/
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
     permissions:
       contents: read
       pages: write
       id-token: write
     steps:
-      - name: Download client build
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.ARTIFACT_CLIENT_NAME }}
-          path: ${{ env.DIRECTORY_BUILD }}
-
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v3
+
+      - name: Download client build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}-client
+          path: artifact
 
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v2
         with:
-          path: ${{ env.DIRECTORY_BUILD }}
+          path: artifact
 
       - name: Deploy to GitHub Pages
         id: deployment
