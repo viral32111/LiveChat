@@ -10,7 +10,8 @@ COPY --chown=0:0 . /app
 WORKDIR /app
 
 # Install production dependencies
-RUN npm clean-install --omit=dev
+RUN cd server && \
+	npm clean-install --omit=dev
 
 # Configure the defaults
 ENV NODE_ENV=production \
