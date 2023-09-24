@@ -84,6 +84,7 @@ jobs:
         run: cp --verbose --archive production.env test.env
 
       - name: Run tests
+        working-directory: Server
         env:
           HTTP_SERVER_ADDRESS: 127.0.0.1
           MONGO_HOST: 127.0.0.1
@@ -122,7 +123,7 @@ jobs:
       - client
       - server
     concurrency:
-      group: docker
+      group: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
       cancel-in-progress: false
     permissions:
       contents: read
