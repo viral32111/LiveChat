@@ -4,8 +4,11 @@
 	"description": "Real-time, ephemeral, room-based chat system.",
 	"main": "./dist/main.js",
 	"scripts": {
-		"start": "npx tsc && cross-env NODE_ENV=development node ./",
-		"test": "npx tsc --build --clean && npx tsc && cross-env NODE_ENV=test npx mocha --ui tdd --timeout 10000 --exit --recursive ./dist/tests/"
+		"clean": "rm -r -f ./dist",
+		"lint": "npx eslint ./source",
+		"build": "npm run lint && npx tsc",
+		"start": "npm run build && NODE_ENV=development node .",
+		"test": "npm run clean && npm run build && NODE_ENV=test npx mocha --ui tdd --timeout 10000 --exit --recursive ./dist/tests/"
 	},
 	"author": {
 		"name": "viral32111",
@@ -16,13 +19,27 @@
 		"type": "git",
 		"url": "git+https://github.com/viral32111/LiveChat.git"
 	},
+	"bugs": {
+		"url": "https://github.com/viral32111/LiveChat/issues"
+	},
+	"homepage": "https://github.com/viral32111/LiveChat",
 	"keywords": [
 		"live",
 		"chat",
 		"room",
 		"ephemeral"
 	],
-	"license": "UNLICENSED",
+	"license": "AGPL-3.0-only",
+	"dependencies": {
+		"connect-mongo": "^4.6.0",
+		"dotenv": "^16.0.3",
+		"express": "^4.18.2",
+		"express-session": "^1.17.3",
+		"log4js": "^6.7.1",
+		"mongodb": "^4.13.0",
+		"multer": "^1.4.5-lts.1",
+		"ws": "^8.11.0"
+	},
 	"devDependencies": {
 		"@types/chai": "^4.3.4",
 		"@types/chai-string": "^1.4.2",
@@ -37,20 +54,9 @@
 		"chai": "^4.3.7",
 		"chai-http": "^4.3.0",
 		"chai-string": "^1.5.0",
-		"cross-env": "^7.0.3",
 		"eslint": "^8.50.0",
 		"mocha": "^10.2.0",
 		"typescript": "^4.9.4"
-	},
-	"dependencies": {
-		"connect-mongo": "^4.6.0",
-		"dotenv": "^16.0.3",
-		"express": "^4.18.2",
-		"express-session": "^1.17.3",
-		"log4js": "^6.7.1",
-		"mongodb": "^4.13.0",
-		"multer": "^1.4.5-lts.1",
-		"ws": "^8.11.0"
 	},
 	"optionalDependencies": {
 		"bufferutil": "^4.0.7",

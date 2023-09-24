@@ -67,13 +67,9 @@ jobs:
         working-directory: Server
         run: npm install
 
-      - name: Lint code
-        working-directory: Server
-        run: npx eslint source
-
       - name: Build project
         working-directory: Server
-        run: npx tsc
+        run: npm run build
 
       - name: Generate Express session secret
         id: express
@@ -86,6 +82,7 @@ jobs:
       - name: Run tests
         working-directory: Server
         env:
+          NODE_ENV: test
           HTTP_SERVER_ADDRESS: 127.0.0.1
           MONGO_HOST: 127.0.0.1
           MONGO_DATABASE: github-actions-workflow
