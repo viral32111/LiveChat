@@ -9,13 +9,17 @@
 
 This is a real-time, ephemeral, room-based chat system, housed in a dynamic & modern web application.  
 
-**~~As of June 15th 2023, the official deployment (https://livechat.viral32111.cf) is no longer running as I've ran out of free credit on Google Cloud Platform! You'll need to deploy this yourself or run it locally to use it.~~ As of July 25th 2023, the official deployment is now back online.**
-
 ![Screenshot](/Screenshot.png)
 
 ## 📥 Usage
 
-There is a publicly deployed instance of this project running on [Google Cloud's Compute Engine](https://cloud.google.com/compute) virtual machines (although the database is hosted on [MongoDB Atlas](https://www.mongodb.com/atlas/database)). ~~It is available at https://livechat.viral32111.cf.~~ **Freenom suspended my `viral32111.cf` domain on September 11th 2023.**
+### Deployment History
+
+* **September 16th 2023:** Purchased new domain & deployed the project to https://live-chat.viral32111.dev.
+* **September 11th 2023:** Freenom suspended my `viral32111.cf` domain.
+* **July 25th 2023:** Deployed on [Oracle Cloud](https://www.oracle.com/cloud/) (including database) to https://livechat.viral32111.cf.
+* **June 25th 2023:** Deployment suspended due to running out of free credit on [Google Cloud Platform](https://console.cloud.google.com/).
+* **January 11th 2023:** Initially publicly deployed to https://livechat.viral32111.cf running on [Google Cloud's Compute Engine](https://cloud.google.com/compute) virtual machines, although the database is hosted on [MongoDB Atlas](https://www.mongodb.com/atlas/database).
 
 Alternatively you can run it locally by using the official [Docker image](https://github.com/users/viral32111/packages/container/package/livechat). You will need to set all the required environment variables (see [production.env](Server/production.env)).
 
