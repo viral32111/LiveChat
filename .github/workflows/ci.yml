@@ -84,6 +84,7 @@ jobs:
         env:
           NODE_ENV: test
           HTTP_SERVER_ADDRESS: 127.0.0.1
+          MONGO_SCHEME: mongodb
           MONGO_HOST: 127.0.0.1
           MONGO_DATABASE: github-actions-workflow
           MONGO_USER_NAME: mongodb
