@@ -16,7 +16,7 @@ This is a real-time, ephemeral, room-based chat system, housed in a dynamic & mo
 ### Deployment History
 
 * **September 16th 2023:** Purchased new domain & deployed the project to https://live-chat.viral32111.dev.
-* **September 11th 2023:** Freenom suspended my `viral32111.cf` domain.
+* **September 11th 2023:** Freenom suspended my https://viral32111.cf domain.
 * **July 25th 2023:** Deployed on [Oracle Cloud](https://www.oracle.com/cloud/) (including database) to https://livechat.viral32111.cf.
 * **June 25th 2023:** Deployment suspended due to running out of free credit on [Google Cloud Platform](https://console.cloud.google.com/).
 * **January 11th 2023:** Initially publicly deployed to https://livechat.viral32111.cf running on [Google Cloud's Compute Engine](https://cloud.google.com/compute) virtual machines, although the database is hosted on [MongoDB Atlas](https://www.mongodb.com/atlas/database).
