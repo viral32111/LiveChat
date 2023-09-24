@@ -189,6 +189,7 @@ jobs:
           pull: true
 
       - name: Delete untagged Docker images
+        if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
         uses: snok/container-retention-policy@v2
         with:
           image-names: ${{ env.DOCKER_IMAGE_NAME }}
