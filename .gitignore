@@ -1,2 +1,16 @@
-# Client message attachments
-Client/attachments/
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Builds
+dist/
+*.tsbuildinfo
+
+# Environment Variables
+.env*
+!.env.example
+
+# macOS & Windows
+.DS_Store
+Thumbs.db

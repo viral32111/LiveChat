@@ -1,0 +1,41 @@
+{
+	"name": "live-chat",
+	"version": "2.0.0",
+	"description": "Real-time, ephemeral, room-based chat system.",
+	"main": "dist/index.js",
+	"type": "module",
+	"scripts": {
+		"clean": "rm -r -f node_modules && npm run --workspaces --if-present clean",
+		"build": "npm run --workspaces --if-present build",
+		"lint": "npm run --workspaces --if-present lint",
+		"start": "npm run --workspace server start",
+		"test": "npm run --workspaces --if-present test",
+		"docker": "docker buildx build --pull --file Dockerfile --tag live-chat:latest ."
+	},
+	"author": "viral32111 <contact@viral32111.com> (https://viral32111.com)",
+	"repository": "github:viral32111/LiveChat",
+	"bugs": {
+		"url": "https://github.com/viral32111/LiveChat/issues",
+		"email": "contact@viral32111.com"
+	},
+	"homepage": "https://github.com/viral32111/LiveChat",
+	"keywords": [ "live", "chat", "rooms", "ephemeral" ],
+	"license": "AGPL-3.0-only",
+	"private": true,
+	"dependencies": {},
+	"devDependencies": {
+		"@types/node": "^20.7.1",
+		"@typescript-eslint/eslint-plugin": "^6.7.3",
+		"@typescript-eslint/parser": "^6.7.3",
+		"eslint": "^8.50.0",
+		"eslint-config-prettier": "^9.0.0",
+		"eslint-plugin-prettier": "^5.0.0",
+		"prettier": "^3.0.3",
+		"typescript": "^5.2.2"
+	},
+	"optionalDependencies": {},
+	"engines": {
+		"node": ">=20.7.0",
+		"npm": ">=10.1.0"
+	}
+}
