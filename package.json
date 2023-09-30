@@ -1,17 +1,23 @@
 {
 	"name": "live-chat",
+	"description": "Instant, ephemeral, room-based chat app.",
 	"version": "2.0.0",
-	"description": "Real-time, ephemeral, room-based chat system.",
 	"main": "dist/index.js",
 	"type": "module",
 	"scripts": {
 		"clean": "rm -r -f node_modules && npm run --workspaces --if-present clean",
-		"build": "npm run --workspaces --if-present build",
 		"lint": "npm run --workspaces --if-present lint",
+		"build": "npm run --workspaces --if-present build",
+		"dev": "npm run --workspace client dev",
+		"preview": "npm run --workspace client preview",
 		"start": "npm run --workspace server start",
 		"test": "npm run --workspaces --if-present test",
 		"docker": "docker buildx build --pull --file Dockerfile --tag live-chat:latest ."
 	},
+	"workspaces": [
+		"client",
+		"server"
+	],
 	"author": "viral32111 <contact@viral32111.com> (https://viral32111.com)",
 	"repository": "github:viral32111/LiveChat",
 	"bugs": {

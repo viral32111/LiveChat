@@ -1,3 +1,0 @@
-/* Show underline on links only when hovering over them */
-a { text-decoration: none; }
-a:hover { text-decoration: underline; }

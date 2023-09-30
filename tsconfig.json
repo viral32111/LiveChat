@@ -1,13 +1,26 @@
 {
 	"compilerOptions": {
 		"strict": true,
+		"alwaysStrict": true,
 		"noImplicitAny": true,
+		"noImplicitThis": true,
 		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true,
 
 		"moduleResolution": "node",
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
 		"skipLibCheck": true,
 
 		"sourceMap": true,
@@ -15,6 +28,11 @@
 		"declarationMap": true,
 
 		"removeComments": true,
-		"newLine": "lf"
+		"newLine": "lf",
+
+		"checkJs": false,
+		"allowJs": false,
+
+		"useDefineForClassFields": true
 	}
 }
