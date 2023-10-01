@@ -8,7 +8,7 @@
 		"lint": "npx eslint source --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
 		"build": "npm run lint && npx tsc && npx vite build",
 		"dev": "npx vite",
-		"preview": "npx vite preview"
+		"preview": "npm run clean && npm run build && npx vite preview"
 	},
 	"private": true,
 	"dependencies": {
