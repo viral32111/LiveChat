@@ -4,7 +4,7 @@
 	"version": "2.0.0",
 	"type": "module",
 	"scripts": {
-		"clean": "rm -r -f dist",
+		"clean": "rm -r -f dist *.tsbuildinfo",
 		"lint": "npx eslint source --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
 		"build": "npm run lint && npx tsc && npx vite build",
 		"dev": "npx vite",
