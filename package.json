@@ -2,10 +2,9 @@
 	"name": "live-chat",
 	"description": "Instant, ephemeral, room-based chat app.",
 	"version": "2.0.0",
-	"main": "dist/index.js",
 	"type": "module",
 	"scripts": {
-		"clean": "rm -r -f node_modules && npm run --workspaces --if-present clean",
+		"clean": "rm -r -f node_modules client/node_modules server/node_modules && npm run --workspaces --if-present clean",
 		"lint": "npm run --workspaces --if-present lint",
 		"build": "npm run --workspaces --if-present build",
 		"dev": "npm run --workspace client dev",

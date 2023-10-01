@@ -18,7 +18,7 @@
 		"composite": true
 	},
 	"include": [
-		"./src",
-		"./vite.config.ts"
+		"source",
+		"vite.config.ts"
 	]
 }

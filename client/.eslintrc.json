@@ -16,5 +16,10 @@
 			"warn",
 			{ "allowConstantExport": true }
 		]
+	},
+	"settings": {
+		"react": {
+			"version": "18"
+		}
 	}
 }

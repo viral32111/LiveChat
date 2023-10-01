@@ -1,0 +1,42 @@
+{
+	"name": "server",
+	"description": "Back-end API for live chat.",
+	"version": "2.0.0",
+	"type": "module",
+	"main": "dist/index.js",
+	"scripts": {
+		"clean": "rm -r -f dist",
+		"lint": "npx eslint source",
+		"build": "npm run lint && npx tsc",
+		"start": "npm run build && node .",
+		"test": "npm run clean && npm run build && NODE_ENV=test npx mocha --ui tdd --exit --recursive dist/tests"
+	},
+	"private": true,
+	"dependencies": {
+		"dotenv": "^16.3.1",
+		"express": "^4.18.2",
+		"express-session": "^1.17.3",
+		"log4js": "^6.9.1",
+		"mongodb": "^6.1.0",
+		"multer": "^1.4.5-lts.1",
+		"ws": "^8.14.2"
+	},
+	"devDependencies": {
+		"@types/chai": "^4.3.6",
+		"@types/chai-string": "^1.4.3",
+		"@types/express": "^4.17.18",
+		"@types/express-session": "^1.17.8",
+		"@types/mocha": "^10.0.2",
+		"@types/multer": "^1.4.8",
+		"@types/node": "^20.8.0",
+		"@types/ws": "^8.5.6",
+		"chai": "^4.3.10",
+		"chai-http": "^4.4.0",
+		"chai-string": "^1.5.0",
+		"mocha": "^10.2.0"
+	},
+	"optionalDependencies": {
+		"bufferutil": "^4.0.7",
+		"utf-8-validate": "^6.0.3"
+	}
+}
