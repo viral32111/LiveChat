@@ -27,6 +27,7 @@ docker-compose.yml
 # Documentation
 *.md
 *.txt
+*.png
 
 # Environment Variables
 .env*

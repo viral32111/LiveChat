@@ -7,25 +7,47 @@
 
 # Dependencies
 node_modules/
-npm-debug.log
-yarn-error.log
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 *.lock
+!yarn.lock
+!package-lock.json
 
 # Source
 */source/
+client/*.html
+client/public/
+
+# Build
+*.tsbuildinfo
+*/*.tsbuildinfo
+server/dist/tests
 
 # Package Configuration
 *.config.ts
+*/*.config.ts
 *.config.js
+*/*.config.js
 *.json
+*/*.json
 !package.json
+!*/package.json
+
+# Docker
+Dockerfile
+docker-compose.yml
 
 # Documentation
 *.md
 *.txt
+*.png
+!LICENSE.txt
 
 # Environment Variables
 .env*
+!.env.example
 
 # Ignores
 .*ignore

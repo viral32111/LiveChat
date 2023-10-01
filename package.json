@@ -11,7 +11,7 @@
 		"preview": "npm run --workspace client preview",
 		"start": "npm run --workspace server start",
 		"test": "npm run --workspaces --if-present test",
-		"docker": "docker buildx build --pull --file Dockerfile --tag live-chat:latest ."
+		"docker": "npm run --workspaces --if-present clean && npm run build && docker buildx build --pull --file Dockerfile --tag live-chat:latest ."
 	},
 	"workspaces": [
 		"client",
