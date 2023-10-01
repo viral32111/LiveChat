@@ -12,33 +12,12 @@ on:
 
 env:
   ARTIFACT_NAME: live-chat
-  DOCKER_IMAGE_NAME: livechat
+  DOCKER_IMAGE_NAME: live-chat
   DOCKER_REGISTRY_DOMAIN: ghcr.io
 
 jobs:
-  client:
-    name: Client
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: read
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v3
-
-      - name: Validate HTML
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
-        with:
-          root: Client
-          css: true
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.ARTIFACT_NAME }}-client
-          path: Client
-
-  server:
-    name: Server
+  build-test:
+    name: Build & Test
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -46,9 +25,9 @@ jobs:
       mongodb:
         image: mongo:6-jammy
         env:
-          MONGO_INITDB_ROOT_USERNAME: mongodb
-          MONGO_INITDB_ROOT_PASSWORD: P4ssw0rd
-          MONGO_INITDB_DATABASE: github-actions-workflow
+          MONGO_INITDB_ROOT_USERNAME: ${{ github.sha }}-user
+          MONGO_INITDB_ROOT_PASSWORD: ${{ github.sha }}-password
+          MONGO_INITDB_DATABASE: ${{ github.sha }}-database
         ports:
           - 27017:27017
     steps:
@@ -61,62 +40,59 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        working-directory: Server
-        run: npm install
+        run: yarn install
 
       - name: Build project
-        working-directory: Server
-        run: npm run build
+        run: yarn build
 
-      - name: Generate Express session secret
-        id: express
-        run: echo "EXPRESS_SESSION_SECRET=$(openssl rand -hex 16)" >> $GITHUB_OUTPUT
+      - name: Validate HTML
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: client/dist
+          css: true
 
-      - name: Create environment variables file
-        working-directory: Server
-        run: cp --verbose --archive production.env test.env
+      - name: Generate secrets
+        id: generate
+        run: |
+          echo "EXPRESS_SESSION_SECRET=$(openssl rand -hex 16)" >> $GITHUB_OUTPUT
+          echo "MONGODB_SECRET=$(openssl rand -hex 16)" >> $GITHUB_OUTPUT
 
       - name: Run tests
-        working-directory: Server
         env:
           NODE_ENV: test
-          HTTP_SERVER_ADDRESS: 127.0.0.1
-          MONGO_SCHEME: mongodb
-          MONGO_HOST: 127.0.0.1
-          MONGO_DATABASE: github-actions-workflow
-          MONGO_USER_NAME: mongodb
-          MONGO_USER_PASS: P4ssw0rd
-          EXPRESS_SESSION_SECRET: ${{ steps.express.outputs.EXPRESS_SESSION_SECRET }}
-          EXPRESS_CLIENT_DIRECTORY: ../Client
-          EXPRESS_COOKIE_DOMAIN: 127.0.0.1
-        run: npm test
+          EXPRESS_LISTEN_ADDRESS: 127.0.0.1 # Shouldn't be needed, as this is the default
+          EXPRESS_CLIENT_DIRECTORY: client/dist
+          MONGODB_SCHEME: mongodb # Shouldn't be needed, as this is the default
+          MONGODB_SERVER_ADDRESS: 127.0.0.1 # Shouldn't be needed, as this is the default
+          MONGODB_USER_NAME: ${{ github.sha }}-user
+          MONGODB_USER_PASSWORD: ${{ github.sha }}-password
+          MONGODB_DATABASE: ${{ github.sha }}-database
+          MONGODB_SECRET: ${{ steps.generate.outputs.MONGODB_SECRET }}
+          EXPRESS_SESSION_COOKIE_DOMAIN: 127.0.0.1 # Shouldn't be needed, as this is the default
+          EXPRESS_SESSION_SECRET: ${{ steps.generate.outputs.EXPRESS_SESSION_SECRET }}
+        run: yarn test
 
-      - name: Remove tests
-        working-directory: Server
+      - name: Remove server tests
+        working-directory: server
         run: rm --verbose --recursive dist/tests
-
-      - name: Upload log artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.ARTIFACT_NAME }}-server-log
-          path: Server/logs/server.log
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_NAME }}-server
+          name: ${{ env.ARTIFACT_NAME }}
           path: |
-            Server/dist/
-            Server/package.json
-            Server/package-lock.json
-            Server/production.env
+            client/dist
+            client/package.json
+            server/dist
+            server/package.json
+            .env.example
+            package.json
+            LICENSE.txt
 
   docker:
     name: Docker
     runs-on: ubuntu-22.04
-    needs:
-      - client
-      - server
+    needs: build-test
     concurrency:
       group: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
       cancel-in-progress: false
@@ -143,17 +119,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download server build artifact
+      - name: Download build artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_NAME }}-server
-          path: artifacts/server/
-
-      - name: Download client build artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.ARTIFACT_NAME }}-client
-          path: artifacts/client/
+          name: ${{ env.ARTIFACT_NAME }}
+          path: artifact
 
       - name: Create metadata for Docker image
         id: metadata
@@ -201,7 +171,7 @@ jobs:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-22.04
     if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-    needs: client
+    needs: build-test
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -216,16 +186,16 @@ jobs:
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v3
 
-      - name: Download client build artifact
+      - name: Download build artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_NAME }}-client
+          name: ${{ env.ARTIFACT_NAME }}
           path: artifact
 
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v2
         with:
-          path: artifact
+          path: artifact/client/dist
 
       - name: Deploy to GitHub Pages
         id: deployment

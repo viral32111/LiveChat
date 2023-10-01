@@ -9,6 +9,18 @@ updates:
 
   # Project
   - package-ecosystem: npm
-    directory: /Server
+    directory: /
+    schedule:
+      interval: monthly
+
+  # Client
+  - package-ecosystem: npm
+    directory: /client/
+    schedule:
+      interval: monthly
+
+  # Server
+  - package-ecosystem: npm
+    directory: /server/
     schedule:
       interval: monthly
