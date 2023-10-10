@@ -17,7 +17,7 @@ WORKDIR /app
 RUN yarn install --prod --frozen-lockfile --non-interactive
 
 # Configure the project
-ENV	EXPRESS_LISTEN_ADDRESS=0.0.0.0 \
+ENV EXPRESS_LISTEN_ADDRESS=0.0.0.0 \
 	EXPRESS_LISTEN_PORT=5000 \
 	EXPRESS_CLIENT_DIRECTORY=/app/client
 

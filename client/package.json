@@ -8,7 +8,8 @@
 		"lint": "npx eslint source --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
 		"build": "npm run lint && npx tsc && npx vite build",
 		"dev": "npx vite",
-		"preview": "npm run clean && npm run build && npx vite preview"
+		"preview": "npm run clean && npm run build && npx vite preview",
+		"test": "npm run clean && npm run build && NODE_ENV=test npx vitest run"
 	},
 	"private": true,
 	"dependencies": {
@@ -26,7 +27,9 @@
 		"eslint-plugin-react-hooks": "^4.6.0",
 		"eslint-plugin-react-refresh": "^0.4.3",
 		"typescript": "^5.0.2",
-		"vite": "^4.4.5"
+		"vite": "^4.4.5",
+		"vite-plugin-checker": "^0.6.2",
+		"vitest": "^0.34.6"
 	},
 	"optionalDependencies": {}
 }
