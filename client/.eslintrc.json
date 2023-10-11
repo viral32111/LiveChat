@@ -1,12 +1,16 @@
 {
-	"extends": [
-		"plugin:react-hooks/recommended",
-		"plugin:react/recommended",
-		"plugin:react/jsx-runtime"
-	],
 	"env": {
 		"es2020": true,
 		"browser": true
+	},
+	"extends": [
+		"plugin:react-hooks/recommended",
+		"plugin:react/recommended",
+		"plugin:react/jsx-runtime",
+		"plugin:compat/recommended"
+	],
+	"parserOptions": {
+		"project": "tsconfig.json"
 	},
 	"plugins": [
 		"react-refresh"

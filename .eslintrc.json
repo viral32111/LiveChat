@@ -2,10 +2,17 @@
 	"root": true,
 	"extends": [
 		"eslint:recommended",
-		"plugin:@typescript-eslint/strict-type-checked",
-		"plugin:@typescript-eslint/stylistic-type-checked",
+		"plugin:@typescript-eslint/recommended",
 		"prettier",
-		"plugin:prettier/recommended"
+		"plugin:prettier/recommended",
+		"plugin:deprecation/recommended",
+		"plugin:jsdoc/recommended"
+		/*
+		"plugin:@typescript-eslint/recommended-type-checked",
+		"plugin:@typescript-eslint/strict",
+		"plugin:@typescript-eslint/strict-type-checked",
+		"plugin:@typescript-eslint/stylistic-type-checked"
+		*/
 	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
@@ -15,15 +22,17 @@
 	},
 	"plugins": [
 		"@typescript-eslint",
-		"prettier"
+		"prettier",
+		"jsdoc"
 	],
 	"rules": {
-		"indent": [ "error", "tab", {
-			"SwitchCase": 1
+		"indent": [ "warn", "tab", {
+			"SwitchCase": 1,
+			"ignoredNodes": [ "ConditionalExpression" ]
 		} ],
-		"linebreak-style": [ "error", "unix" ],
-		"quotes": [ "error", "double" ],
-		"semi": [ "error", "never" ],
+		"linebreak-style": [ "warn", "unix" ],
+		"quotes": [ "warn", "double" ],
+		"semi": [ "warn", "never" ],
 		"@typescript-eslint/no-explicit-any": "warn",
 		"@typescript-eslint/no-unused-vars": "warn",
 		"@typescript-eslint/ban-ts-comment": "warn",

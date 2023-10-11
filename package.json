@@ -24,20 +24,16 @@
 		"email": "contact@viral32111.com"
 	},
 	"homepage": "https://github.com/viral32111/LiveChat",
-	"keywords": [ "live", "chat", "rooms", "ephemeral" ],
+	"keywords": [
+		"live",
+		"chat",
+		"rooms",
+		"ephemeral"
+	],
 	"license": "AGPL-3.0-only",
 	"private": true,
 	"dependencies": {},
-	"devDependencies": {
-		"@types/node": "^20.7.1",
-		"@typescript-eslint/eslint-plugin": "^6.7.3",
-		"@typescript-eslint/parser": "^6.7.3",
-		"eslint": "^8.50.0",
-		"eslint-config-prettier": "^9.0.0",
-		"eslint-plugin-prettier": "^5.0.0",
-		"prettier": "^3.0.3",
-		"typescript": "^5.2.2"
-	},
+	"devDependencies": {},
 	"optionalDependencies": {},
 	"engines": {
 		"node": ">=20.7.0",

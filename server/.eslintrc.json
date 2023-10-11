@@ -2,5 +2,11 @@
 	"env": {
 		"es2022": true,
 		"node": true
+	},
+	"extends": [
+		"plugin:node/recommended"
+	],
+	"parserOptions": {
+		"project": "tsconfig.json"
 	}
 }
