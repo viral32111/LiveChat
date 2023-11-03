@@ -96,13 +96,13 @@ expressApp.put( "/api/upload", ( request, response ) => {
 
 		// If we got to this point, then no errors occured
 
+		// Cast because TypeScript doesn't know how to do this automatically
+		const uploadedFiles = request.files as Express.Multer.File[] | undefined
+
 		// Fail if no files were uploaded
-		if ( request.files === undefined || request.files.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
+		if ( uploadedFiles === undefined || uploadedFiles.length <= 0 ) return respondToRequest( response, HTTPStatusCodes.BadRequest, {
 			error: ErrorCodes.NoFilesUploaded
 		} )
-
-		// Cast because TypeScript doesn't know how to do this automatically
-		const uploadedFiles = request.files as Express.Multer.File[]
 
 		// Loop through the uploaded files & add their type and URL to a payload for the response
 		const filesPayload: Attachment[] = []
