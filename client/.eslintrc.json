@@ -6,8 +6,7 @@
 	"extends": [
 		"plugin:react-hooks/recommended",
 		"plugin:react/recommended",
-		"plugin:react/jsx-runtime",
-		"plugin:compat/recommended"
+		"plugin:react/jsx-runtime"
 	],
 	"parserOptions": {
 		"project": "tsconfig.json"

@@ -23,7 +23,7 @@ process.on("uncaughtException", error => {
 	log.fatal("%s: %s", error.name, error.message)
 	if (error.stack != null) console.error(error.stack)
 
-	process.exit(1)
+	throw error
 })
 
 log.debug("Loading environment variables file...")
@@ -36,31 +36,19 @@ if (dotenvResult.error ?? !dotenvResult.parsed) {
 
 log.debug("Checking required environment variables...")
 const EXPRESS_LISTEN_ADDRESS = process.env["EXPRESS_LISTEN_ADDRESS"] ?? "0.0.0.0"
-if (!EXPRESS_LISTEN_ADDRESS) {
-	log.fatal("Environment variable 'EXPRESS_LISTEN_ADDRESS' value '%s' is invalid!", EXPRESS_LISTEN_ADDRESS)
-	process.exit(1)
-}
+if (!EXPRESS_LISTEN_ADDRESS) throw new Error("Environment variable 'EXPRESS_LISTEN_ADDRESS' value is invalid!")
 
 const EXPRESS_LISTEN_PORT = parseInt(process.env["EXPRESS_LISTEN_PORT"] ?? "3000")
-if (!EXPRESS_LISTEN_PORT || isNaN(EXPRESS_LISTEN_PORT) || EXPRESS_LISTEN_PORT < 0 || EXPRESS_LISTEN_PORT > 65535) {
-	log.fatal(
-		"Environment variable 'EXPRESS_LISTEN_PORT' value '%s' is not a valid port number! (must be between 0 and 65535)",
-		EXPRESS_LISTEN_PORT
+if (!EXPRESS_LISTEN_PORT || isNaN(EXPRESS_LISTEN_PORT) || EXPRESS_LISTEN_PORT < 0 || EXPRESS_LISTEN_PORT > 65535)
+	throw new Error(
+		"Environment variable 'EXPRESS_LISTEN_PORT' value is not a valid port number! (must be between 0 and 65535)"
 	)
-	process.exit(1)
-}
 
 const EXPRESS_CLIENT_DIRECTORY = process.env["EXPRESS_CLIENT_DIRECTORY"] ?? "client/dist"
-if (!EXPRESS_CLIENT_DIRECTORY) {
-	log.fatal("Environment variable 'EXPRESS_CLIENT_DIRECTORY' value '%s' is invalid!", EXPRESS_CLIENT_DIRECTORY)
-	process.exit(1)
-}
+if (!EXPRESS_CLIENT_DIRECTORY) throw new Error("Environment variable 'EXPRESS_CLIENT_DIRECTORY' value is invalid!")
 
 const PACKAGE_FILE = process.env["PACKAGE_FILE"] ?? "package.json"
-if (!PACKAGE_FILE) {
-	log.fatal("Environment variable 'PACKAGE_FILE' value '%s' is invalid!", PACKAGE_FILE)
-	process.exit(1)
-}
+if (!PACKAGE_FILE) throw new Error("Environment variable 'PACKAGE_FILE' value is invalid!")
 log.debug("Checked required environment variables.")
 
 let version = "2.0.0"
@@ -176,7 +164,7 @@ export const httpServer = expressApp.listen(EXPRESS_LISTEN_PORT, EXPRESS_LISTEN_
 	}
 })
 
-const safeStop = () => {
+const safeStop = (): void => {
 	log.info("Stopping...")
 
 	log.debug("Stopping Express application...")
