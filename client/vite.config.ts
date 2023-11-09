@@ -11,11 +11,11 @@ export default defineConfig( {
 	build: {
 		outDir: "dist"
 	},
-	test: {
+	/*test: {
 		globals: true,
 		include: [
 			"source/tests/*.ts",
 			"source/tests/*.tsx"
 		]
-	}
+	}*/
 } )

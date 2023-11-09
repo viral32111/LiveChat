@@ -1,16 +1,22 @@
 # Dependencies
 node_modules/
+npm-*.log
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Yarn
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+yarn-*.log
 
 # Builds
 dist/
 *.tsbuildinfo
+*.d.ts
+*.map
 
 # Environment Variables
 .env*

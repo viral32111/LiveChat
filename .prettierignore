@@ -2,22 +2,28 @@
 .git
 .github/
 
-# Visual Studio Code
+# IDEs
 .vscode/
 
 # Dependencies
 node_modules/
-npm-debug.log
-yarn-error.log
+npm-*.log
+yarn-*.log
+.pnp.*
+.yarn/*
 *.lock
 
 # Builds
 dist/
 *.tsbuildinfo
+*.d.ts
+*.map
+
+# Source
+*.html
 
 # Package Configuration
-*.config.ts
-*.config.js
+*.config.*s
 *.json
 
 # Docker
