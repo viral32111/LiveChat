@@ -45,7 +45,7 @@
 		"@types/chai-string": "^1.4.5",
 		"@types/express": "^4.17.21",
 		"@types/express-session": "^1.18.0",
-		"@types/mocha": "^10.0.6",
+		"@types/mocha": "^10.0.7",
 		"@types/multer": "^1.4.11",
 		"@types/node": "^20.13.0",
 		"@types/ws": "^8.5.10",
@@ -55,7 +55,7 @@
 		"chai-http": "^4.3.0",
 		"chai-string": "^1.5.0",
 		"eslint": "^8.57.0",
-		"mocha": "^10.4.0",
+		"mocha": "^10.7.0",
 		"typescript": "^5.5.2"
 	},
 	"optionalDependencies": {
